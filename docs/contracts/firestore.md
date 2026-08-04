@@ -21,7 +21,7 @@
       "board": "LMS//L",              // board.md の盤面文字列
       "elapsed_ms": 12345,            // GOからの経過時間
       "result": "scored",             // "scored" | "unclearable" | "duplicate_same" | "duplicate_mirror"
-      "points": 9,                    // 無得点は 0
+      "points": 12,                   // 獲得点 = 箱数4 * 最短手数3。無得点は 0
       "min_moves": 3,                 // クリア可能時のみ。クリア不可は null
       "dup_of_seq": null              // 重複時: 得点した元判定の seq。それ以外 null
     }

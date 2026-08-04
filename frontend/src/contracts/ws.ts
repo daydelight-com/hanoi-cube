@@ -88,7 +88,11 @@ export type SfxId =
 // ---- サーバー → ディスプレイ(/ws/display) ----
 
 export type DisplayMessage =
-  | { type: 'snapshot'; payload: ScreenState & { lang: Lang } }
+  | {
+      type: 'snapshot'
+      // board = 最新の確定盤面(未確定なら null)。再接続時の復元に使う
+      payload: ScreenState & { lang: Lang; board: Omit<CvBoardUpdate, 'kind'> | null }
+    }
   | { type: 'screen'; payload: ScreenState }
   | { type: 'lang'; payload: { lang: Lang } }
   | { type: 'boxes'; payload: { t_ms: number; boxes: BoxObservation[] } }

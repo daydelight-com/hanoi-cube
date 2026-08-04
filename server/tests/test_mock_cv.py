@@ -13,16 +13,23 @@ def board_updates(mock: MockCv) -> list[CvBoardUpdate]:
 def test_initial_state_all_boxes_staged() -> None:
     mock = MockCv()
     messages = mock.poll()
-    frames = [m for m in messages if isinstance(m, CvFrame)]
-    assert len(frames) == 1
-    frame = frames[0]
+    # 初回 poll は「初期確定盤面 → 最新フレーム」の時系列順で返す
+    assert [m.kind for m in messages] == ["board", "frame"]
+    initial, frame = messages
+    assert isinstance(initial, CvBoardUpdate)
+    assert initial.board == "//"
+    assert initial.legal
+    assert list(initial.staging_box_ids) == list(BOX_IDS)  # 全箱が待機エリア
+    assert isinstance(frame, CvFrame)
     assert frame.mat_corners_detected == 4
     assert [b.box_id for b in frame.boxes] == list(BOX_IDS)  # 常に9箱すべて
     assert all(b.area == "staging" for b in frame.boxes)
+    assert initial.t_ms <= frame.t_ms  # 同一バッチ内で時刻が逆転しない
 
 
 def test_grab_and_place_builds_board() -> None:
     mock = MockCv()
+    mock.poll()  # 初期盤面の配信を消化
     mock.grab("large-1")
     (update,) = board_updates(mock)
     assert update.board == "//"
@@ -85,11 +92,23 @@ def test_set_board_rejects_impossible_and_bad_format() -> None:
 
 def test_no_duplicate_board_update_when_unchanged() -> None:
     mock = MockCv()
+    mock.poll()  # 初期盤面の配信を消化
     mock.set_board("LMS//L")
     assert len(board_updates(mock)) == 1
     assert board_updates(mock) == []  # 変化なしなら再emitしない
     mock.set_board("LMS//L")
     assert board_updates(mock) == []
+
+
+def test_overflow_violation() -> None:
+    mock = MockCv()
+    mock.set_board("LMSM//")  # A塔に4箱(overflow。M on S の size_order・M重複も併発)
+    update = board_updates(mock)[-1]
+    assert not update.legal
+    kinds = [(v.tower, v.type) for v in update.violations]
+    assert ("A", "overflow") in kinds
+    assert ("A", "size_order") in kinds
+    assert ("A", "duplicate_size") in kinds
 
 
 def test_frame_positions_stack_heights() -> None:

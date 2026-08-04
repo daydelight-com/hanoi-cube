@@ -11,7 +11,7 @@
 
 | type | 送信タイミング | payload |
 |---|---|---|
-| `snapshot` | 接続直後・再接続直後 | `{ screen, ctx, lang }`(§3) |
+| `snapshot` | 接続直後・再接続直後 | `{ screen, ctx, lang, board }`(§3。board = 最新の確定盤面) |
 | `screen` | 画面遷移のたび | `{ screen, ctx }` |
 | `lang` | 言語切替・リセット時 | `{ lang: "ja" \| "en" }` |
 | `boxes` | 約30fps(全画面で常時) | `{ t_ms, boxes: BoxObservation[] }`(cv-interface.md §2 と同型) |
@@ -49,8 +49,12 @@
 ## 3. snapshot / screen の payload
 
 ```jsonc
-{ "screen": "game_play", "ctx": { ... }, "lang": "ja" }   // snapshot(lang付き)
-{ "screen": "game_play", "ctx": { ... } }                  // screen
+// snapshot: lang と最新の確定盤面(board メッセージと同型)を含む。
+// 静止盤面のまま再接続しても board を待たずに全状態を復元できるようにする
+{ "screen": "game_play", "ctx": { ... }, "lang": "ja",
+  "board": { "t_ms": 0, "towers": ["", "", ""], "board": "//", "legal": true,
+             "violations": [], "staging_box_ids": [ ... ] } }   // 未確定なら null
+{ "screen": "game_play", "ctx": { ... } }                        // screen
 ```
 
 `screen` は screens.md の画面ID。`ctx` は画面ごとの表示データ(screens.md §3 に画面別の ctx 型を定義)。

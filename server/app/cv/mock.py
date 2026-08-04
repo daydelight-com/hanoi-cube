@@ -17,6 +17,7 @@ from app.cv.interface import (
     BOX_SIZE_OF,
     SIZE_CHAR,
     Area,
+    BoxId,
     BoxObservation,
     BoxSize,
     CvBoardUpdate,
@@ -40,11 +41,11 @@ _TOWERS: tuple[str, str, str] = ("A", "B", "C")
 
 @dataclass
 class _State:
-    stacks: dict[str, list[str]] = field(
+    stacks: dict[str, list[BoxId]] = field(
         default_factory=lambda: {"A": [], "B": [], "C": []}
     )  # 塔ごとの box_id 列(下から上)
-    staging: list[str] = field(default_factory=lambda: list(BOX_IDS))  # 待機エリアの box_id
-    held: str | None = None
+    staging: list[BoxId] = field(default_factory=lambda: list(BOX_IDS))  # 待機エリアの box_id
+    held: BoxId | None = None
 
 
 class MockCv:
@@ -55,8 +56,8 @@ class MockCv:
         self._t_ms = 0
         self._pending: list[CvMessage] = []
         self._last_board: CvBoardUpdate | None = None
+        # 初期盤面(全箱待機)も確定盤面として初回 poll() で配信する(cv-interface.md §3)
         self._emit_board_if_changed()
-        self._pending.clear()  # 初期盤面はスナップショットで取得できるため初回emitは捨てる
 
     # ---- 操作(モックCLI・テストから呼ぶ) ----
 
@@ -64,15 +65,16 @@ class MockCv:
         """箱を掴む。塔の途中の箱も掴める(上の箱は下に詰める)。"""
         if box_id not in BOX_IDS:
             raise ValueError(f"unknown box: {box_id}")
+        box = box_id  # in チェックで BoxId に絞り込まれる
         if self._state.held is not None:
             raise ValueError(f"already holding {self._state.held}")
         for stack in self._state.stacks.values():
-            if box_id in stack:
-                stack.remove(box_id)
+            if box in stack:
+                stack.remove(box)
                 break
         else:
-            self._state.staging.remove(box_id)
-        self._state.held = box_id
+            self._state.staging.remove(box)
+        self._state.held = box
         self._emit_board_if_changed()
 
     def place(self, target: str) -> None:
@@ -96,12 +98,12 @@ class MockCv:
         各サイズ3個の物理制約は超えられない。
         """
         towers = parse_board(board)
-        pool: dict[str, list[str]] = {"L": [], "M": [], "S": []}
+        pool: dict[str, list[BoxId]] = {"L": [], "M": [], "S": []}
         for box_id in BOX_IDS:
             pool[SIZE_CHAR[BOX_SIZE_OF[box_id]]].append(box_id)
-        stacks: dict[str, list[str]] = {}
+        stacks: dict[str, list[BoxId]] = {}
         for name, tower in zip(_TOWERS, towers, strict=True):
-            stack: list[str] = []
+            stack: list[BoxId] = []
             for ch in tower:
                 if not pool[ch]:
                     raise ValueError(f"board {board!r} needs more than 3 boxes of size {ch}")
@@ -118,8 +120,8 @@ class MockCv:
 
     def poll(self) -> list[CvMessage]:
         self._t_ms += 33  # 約30fps相当で時刻を進める
-        messages: list[CvMessage] = [self._frame()]
-        messages.extend(self._pending)
+        # 先に発生した確定盤面イベント → 最新フレーム の時系列順で返す
+        messages: list[CvMessage] = [*self._pending, self._frame()]
         self._pending.clear()
         return messages
 
@@ -149,7 +151,7 @@ class MockCv:
 
     def _observe(
         self,
-        box_id: str,
+        box_id: BoxId,
         area: Area | str | None,
         level: int | None,
         pos: tuple[float, float, float],
