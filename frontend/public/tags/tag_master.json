@@ -1,0 +1,631 @@
+{
+  "family": "tag36h11",
+  "faces_per_box": 6,
+  "id_rule": "id = box_index*6 + (face-1); box order: 大1..大3,中1..中3,小1..小3",
+  "second_corner_reserved_ids": [
+    54,
+    107
+  ],
+  "box_tags": [
+    {
+      "id": 0,
+      "box": "large-1",
+      "box_label": "大1",
+      "size": "large",
+      "box_mm": 75,
+      "face": 1,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 1,
+      "box": "large-1",
+      "box_label": "大1",
+      "size": "large",
+      "box_mm": 75,
+      "face": 2,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 2,
+      "box": "large-1",
+      "box_label": "大1",
+      "size": "large",
+      "box_mm": 75,
+      "face": 3,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 3,
+      "box": "large-1",
+      "box_label": "大1",
+      "size": "large",
+      "box_mm": 75,
+      "face": 4,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 4,
+      "box": "large-1",
+      "box_label": "大1",
+      "size": "large",
+      "box_mm": 75,
+      "face": 5,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 5,
+      "box": "large-1",
+      "box_label": "大1",
+      "size": "large",
+      "box_mm": 75,
+      "face": 6,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 6,
+      "box": "large-2",
+      "box_label": "大2",
+      "size": "large",
+      "box_mm": 75,
+      "face": 1,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 7,
+      "box": "large-2",
+      "box_label": "大2",
+      "size": "large",
+      "box_mm": 75,
+      "face": 2,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 8,
+      "box": "large-2",
+      "box_label": "大2",
+      "size": "large",
+      "box_mm": 75,
+      "face": 3,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 9,
+      "box": "large-2",
+      "box_label": "大2",
+      "size": "large",
+      "box_mm": 75,
+      "face": 4,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 10,
+      "box": "large-2",
+      "box_label": "大2",
+      "size": "large",
+      "box_mm": 75,
+      "face": 5,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 11,
+      "box": "large-2",
+      "box_label": "大2",
+      "size": "large",
+      "box_mm": 75,
+      "face": 6,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 12,
+      "box": "large-3",
+      "box_label": "大3",
+      "size": "large",
+      "box_mm": 75,
+      "face": 1,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 13,
+      "box": "large-3",
+      "box_label": "大3",
+      "size": "large",
+      "box_mm": 75,
+      "face": 2,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 14,
+      "box": "large-3",
+      "box_label": "大3",
+      "size": "large",
+      "box_mm": 75,
+      "face": 3,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 15,
+      "box": "large-3",
+      "box_label": "大3",
+      "size": "large",
+      "box_mm": 75,
+      "face": 4,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 16,
+      "box": "large-3",
+      "box_label": "大3",
+      "size": "large",
+      "box_mm": 75,
+      "face": 5,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 17,
+      "box": "large-3",
+      "box_label": "大3",
+      "size": "large",
+      "box_mm": 75,
+      "face": 6,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 18,
+      "box": "medium-1",
+      "box_label": "中1",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 1,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 19,
+      "box": "medium-1",
+      "box_label": "中1",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 2,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 20,
+      "box": "medium-1",
+      "box_label": "中1",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 3,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 21,
+      "box": "medium-1",
+      "box_label": "中1",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 4,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 22,
+      "box": "medium-1",
+      "box_label": "中1",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 5,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 23,
+      "box": "medium-1",
+      "box_label": "中1",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 6,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 24,
+      "box": "medium-2",
+      "box_label": "中2",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 1,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 25,
+      "box": "medium-2",
+      "box_label": "中2",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 2,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 26,
+      "box": "medium-2",
+      "box_label": "中2",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 3,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 27,
+      "box": "medium-2",
+      "box_label": "中2",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 4,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 28,
+      "box": "medium-2",
+      "box_label": "中2",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 5,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 29,
+      "box": "medium-2",
+      "box_label": "中2",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 6,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 30,
+      "box": "medium-3",
+      "box_label": "中3",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 1,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 31,
+      "box": "medium-3",
+      "box_label": "中3",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 2,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 32,
+      "box": "medium-3",
+      "box_label": "中3",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 3,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 33,
+      "box": "medium-3",
+      "box_label": "中3",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 4,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 34,
+      "box": "medium-3",
+      "box_label": "中3",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 5,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 35,
+      "box": "medium-3",
+      "box_label": "中3",
+      "size": "medium",
+      "box_mm": 50,
+      "face": 6,
+      "tag_mm": 20.0,
+      "black_mm": 16.0,
+      "placement": "top_right"
+    },
+    {
+      "id": 36,
+      "box": "small-1",
+      "box_label": "小1",
+      "size": "small",
+      "box_mm": 30,
+      "face": 1,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 37,
+      "box": "small-1",
+      "box_label": "小1",
+      "size": "small",
+      "box_mm": 30,
+      "face": 2,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 38,
+      "box": "small-1",
+      "box_label": "小1",
+      "size": "small",
+      "box_mm": 30,
+      "face": 3,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 39,
+      "box": "small-1",
+      "box_label": "小1",
+      "size": "small",
+      "box_mm": 30,
+      "face": 4,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 40,
+      "box": "small-1",
+      "box_label": "小1",
+      "size": "small",
+      "box_mm": 30,
+      "face": 5,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 41,
+      "box": "small-1",
+      "box_label": "小1",
+      "size": "small",
+      "box_mm": 30,
+      "face": 6,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 42,
+      "box": "small-2",
+      "box_label": "小2",
+      "size": "small",
+      "box_mm": 30,
+      "face": 1,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 43,
+      "box": "small-2",
+      "box_label": "小2",
+      "size": "small",
+      "box_mm": 30,
+      "face": 2,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 44,
+      "box": "small-2",
+      "box_label": "小2",
+      "size": "small",
+      "box_mm": 30,
+      "face": 3,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 45,
+      "box": "small-2",
+      "box_label": "小2",
+      "size": "small",
+      "box_mm": 30,
+      "face": 4,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 46,
+      "box": "small-2",
+      "box_label": "小2",
+      "size": "small",
+      "box_mm": 30,
+      "face": 5,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 47,
+      "box": "small-2",
+      "box_label": "小2",
+      "size": "small",
+      "box_mm": 30,
+      "face": 6,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 48,
+      "box": "small-3",
+      "box_label": "小3",
+      "size": "small",
+      "box_mm": 30,
+      "face": 1,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 49,
+      "box": "small-3",
+      "box_label": "小3",
+      "size": "small",
+      "box_mm": 30,
+      "face": 2,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 50,
+      "box": "small-3",
+      "box_label": "小3",
+      "size": "small",
+      "box_mm": 30,
+      "face": 3,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 51,
+      "box": "small-3",
+      "box_label": "小3",
+      "size": "small",
+      "box_mm": 30,
+      "face": 4,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 52,
+      "box": "small-3",
+      "box_label": "小3",
+      "size": "small",
+      "box_mm": 30,
+      "face": 5,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    },
+    {
+      "id": 53,
+      "box": "small-3",
+      "box_label": "小3",
+      "size": "small",
+      "box_mm": 30,
+      "face": 6,
+      "tag_mm": 26.0,
+      "black_mm": 20.8,
+      "placement": "center"
+    }
+  ],
+  "mat_tags": [
+    {
+      "id": 200,
+      "corner": "左上",
+      "tag_mm": 46.0,
+      "black_mm": 36.8
+    },
+    {
+      "id": 201,
+      "corner": "右上",
+      "tag_mm": 46.0,
+      "black_mm": 36.8
+    },
+    {
+      "id": 202,
+      "corner": "右下",
+      "tag_mm": 46.0,
+      "black_mm": 36.8
+    },
+    {
+      "id": 203,
+      "corner": "左下",
+      "tag_mm": 46.0,
+      "black_mm": 36.8
+    }
+  ]
+}
