@@ -31,13 +31,20 @@ class Judgement(BaseModel):
     min_moves: int | None       # クリア可能時の最短手数(unclearable は None)
     canonical_key: str          # 重複照合に使った正準キー
 
-def judge(board: str, judged_keys: AbstractSet[str], table: PrecomputeTable) -> Judgement
+def judge(
+    board: str,
+    judged_keys: AbstractSet[str],
+    judged_boards: AbstractSet[str],
+    table: PrecomputeTable,
+) -> Judgement
     # board: 合法盤面文字列(呼び出し側が legal を保証する)
-    # judged_keys: このプレイで既に判定済みの canonical_key の集合(scored/duplicate は呼び出し側が追加)
+    # judged_keys: このプレイで既に判定済みの canonical_key の集合
+    # judged_boards: このプレイで既に判定済みの生盤面文字列の集合
+    #   (scored/duplicate の盤面は呼び出し側が両集合に追加する)
     # 規則(ルールブック§6):
     #   - クリア不可 -> unclearable(失敗カウント+1は呼び出し側)
-    #   - canonical_key が judged_keys にあり、盤面文字列も完全一致で判定済み -> duplicate_same
-    #     鏡像のみ一致 -> duplicate_mirror(いずれも0点)
+    #   - canonical_key が judged_keys にあり、board が judged_boards にもある -> duplicate_same
+    #     鏡像のみ一致(board が judged_boards に無い)-> duplicate_mirror(いずれも0点)
     #   - それ以外でクリア可能 -> scored, points = box_count(board) * min_moves
 
 def score(board: str, table: PrecomputeTable) -> int   # box_count * min_moves。クリア不可は 0
@@ -45,7 +52,8 @@ def min_path(board: str, table: PrecomputeTable) -> list[Move] | None
 ```
 
 `duplicate_same` / `duplicate_mirror` の区別のため、呼び出し側(状態機械)は判定済み盤面の
-**生の盤面文字列の集合**も保持する(canonical_key 集合と併用)。
+**canonical_key 集合と生の盤面文字列集合の両方**を保持し、judge に両方渡す
+(canonical_key 集合だけでは same / mirror を区別できないため。handoff/S1.md 参照)。
 
 ## 3. 事前計算テーブル(S1で生成)
 
