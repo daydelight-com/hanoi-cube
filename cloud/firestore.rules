@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 契約: docs/contracts/firestore.md §3
+    // 読み取りは全員許可(記録画面・ランキング)。
+    // クライアント書き込みは全面禁止(書き込みはブースMacの Admin SDK のみ。ルールを経由しない)。
+    match /plays/{playId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
