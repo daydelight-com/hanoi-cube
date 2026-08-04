@@ -10,8 +10,11 @@ description: 現在の変更差分(未コミット+未プッシュ)に対する�
 
 ## 手順
 
-1. **範囲確定**: `git status` / `git diff`(未コミット)と `git log origin/main..HEAD --oneline` +
-   `git diff origin/main..HEAD`(未プッシュ)で対象差分を出す。
+1. **範囲確定**: 次のすべてを合わせて対象差分とする。`git status` に名前だけ出た変更を
+   内容未確認のまま残さない。
+   - `git diff`(未ステージ)と `git diff --cached`(ステージ済み)
+   - `git status --short` に出る未追跡ファイル(内容を Read で読む)
+   - `git log origin/main..HEAD --oneline` + `git diff origin/main..HEAD`(未プッシュのコミット)
 2. **影響範囲の調査(レビュー前に必ず実施)**
 
    > この手順を省略しない。変更ファイルだけを見てレビューを始めてはならない。
