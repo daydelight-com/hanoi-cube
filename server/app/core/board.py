@@ -15,7 +15,7 @@ TOWER_NAMES: tuple[Tower, Tower, Tower] = ("A", "B", "C")
 TOWER_STATES: tuple[str, ...] = ("", "S", "M", "L", "MS", "LS", "LM", "LMS")
 
 _TOWER_INDEX: dict[str, int] = {state: i for i, state in enumerate(TOWER_STATES)}
-_BOARD_RE = re.compile(r"^[LMS]*/[LMS]*/[LMS]*$")
+_BOARD_RE = re.compile(r"[LMS]*/[LMS]*/[LMS]*")
 
 
 def is_legal_tower(tower: str) -> bool:
@@ -25,7 +25,7 @@ def is_legal_tower(tower: str) -> bool:
 
 def parse_board(board: str) -> tuple[str, str, str]:
     """盤面文字列を (A, B, C) の塔文字列に分解する。形式不正は ValueError。"""
-    if not _BOARD_RE.match(board):
+    if not _BOARD_RE.fullmatch(board):
         raise ValueError(f"invalid board string: {board!r}")
     a, b, c = board.split("/")
     return a, b, c

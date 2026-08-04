@@ -30,7 +30,9 @@ def test_parse_and_format_roundtrip() -> None:
     assert parse_board("//") == ("", "", "")
 
 
-@pytest.mark.parametrize("bad", ["", "LMS/L", "LMS//L/", "lms//L", "LMS/-/L", "LMX//L"])
+@pytest.mark.parametrize(
+    "bad", ["", "LMS/L", "LMS//L/", "lms//L", "LMS/-/L", "LMX//L", "LMS//L\n", " LMS//L"]
+)
 def test_parse_rejects_invalid_format(bad: str) -> None:
     with pytest.raises(ValueError):
         parse_board(bad)
