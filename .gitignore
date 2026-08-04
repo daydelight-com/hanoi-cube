@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# 生成物(scripts/generate_tag_sheet.py で再生成可能)
+output/
