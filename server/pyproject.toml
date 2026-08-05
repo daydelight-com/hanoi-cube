@@ -8,6 +8,9 @@ dependencies = [
     "uvicorn>=0.30",
     "pydantic>=2.7",
     "websockets>=12",
+    "numpy>=2.5.1",
+    "opencv-python>=5.0.0.93",
+    "pupil-apriltags>=1.0.4.post11",
 ]
 
 [dependency-groups]
@@ -35,6 +38,11 @@ select = [
 [tool.mypy]
 strict = true
 files = ["app", "tests"]
+
+[[tool.mypy.overrides]]
+# 型スタブが提供されていない外部CVライブラリ
+module = ["pupil_apriltags.*", "cv2.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
