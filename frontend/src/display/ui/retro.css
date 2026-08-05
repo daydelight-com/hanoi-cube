@@ -1,0 +1,210 @@
+/* レトロアーケード風テーマ(仕様§5.1: #438532 基調のネオン/CRT調+スキャンライン)。
+   ピクセルフォントのアセットは未確定のため等幅フォールバック+字間・グローで
+   ドット感を出す(handoff 参照)。 */
+
+:root {
+  --crt-bg: #060d06;
+  --crt-dim: rgba(4, 10, 4, 0.82);
+  --neon: #7ee06a;
+  --neon-strong: #b9ff8e;
+  --neon-base: #438532;
+  --neon-dark: #1e4517;
+  --retro-font: 'DotGothic16', 'Hiragino Kaku Gothic StdN', 'Osaka-Mono', 'MS Gothic', monospace;
+}
+
+.retro-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  font-family: var(--retro-font);
+  color: var(--neon);
+  text-shadow: 0 0 6px rgba(126, 224, 106, 0.55);
+  letter-spacing: 0.12em;
+  user-select: none;
+}
+
+/* CRTスキャンライン+周辺減光。全画面共通の最前面オーバーレイ */
+.retro-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.22) 3px,
+      rgba(0, 0, 0, 0) 4px
+    ),
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.45) 100%);
+}
+
+/* 画面レイヤ(3D盤面キャンバスの上に重ねる) */
+.retro-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.2vh;
+  background: var(--crt-dim);
+}
+
+.retro-screen--clear {
+  background: transparent;
+}
+
+.retro-title {
+  font-size: 8vw;
+  font-weight: bold;
+  color: var(--neon-strong);
+  text-shadow:
+    0 0 12px rgba(185, 255, 142, 0.9),
+    0 0 40px rgba(67, 133, 50, 0.8),
+    4px 4px 0 var(--neon-dark);
+  letter-spacing: 0.18em;
+  margin: 0;
+}
+
+.retro-heading {
+  font-size: 3.4vw;
+  color: var(--neon-strong);
+  letter-spacing: 0.2em;
+  margin: 0;
+}
+
+.retro-text {
+  font-size: 1.7vw;
+  line-height: 1.9;
+}
+
+.retro-blink {
+  animation: retro-blink 1.1s steps(1) infinite;
+}
+
+@keyframes retro-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* 枠(ダイアログ・パネル) */
+.retro-frame {
+  border: 4px solid var(--neon-base);
+  outline: 2px solid var(--neon-dark);
+  outline-offset: 4px;
+  box-shadow:
+    0 0 18px rgba(67, 133, 50, 0.55),
+    inset 0 0 24px rgba(67, 133, 50, 0.2);
+  background: rgba(5, 14, 5, 0.92);
+  padding: 3vh 3vw;
+}
+
+/* メニュー項目(フォーカスはサーバー状態 ctx.focus に追従) */
+.retro-menu-item {
+  font-size: 2.4vw;
+  padding: 2vh 2.4vw;
+  border: 3px solid var(--neon-dark);
+  color: var(--neon);
+  background: rgba(5, 14, 5, 0.85);
+  white-space: nowrap;
+}
+
+.retro-menu-item--focused {
+  border-color: var(--neon-strong);
+  color: var(--neon-strong);
+  background: rgba(30, 69, 23, 0.9);
+  box-shadow: 0 0 20px rgba(126, 224, 106, 0.8);
+  animation: retro-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes retro-pulse {
+  50% {
+    box-shadow: 0 0 34px rgba(185, 255, 142, 0.95);
+  }
+}
+
+/* フォーカスカーソル(▶)。非フォーカス時も幅を確保してガタつきを防ぐ */
+.retro-menu-item::before {
+  content: '▶ ';
+  visibility: hidden;
+}
+
+.retro-menu-item--focused::before {
+  visibility: visible;
+}
+
+/* ページインジケーター(●○○) */
+.retro-page-dots {
+  font-size: 1.6vw;
+  letter-spacing: 0.5em;
+  color: var(--neon-base);
+}
+
+.retro-page-dots .current {
+  color: var(--neon-strong);
+  text-shadow: 0 0 10px rgba(185, 255, 142, 0.9);
+}
+
+/* ランキング表 */
+.retro-ranking-table {
+  border-collapse: collapse;
+  font-size: 1.9vw;
+  min-width: 46vw;
+}
+
+.retro-ranking-table th,
+.retro-ranking-table td {
+  padding: 0.7vh 1.6vw;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.retro-ranking-table th {
+  color: var(--neon-base);
+  border-bottom: 3px solid var(--neon-dark);
+  font-weight: normal;
+}
+
+.retro-ranking-table td.name {
+  text-align: left;
+  min-width: 14vw;
+}
+
+.retro-ranking-table tr.top1 td {
+  color: var(--neon-strong);
+  text-shadow: 0 0 12px rgba(185, 255, 142, 0.9);
+}
+
+/* 待機ランキングのせり上がり(下位から1位へ。時間は行数に応じて JS 側で指定) */
+.retro-ranking-rise {
+  animation-name: retro-rise;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes retro-rise {
+  from {
+    transform: translateY(100vh);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* 接続断バナー */
+.retro-disconnected {
+  position: absolute;
+  top: 2vh;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  font-size: 1.4vw;
+  color: #ffb2b2;
+  text-shadow: 0 0 8px rgba(255, 120, 120, 0.8);
+  border: 2px solid #7a2626;
+  background: rgba(20, 4, 4, 0.85);
+  padding: 0.8vh 1.6vw;
+}
