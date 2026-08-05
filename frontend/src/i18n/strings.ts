@@ -24,11 +24,37 @@ export interface Messages {
   // ルールダイアログ
   ruleClose: string
   rulePageNav: string
+  // 練習
+  practiceHeading: string
+  practiceBack: string
+  practiceHint: string
+  // ゲーム(本番)共通ラベル
+  scoreLabel: string
+  timeLabel: string
+  failLabel: string
+  // 判定演出(scored は +N 表示のため言語非依存)
+  judgeFail: string
+  judgeDup: string
+  // リザルト
+  resultHeading: string
+  resultRank: string
+  resultNameLabel: string
+  resultInputButton: string
+  resultDecideButton: string
+  resultTyping: string
+  resultHint: string
+  // ランキング
+  rankingNext: string
+  // QR
+  qrHeading: string
+  qrCaption: string
+  qrNext: string
+  // iPadコントローラ
+  padNamePlaceholder: string
+  padNameDone: string
   // 共通
   connecting: string
   disconnected: string
-  // 未実装画面のプレースホルダ(S5で本実装)
-  placeholderNote: string
 }
 
 export const MESSAGES: Record<Lang, Messages> = {
@@ -48,9 +74,29 @@ export const MESSAGES: Record<Lang, Messages> = {
     modeHint: '←→ でえらんで けっていボタン',
     ruleClose: 'けっていボタンで とじる',
     rulePageNav: '←→ でページきりかえ',
+    practiceHeading: 'れんしゅう',
+    practiceBack: 'もどる',
+    practiceHint: 'はこを ならべて けっていで はんてい',
+    scoreLabel: 'スコア',
+    timeLabel: 'のこり',
+    failLabel: 'しっぱい',
+    judgeFail: 'しっぱい...',
+    judgeDup: 'はんていずみ',
+    resultHeading: 'けっか はっぴょう',
+    resultRank: 'じゅんい',
+    resultNameLabel: 'なまえ',
+    resultInputButton: 'にゅうりょく',
+    resultDecideButton: 'けってい',
+    resultTyping: 'iPadで なまえを いれてね',
+    resultHint: '←→ でえらんで けっていボタン',
+    rankingNext: 'けっていボタンで つぎへ',
+    qrHeading: 'きょうの きろく',
+    qrCaption: 'スマホで よみとると きょうの プレイきろくが みられるよ',
+    qrNext: 'けっていボタンで タイトルへ',
+    padNamePlaceholder: 'なまえ(10もじまで)',
+    padNameDone: 'かんりょう',
     connecting: 'サーバーに せつぞくちゅう...',
     disconnected: 'せつぞくが きれました さいせつぞくちゅう...',
-    placeholderNote: 'この画面は次のセッションで実装されます',
   },
   en: {
     titleSubtitle: 'STACK THE BOXES, BEAT THE SCORE!',
@@ -68,9 +114,29 @@ export const MESSAGES: Record<Lang, Messages> = {
     modeHint: 'MOVE WITH ARROWS, PRESS ENTER',
     ruleClose: 'PRESS ENTER TO CLOSE',
     rulePageNav: 'TURN PAGES WITH ARROWS',
+    practiceHeading: 'PRACTICE',
+    practiceBack: 'BACK',
+    practiceHint: 'ARRANGE BOXES AND PRESS ENTER TO JUDGE',
+    scoreLabel: 'SCORE',
+    timeLabel: 'TIME',
+    failLabel: 'FAILS',
+    judgeFail: 'FAILED...',
+    judgeDup: 'ALREADY JUDGED',
+    resultHeading: 'RESULT',
+    resultRank: 'RANK',
+    resultNameLabel: 'NAME',
+    resultInputButton: 'INPUT',
+    resultDecideButton: 'OK',
+    resultTyping: 'TYPE YOUR NAME ON THE IPAD',
+    resultHint: 'MOVE WITH ARROWS, PRESS ENTER',
+    rankingNext: 'PRESS ENTER TO CONTINUE',
+    qrHeading: "TODAY'S RECORD",
+    qrCaption: 'SCAN WITH YOUR PHONE TO SEE YOUR PLAY RECORD',
+    qrNext: 'PRESS ENTER FOR TITLE',
+    padNamePlaceholder: 'NAME (MAX 10)',
+    padNameDone: 'DONE',
     connecting: 'CONNECTING TO SERVER...',
     disconnected: 'CONNECTION LOST - RECONNECTING...',
-    placeholderNote: 'This screen will be implemented in a later session',
   },
 }
 

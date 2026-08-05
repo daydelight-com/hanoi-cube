@@ -36,7 +36,13 @@ export function reduceDisplay(state: DisplayState, msg: DisplayMessage): Display
       return { screen: rest as ScreenState, lang, board, lastJudge: null }
     }
     case 'screen':
-      return { ...state, screen: msg.payload }
+      // 画面が変わったら判定演出を捨てる(練習の判定が本番入場時に再表示される等の
+      // 持ち越し防止。判定と同時に届く screen は同一画面IDなので保持される)
+      return {
+        ...state,
+        screen: msg.payload,
+        lastJudge: msg.payload.screen === screen?.screen ? state.lastJudge : null,
+      }
     case 'lang':
       return { ...state, lang: msg.payload.lang }
     case 'board':

@@ -108,6 +108,33 @@ describe('reduceDisplay', () => {
     expect(s.lastJudge?.seq).toBe(2)
   })
 
+  it('screen で画面が変わると lastJudge を捨てる(演出の持ち越し防止)', () => {
+    const base = reduceDisplay(reduceDisplay(initialDisplayState, snapshot), judgeMsg)
+    expect(base.lastJudge).not.toBeNull()
+    // 同一画面の screen(判定と同時に届く)では保持する
+    const same = reduceDisplay(base, {
+      type: 'screen',
+      payload: { screen: 'game_play', ctx: { score: 21, fail_count: 1, remaining_ms: 43000 } },
+    })
+    expect(same.lastJudge?.seq).toBe(2)
+    // 別画面への遷移で捨てる
+    const moved = reduceDisplay(same, {
+      type: 'screen',
+      payload: {
+        screen: 'result',
+        ctx: {
+          score: 21,
+          fail_count: 1,
+          rank: 1,
+          name_text: '',
+          focus: 'decide',
+          input_mode: 'name',
+        },
+      },
+    })
+    expect(moved.lastJudge).toBeNull()
+  })
+
   it('judge は practice ではスコアのみ ctx に反映する', () => {
     const base = at({ screen: 'practice', ctx: { score: 12, selection: null } })
     const s = reduceDisplay(base, judgeMsg)

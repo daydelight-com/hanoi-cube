@@ -194,6 +194,217 @@
   }
 }
 
+/* HUD(practice / game_play の上部表示。背景透過で3D盤面を隠さない) */
+.retro-hud {
+  position: absolute;
+  top: 3vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6vh;
+}
+
+.retro-hud--left {
+  left: 3vw;
+}
+
+.retro-hud--right {
+  right: 3vw;
+}
+
+.retro-hud--center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.retro-hud-label {
+  font-size: 1.4vw;
+  color: var(--neon-base);
+  letter-spacing: 0.24em;
+}
+
+.retro-hud-value {
+  font-size: 3vw;
+  color: var(--neon-strong);
+  text-shadow: 0 0 12px rgba(185, 255, 142, 0.8);
+}
+
+.retro-hud-timer {
+  font-size: 4vw;
+  color: var(--neon-strong);
+  text-shadow: 0 0 14px rgba(185, 255, 142, 0.85);
+  font-variant-numeric: tabular-nums;
+}
+
+.retro-hud-timer.critical {
+  color: #ff8f6a;
+  text-shadow: 0 0 16px rgba(255, 143, 106, 0.9);
+  animation: retro-blink 0.5s steps(1) infinite;
+}
+
+.retro-bottom-hint {
+  position: absolute;
+  bottom: 4vh;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/* カウントダウン(3,2,1,GO!)。key の差し替えで毎回再生する */
+.retro-countdown {
+  font-size: 18vw;
+  font-weight: bold;
+  color: var(--neon-strong);
+  text-shadow:
+    0 0 24px rgba(185, 255, 142, 0.95),
+    0 0 80px rgba(67, 133, 50, 0.8);
+  animation: retro-count-zoom 0.9s ease-out;
+}
+
+.retro-countdown.go {
+  color: #fff2a8;
+  text-shadow:
+    0 0 26px rgba(255, 242, 168, 0.95),
+    0 0 90px rgba(255, 200, 80, 0.8);
+}
+
+@keyframes retro-count-zoom {
+  from {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 判定演出(+N / 失敗 / 判定済み) */
+.retro-judge {
+  position: absolute;
+  top: 34vh;
+  left: 50%;
+  font-size: 7vw;
+  font-weight: bold;
+  white-space: nowrap;
+  animation: retro-judge-pop 1.6s ease-out forwards;
+}
+
+.retro-judge--scored {
+  color: #fff2a8;
+  text-shadow:
+    0 0 20px rgba(255, 242, 168, 0.95),
+    0 0 70px rgba(255, 200, 80, 0.75);
+}
+
+.retro-judge--failed {
+  color: #ff8f6a;
+  text-shadow: 0 0 20px rgba(255, 143, 106, 0.9);
+}
+
+.retro-judge--duplicate {
+  color: var(--neon);
+  text-shadow: 0 0 16px rgba(126, 224, 106, 0.8);
+}
+
+@keyframes retro-judge-pop {
+  from {
+    transform: translate(-50%, 2vh) scale(0.4);
+    opacity: 0;
+  }
+  20% {
+    transform: translate(-50%, 0) scale(1.15);
+    opacity: 1;
+  }
+  35% {
+    transform: translate(-50%, 0) scale(1);
+  }
+  80% {
+    transform: translate(-50%, -2vh) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, -5vh) scale(1);
+    opacity: 0;
+  }
+}
+
+/* リザルト */
+.retro-result-stats {
+  display: flex;
+  gap: 5vw;
+  align-items: flex-end;
+  justify-content: center;
+  text-align: center;
+}
+
+.retro-result-score {
+  font-size: 6vw;
+  color: #fff2a8;
+  text-shadow: 0 0 20px rgba(255, 242, 168, 0.9);
+}
+
+.retro-result-sub {
+  font-size: 3.6vw;
+  color: var(--neon-strong);
+}
+
+.retro-result-name {
+  margin-top: 3vh;
+  display: flex;
+  align-items: center;
+  gap: 2vw;
+  justify-content: center;
+}
+
+.retro-name-field {
+  min-width: 24vw;
+  min-height: 1.6em;
+  padding: 0.6vh 1.2vw;
+  font-size: 2.6vw;
+  border-bottom: 4px solid var(--neon-base);
+  color: var(--neon-strong);
+  text-align: center;
+}
+
+.retro-name-field.typing {
+  border-bottom-color: var(--neon-strong);
+}
+
+.retro-caret {
+  animation: retro-blink 0.8s steps(1) infinite;
+}
+
+.retro-disabled {
+  opacity: 0.35;
+}
+
+/* ランキング画面のスクロール領域(全件表示。§5.8) */
+.retro-ranking-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+/* QR画面 */
+.retro-qr {
+  display: block;
+  width: min(34vh, 30vw);
+  height: min(34vh, 30vw);
+  image-rendering: pixelated;
+}
+
+.retro-qr--placeholder {
+  background: #e8ffe0;
+}
+
+.retro-qr-url {
+  font-size: 1.3vw;
+  color: var(--neon-base);
+  letter-spacing: 0.06em;
+}
+
 /* 接続断バナー */
 .retro-disconnected {
   position: absolute;

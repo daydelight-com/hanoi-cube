@@ -1,27 +1,29 @@
 // 画面ルーター: サーバー配信の screen(screens.md の画面ID)に応じて描画する。
-// S4 実装対象: idle_title / idle_ranking / mode_select / rule_dialog。
-// practice / game_* / result / ranking / qr は S5 で本実装(暫定プレースホルダ)。
+// S4: idle_title / idle_ranking / mode_select / rule_dialog、
+// S5: practice / game_countdown / game_play / result / ranking / qr(全10画面)。
 
-import type { Lang, ScreenState } from '../../contracts/ws'
+import type { Judge, Lang, ScreenState } from '../../contracts/ws'
 import { t } from '../../i18n/strings'
 import { Blink } from '../ui/Retro'
+import { GameCountdownScreen, GamePlayScreen } from './GameScreens'
 import { IdleRankingScreen } from './IdleRankingScreen'
 import { IdleTitleScreen } from './IdleTitleScreen'
 import { ModeSelectScreen } from './ModeSelectScreen'
+import { PracticeScreen } from './PracticeScreen'
+import { QrScreen } from './QrScreen'
+import { RankingScreen } from './RankingScreen'
+import { ResultScreen } from './ResultScreen'
 import { RuleDialogScreen } from './RuleDialogScreen'
 
-function ScreenPlaceholder({ lang, screenId }: { lang: Lang; screenId: string }) {
-  // 3D盤面が見えるよう背景は暗くしない(practice/game 系はS5で本実装)
-  return (
-    <div className="retro-screen retro-screen--clear" style={{ justifyContent: 'flex-start' }}>
-      <div className="retro-text" style={{ marginTop: '4vh' }}>
-        [{screenId}] {t(lang, 'placeholderNote')}
-      </div>
-    </div>
-  )
-}
-
-export function ScreenView({ lang, screen }: { lang: Lang; screen: ScreenState | null }) {
+export function ScreenView({
+  lang,
+  screen,
+  lastJudge,
+}: {
+  lang: Lang
+  screen: ScreenState | null
+  lastJudge: Judge | null
+}) {
   if (screen === null) {
     return (
       <div className="retro-screen">
@@ -40,7 +42,17 @@ export function ScreenView({ lang, screen }: { lang: Lang; screen: ScreenState |
       return <ModeSelectScreen lang={lang} ctx={screen.ctx} />
     case 'rule_dialog':
       return <RuleDialogScreen lang={lang} ctx={screen.ctx} />
-    default:
-      return <ScreenPlaceholder lang={lang} screenId={screen.screen} />
+    case 'practice':
+      return <PracticeScreen lang={lang} ctx={screen.ctx} lastJudge={lastJudge} />
+    case 'game_countdown':
+      return <GameCountdownScreen ctx={screen.ctx} />
+    case 'game_play':
+      return <GamePlayScreen lang={lang} ctx={screen.ctx} lastJudge={lastJudge} />
+    case 'result':
+      return <ResultScreen lang={lang} ctx={screen.ctx} />
+    case 'ranking':
+      return <RankingScreen lang={lang} ctx={screen.ctx} />
+    case 'qr':
+      return <QrScreen lang={lang} ctx={screen.ctx} />
   }
 }

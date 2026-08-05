@@ -38,7 +38,7 @@ export function DisplayApp() {
   return (
     <div className="retro-root" style={{ background: 'var(--crt-bg)' }}>
       <BoardCanvas onScene={(scene) => (sceneRef.current = scene)} onFps={setFps} />
-      <ScreenView lang={state.lang} screen={state.screen} />
+      <ScreenView lang={state.lang} screen={state.screen} lastJudge={state.lastJudge} />
       {!connected && state.screen !== null && (
         <div className="retro-disconnected">{t(state.lang, 'disconnected')}</div>
       )}

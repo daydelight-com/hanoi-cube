@@ -32,6 +32,7 @@ export function RankingTable({
           <tr
             key={e.play_id}
             className={e.rank === 1 ? 'top1' : undefined}
+            data-highlight={e.play_id === highlightPlayId ? 'true' : undefined}
             style={
               e.play_id === highlightPlayId ? { background: 'rgba(30, 69, 23, 0.9)' } : undefined
             }
