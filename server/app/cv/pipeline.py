@@ -25,7 +25,7 @@ import numpy.typing as npt
 from app.cv.detector import TagDetection
 from app.cv.geometry import CameraModel, box_estimate, calibrate
 from app.cv.interface import BOX_EDGE_MM, CvMessage
-from app.cv.layout import MAT_SIZE_MM, MAT_TAG_CENTERS_MM, MAT_TAG_IDS
+from app.cv.layout import MAT_SIZE_MM, MAT_TAG_BLACK_MM, MAT_TAG_CENTERS_MM, MAT_TAG_IDS
 from app.cv.tag_master import TagMaster
 from app.cv.tracker import BoardTracker, BoxSighting
 
@@ -36,8 +36,10 @@ logger = logging.getLogger(__name__)
 CALIBRATION_REFRESH_MS = 1000
 # 蓄積したコーナー観測の有効期限(ms)。再投影誤差が悪いときはこれより古い観測を捨てる
 CALIBRATION_STALE_MS = 5000
-# 採用条件: 検出コーナーの再投影誤差(px)。合成実測は1px未満、実機の目安として3px
-CALIBRATION_MAX_REPROJ_PX = 3.0
+# 採用条件: 検出コーナーの再投影誤差の実寸換算(mm)。タグ貼付の数mmの誤差は許容し、
+# カメラのズレや配置の取り違え(数十mm以上)は棄却する。px固定にしないのは
+# カメラ距離(px/mm)に依存させないため
+CALIBRATION_MAX_REPROJ_MM = 5.0
 
 
 @dataclass(frozen=True)
@@ -152,14 +154,17 @@ class FramePipeline:
             self._log_reject(t_ms, f"推定失敗: {exc}")
             return
         error_px = self._reprojection_error(camera, corners)
-        if error_px > CALIBRATION_MAX_REPROJ_PX:
-            # 新旧観測の不整合(カメラ移動+遮蔽)とみなし、古い観測を捨てて
-            # 前回のキャリブレーションを維持する
+        px_per_mm = self._px_per_mm(corners)
+        error_mm = error_px / px_per_mm
+        if error_mm > CALIBRATION_MAX_REPROJ_MM:
+            # 新旧観測の不整合(カメラ移動+遮蔽)や配置の取り違えとみなし、
+            # 古い観測を捨てて前回のキャリブレーションを維持する
             self._log_reject(
                 t_ms,
-                f"再投影誤差 {error_px:.1f}px(閾値{CALIBRATION_MAX_REPROJ_PX}px)で棄却。"
-                "誤差が大きいままの場合、四隅タグの物理配置(位置・ID対応・寸法)が"
-                " layout.py の MAT_TAG_CENTERS_MM と一致しているか確認すること",
+                f"再投影誤差 {error_mm:.1f}mm相当({error_px:.1f}px, "
+                f"閾値{CALIBRATION_MAX_REPROJ_MM}mm)で棄却。誤差が大きいままの場合、"
+                "四隅タグの物理配置(位置・ID対応・寸法)が layout.py の"
+                " MAT_TAG_CENTERS_MM と一致しているか確認すること",
             )
             self._mat_corners = {
                 tag_id: obs
@@ -171,12 +176,14 @@ class FramePipeline:
         # 初回のみINFO(1秒ごとの定期更新でログを埋めない)
         logger.log(
             logging.INFO if self._camera is None else logging.DEBUG,
-            "キャリブレーション更新: 焦点距離=%.0fpx カメラ位置=(%.0f, %.0f, %.0f)mm 誤差=%.1fpx",
+            "キャリブレーション更新: 焦点距離=%.0fpx カメラ位置=(%.0f, %.0f, %.0f)mm"
+            " 誤差=%.1fmm相当 スケール=%.2fpx/mm",
             camera.focal,
             cam_pos[0],
             cam_pos[1],
             cam_pos[2],
-            error_px,
+            error_mm,
+            px_per_mm,
         )
         self._camera = camera
         self._last_calibrated_ms = t_ms
@@ -189,6 +196,15 @@ class FramePipeline:
         ):
             self._last_reject_log_ms = t_ms
             logger.warning("キャリブレーション不成立: %s", reason)
+
+    @staticmethod
+    def _px_per_mm(corners: dict[int, npt.NDArray[np.float64]]) -> float:
+        """マット四隅タグの見かけ辺長から画像スケール(px/mm)を推定する。"""
+        scales = []
+        for c in corners.values():
+            side = sum(float(np.linalg.norm(c[i] - c[(i + 1) % 4])) for i in range(4)) / 4
+            scales.append(side / MAT_TAG_BLACK_MM)
+        return max(float(np.median(scales)), 1e-6)
 
     @staticmethod
     def _reprojection_error(

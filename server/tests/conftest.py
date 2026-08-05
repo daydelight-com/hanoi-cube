@@ -6,7 +6,13 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
+
+# app.cv.layout はモジュール読み込み時に HANOI_MAT_SIZE を評価するため、
+# テストモジュールの import より前(conftest 読み込み時)に外して既定レイアウトに固定する
+os.environ.pop("HANOI_MAT_SIZE", None)
 
 _ISOLATED_ENV_VARS = [
     "HANOI_CV",
@@ -16,6 +22,7 @@ _ISOLATED_ENV_VARS = [
     "HANOI_CV_HEIGHT",
     "HANOI_TAG_MASTER",
     "HANOI_MOCK_API",
+    "HANOI_MAT_SIZE",
 ]
 
 

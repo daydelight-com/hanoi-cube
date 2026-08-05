@@ -2,21 +2,42 @@
 
 マット左手前隅が原点、x=右、y=奥(塔)方向、z=上、単位mm。
 
-**会場のマット実寸に合わせるときは MAT_SIZE_MM だけを変える**(塔位置・待機帯・
-エリア判定・四隅タグ位置はすべてここから導出される)。変更したら:
+**会場のマット実寸は環境変数 HANOI_MAT_SIZE で指定する**(例: `HANOI_MAT_SIZE=450x300`。
+未指定は 600x400)。塔位置・待機帯・エリア判定・四隅タグ位置はすべて寸法から
+導出される。寸法を変えたら:
   - 四隅タグを実物の各隅から MAT_TAG_INSET_MM 内側(タグ中心)に貼り直す
   - フロント表示の写し frontend/src/three/layout.ts も同値に合わせる
 モックCV(mock.py)の合成レイアウトも本モジュールの値を使う。
+テストは既定レイアウト(600x400)で動く(tests/conftest.py が環境変数を隔離する)。
 
 既定値 600x400 のときの導出値は S8 以前の固定値と同一
 (塔x=150/300/450, 塔y=280, 待機y=80, 待機帯上限170, 塔バンド±70/±80)。
+
+寸法の目安: 塔間隔=幅/4 が大箱(75mm)より十分広く、待機帯(奥行きの約29%)に
+箱(最大75mm)が収まるよう、**幅450mm x 奥行き300mm 以上を推奨**。それ未満でも
+動作はするが、隣の塔と箱が物理的に干渉しやすくなる。
 """
 
 from __future__ import annotations
 
-# ============ 設営時に合わせる設定値(ここだけ変える) ============
-MAT_SIZE_MM: tuple[float, float] = (600.0, 400.0)
-# ================================================================
+import os
+
+_DEFAULT_MAT_SIZE_MM = (600.0, 400.0)
+
+
+def _mat_size_from_env() -> tuple[float, float]:
+    raw = os.environ.get("HANOI_MAT_SIZE")
+    if not raw:
+        return _DEFAULT_MAT_SIZE_MM
+    try:
+        # 全角の乗算記号も半角xとして許容する
+        w_str, h_str = raw.lower().replace("×", "x").split("x")  # noqa: RUF001
+        return (float(w_str), float(h_str))
+    except ValueError as exc:
+        raise ValueError(f"HANOI_MAT_SIZE の形式が不正: {raw!r}(例: 450x300)") from exc
+
+
+MAT_SIZE_MM: tuple[float, float] = _mat_size_from_env()
 
 _W, _H = MAT_SIZE_MM
 
