@@ -1,9 +1,10 @@
-// DisplaySocket の再接続ロジックのテスト(S3 申し送り: ブラウザ実測のみだった部分)。
+// DisplaySocket / ControllerSocket の再接続・送信ロジックのテスト
+// (S3 申し送り: ブラウザ実測のみだった部分)。
 // WebSocket をフェイクに差し替え、フェイクタイマーで再接続バックオフを検証する。
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DisplayMessage } from '../contracts/ws'
-import { DisplaySocket } from './socket'
+import { ControllerSocket, DisplaySocket } from './socket'
 
 class FakeWebSocket {
   static CONNECTING = 0
@@ -19,6 +20,7 @@ class FakeWebSocket {
   onclose: (() => void) | null = null
   onerror: (() => void) | null = null
   closeCalls = 0
+  sent: string[] = []
 
   constructor(url: string) {
     this.url = url
@@ -28,6 +30,10 @@ class FakeWebSocket {
   close(): void {
     this.closeCalls += 1
     this.readyState = FakeWebSocket.CLOSED
+  }
+
+  send(data: string): void {
+    this.sent.push(data)
   }
 
   // ---- テスト用シミュレーション ----
@@ -174,5 +180,41 @@ describe('DisplaySocket', () => {
     expect(statuses).toEqual([]) // onStatus は呼ばれない
     vi.advanceTimersByTime(60_000)
     expect(FakeWebSocket.instances).toHaveLength(1)
+  })
+})
+
+describe('ControllerSocket', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] })
+    FakeWebSocket.instances = []
+    vi.stubGlobal('WebSocket', FakeWebSocket)
+    vi.stubGlobal('location', { protocol: 'http:', host: 'test-host' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.useRealTimers()
+  })
+
+  it('既定で /ws/controller に接続する(ws-messages.md §5)', () => {
+    const socket = new ControllerSocket({ onMessage: () => {} })
+    expect(lastWs().url).toBe('ws://test-host/ws/controller')
+    socket.close()
+  })
+
+  it('OPEN 中の send はJSONで送信し、未接続中は破棄する', () => {
+    const socket = new ControllerSocket({ onMessage: () => {} }, 'ws://test/ws/controller')
+    const ws = lastWs()
+    socket.send({ type: 'button', payload: { button: 'enter' } }) // CONNECTING 中は破棄
+    expect(ws.sent).toEqual([])
+
+    ws.simulateOpen()
+    socket.send({ type: 'name_text', payload: { text: 'たろう' } })
+    expect(ws.sent).toEqual(['{"type":"name_text","payload":{"text":"たろう"}}'])
+
+    ws.simulateClose()
+    socket.send({ type: 'button', payload: { button: 'left' } }) // 切断後は破棄
+    expect(ws.sent).toHaveLength(1)
+    socket.close()
   })
 })
