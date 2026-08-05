@@ -139,6 +139,30 @@ try {
   await ok()
   await waitText(display, 'けっていボタンで スタート')
 
+  // 12. 効果音の発火検証(S6)。音声出力そのものは無人検証できないため、
+  //     エンジンの発火ログ(window.__sfxPlayed)で代替する。実機スピーカーでの
+  //     聞こえ方は要人間確認(handoff 参照)
+  const displaySfx = await display.evaluate(() => window.__sfxPlayed ?? [])
+  const padSfx = await pad.evaluate(() => window.__sfxPlayed ?? [])
+  const countOf = (log, id) => log.filter((x) => x === id).length
+  // 台本から一意に決まる回数は厳密に、操作タイミング依存のものは1回以上で検証
+  // judge_success は練習(+1)と本番(+1)の2回
+  const exactDisplay = { count: 3, go: 1, timeup: 1, tick10: 9, judge_success: 2, judge_dup: 1 }
+  const atLeastDisplay = ['decide', 'cursor', 'back', 'key_touch']
+  const problems = []
+  for (const [id, n] of Object.entries(exactDisplay)) {
+    if (countOf(displaySfx, id) !== n)
+      problems.push(`display ${id}=${countOf(displaySfx, id)} (期待${n})`)
+  }
+  for (const id of atLeastDisplay) {
+    if (countOf(displaySfx, id) < 1) problems.push(`display ${id} 未発火`)
+  }
+  for (const id of ['pad_button', 'pad_flash']) {
+    if (countOf(padSfx, id) < 1) problems.push(`pad ${id} 未発火`)
+  }
+  if (problems.length > 0) throw new Error(`効果音の発火検証に失敗: ${problems.join(', ')}`)
+  console.log(`sfx: display=${displaySfx.length}発火 pad=${padSfx.length}発火 (検証OK)`)
+
   console.log('E2E full play: PASS')
 } finally {
   await displayBrowser.close()
