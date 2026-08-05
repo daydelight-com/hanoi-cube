@@ -1,19 +1,25 @@
 // マット座標系(cv-interface.md §2)と three.js 座標系の対応。
-// マット寸法・塔/待機エリア位置は server/app/cv/layout.py(モックCV・実CV共通の正)と同値。
+// マット寸法・塔/待機エリア位置は server/app/cv/layout.py(モックCV・実CV共通の正)の
+// 既定値(A3 横置き 420x297)と同値になるよう、同じ式で寸法から導出する。
+// サーバー側を HANOI_MAT_SIZE で変えた場合はここの寸法も合わせること(表示専用の写し)。
 // 実CVではキャリブレーション結果に依らずマット座標系(mm)で届くため、この定数は表示専用。
 
 import * as THREE from 'three'
 
-export const MAT_SIZE_MM = { x: 600, y: 400 } as const
-export const TOWER_X_MM = { A: 150, B: 300, C: 450 } as const
-export const TOWER_Y_MM = 280
-export const STAGING_Y_MM = 80
-export const STAGING_X0_MM = 60
-export const STAGING_PITCH_MM = 60
+export const MAT_SIZE_MM = { x: 420, y: 297 } as const
+export const TOWER_X_MM = {
+  A: MAT_SIZE_MM.x / 4,
+  B: MAT_SIZE_MM.x / 2,
+  C: (MAT_SIZE_MM.x * 3) / 4,
+} as const
+export const TOWER_Y_MM = MAT_SIZE_MM.y * 0.7
+export const STAGING_Y_MM = MAT_SIZE_MM.y * 0.2
+export const STAGING_X0_MM = MAT_SIZE_MM.x * 0.1
+export const STAGING_PITCH_MM = MAT_SIZE_MM.x * 0.1
 
 // マット座標系: 左手前隅が原点、x=右、y=奥、z=上(mm)
 // three 座標系: マット中心が原点、x=右、y=上、z=手前(カメラ側)
-//   three.x = mat.x - 300 / three.y = mat.z / three.z = -(mat.y - 200)
+//   three.x = mat.x - W/2 / three.y = mat.z / three.z = -(mat.y - H/2)
 // これは x 軸まわり -90° の回転+平行移動に一致する。
 
 const MAT_CENTER = new THREE.Vector3(MAT_SIZE_MM.x / 2, MAT_SIZE_MM.y / 2, 0)

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
-import { MAT_TO_THREE_QUAT, matPosToThree, matQuatToThree } from './layout'
+import { MAT_TO_THREE_QUAT, TOWER_X_MM, TOWER_Y_MM, matPosToThree, matQuatToThree } from './layout'
 
 function toArray(v: THREE.Vector3): [number, number, number] {
   return [v.x, v.y, v.z]
@@ -9,24 +9,24 @@ function toArray(v: THREE.Vector3): [number, number, number] {
 describe('matPosToThree', () => {
   it('マット中心(床面)が three 原点になる', () => {
     const out = new THREE.Vector3()
-    matPosToThree([300, 200, 0], out)
+    matPosToThree([210, 148.5, 0], out)
     expect(toArray(out).map((n) => Math.round(n * 1e6) / 1e6)).toEqual([0, 0, 0])
   })
 
   it('マット原点(左手前)は左・手前・床になる', () => {
     const out = new THREE.Vector3()
     matPosToThree([0, 0, 0], out)
-    expect(out.x).toBeCloseTo(-300)
+    expect(out.x).toBeCloseTo(-210)
     expect(out.y).toBeCloseTo(0)
-    expect(out.z).toBeCloseTo(200) // 手前 = +z
+    expect(out.z).toBeCloseTo(148.5) // 手前 = +z
   })
 
-  it('塔C位置・高さ75mm(mat 450,280,75)', () => {
+  it('塔C位置・高さ75mm(mat 315,207.9,75)', () => {
     const out = new THREE.Vector3()
-    matPosToThree([450, 280, 75], out)
-    expect(out.x).toBeCloseTo(150)
+    matPosToThree([TOWER_X_MM.C, TOWER_Y_MM, 75], out)
+    expect(out.x).toBeCloseTo(105)
     expect(out.y).toBeCloseTo(75) // マットzの高さ → three y
-    expect(out.z).toBeCloseTo(-80) // 奥 = -z
+    expect(out.z).toBeCloseTo(-59.4) // 奥 = -z
   })
 })
 

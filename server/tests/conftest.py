@@ -10,9 +10,11 @@ import os
 
 import pytest
 
-# app.cv.layout はモジュール読み込み時に HANOI_MAT_SIZE を評価するため、
-# テストモジュールの import より前(conftest 読み込み時)に外して既定レイアウトに固定する
-os.environ.pop("HANOI_MAT_SIZE", None)
+# app.cv.layout はモジュール読み込み時に HANOI_MAT_SIZE を評価する。テストのレイアウト
+# 前提値(塔x=150/300/450 等)は 600x400 で書かれているため、テストモジュールの import より
+# 前(conftest 読み込み時)に 600x400 へ固定する(既定は A3=420x297)
+_TEST_MAT_SIZE = "600x400"
+os.environ["HANOI_MAT_SIZE"] = _TEST_MAT_SIZE
 
 _ISOLATED_ENV_VARS = [
     "HANOI_CV",
@@ -22,7 +24,6 @@ _ISOLATED_ENV_VARS = [
     "HANOI_CV_HEIGHT",
     "HANOI_TAG_MASTER",
     "HANOI_MOCK_API",
-    "HANOI_MAT_SIZE",
 ]
 
 
@@ -30,3 +31,6 @@ _ISOLATED_ENV_VARS = [
 def _isolate_hanoi_env(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in _ISOLATED_ENV_VARS:
         monkeypatch.delenv(name, raising=False)
+    # CVワーカー等の子プロセスは環境変数からレイアウトを再評価するため、
+    # 削除ではなくテスト用寸法を明示的に継承させる
+    monkeypatch.setenv("HANOI_MAT_SIZE", _TEST_MAT_SIZE)

@@ -52,8 +52,10 @@ export class BoardScene {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
     this.camera = new THREE.PerspectiveCamera(45, 1, 10, 5000)
-    this.camera.position.set(0, 520, 640)
-    this.camera.lookAt(0, 40, 0)
+    // カメラ距離は幅600mmマット時の値をマット幅に比例させ、寸法によらず同じ画角比で映す
+    const camScale = MAT_SIZE_MM.x / 600
+    this.camera.position.set(0, 520 * camScale, 640 * camScale)
+    this.camera.lookAt(0, 40 * camScale, 0)
 
     this.scene.background = new THREE.Color('#060d06')
     this.scene.add(new THREE.AmbientLight(0xffffff, 0.9))
