@@ -16,6 +16,7 @@ worker.py(別プロセス)がフレームごとに呼ぶ。カメラ・プロセ
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 
 import numpy as np
@@ -27,6 +28,8 @@ from app.cv.interface import BOX_EDGE_MM, CvMessage
 from app.cv.layout import MAT_TAG_CENTERS_MM, MAT_TAG_IDS
 from app.cv.tag_master import TagMaster
 from app.cv.tracker import BoardTracker, BoxSighting
+
+logger = logging.getLogger(__name__)
 
 # キャリブレーションの更新間隔(ms)。マット・カメラは固定だが、三脚の微動や
 # 起動直後の露出変化に追従するため定期的に再推定する
@@ -53,6 +56,7 @@ class FramePipeline:
         self._image_size: tuple[int, int] | None = None
         self._mat_corners: dict[int, _CornerObservation] = {}
         self._last_calibrated_ms: int | None = None
+        self._last_reject_log_ms: int | None = None
 
     @property
     def calibrated(self) -> bool:
@@ -101,20 +105,48 @@ class FramePipeline:
         corners = {tag_id: obs.corners_px for tag_id, obs in self._mat_corners.items()}
         try:
             camera = calibrate(corners, self._image_size)
-        except ValueError:
+        except ValueError as exc:
             # 退化配置(誤検出等)。次のフレームで再試行する
+            self._log_reject(t_ms, f"推定失敗: {exc}")
             return
-        if self._reprojection_error(camera, corners) > CALIBRATION_MAX_REPROJ_PX:
+        error_px = self._reprojection_error(camera, corners)
+        if error_px > CALIBRATION_MAX_REPROJ_PX:
             # 新旧観測の不整合(カメラ移動+遮蔽)とみなし、古い観測を捨てて
             # 前回のキャリブレーションを維持する
+            self._log_reject(
+                t_ms,
+                f"再投影誤差 {error_px:.1f}px(閾値{CALIBRATION_MAX_REPROJ_PX}px)で棄却。"
+                "誤差が大きいままの場合、四隅タグの物理配置(位置・ID対応・寸法)が"
+                " layout.py の MAT_TAG_CENTERS_MM と一致しているか確認すること",
+            )
             self._mat_corners = {
                 tag_id: obs
                 for tag_id, obs in self._mat_corners.items()
                 if t_ms - obs.t_ms <= CALIBRATION_STALE_MS
             }
             return
+        cam_pos = camera.cam_pos_mat
+        # 初回のみINFO(1秒ごとの定期更新でログを埋めない)
+        logger.log(
+            logging.INFO if self._camera is None else logging.DEBUG,
+            "キャリブレーション更新: 焦点距離=%.0fpx カメラ位置=(%.0f, %.0f, %.0f)mm 誤差=%.1fpx",
+            camera.focal,
+            cam_pos[0],
+            cam_pos[1],
+            cam_pos[2],
+            error_px,
+        )
         self._camera = camera
         self._last_calibrated_ms = t_ms
+
+    def _log_reject(self, t_ms: int, reason: str) -> None:
+        """棄却理由をログする(連続棄却で埋まらないよう更新間隔に合わせて間引く)。"""
+        if (
+            self._last_reject_log_ms is None
+            or t_ms - self._last_reject_log_ms >= CALIBRATION_REFRESH_MS
+        ):
+            self._last_reject_log_ms = t_ms
+            logger.warning("キャリブレーション不成立: %s", reason)
 
     @staticmethod
     def _reprojection_error(
