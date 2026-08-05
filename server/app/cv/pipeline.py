@@ -36,10 +36,14 @@ logger = logging.getLogger(__name__)
 CALIBRATION_REFRESH_MS = 1000
 # 蓄積したコーナー観測の有効期限(ms)。再投影誤差が悪いときはこれより古い観測を捨てる
 CALIBRATION_STALE_MS = 5000
-# 採用条件: 検出コーナーの再投影誤差の実寸換算(mm)。タグ貼付の数mmの誤差は許容し、
-# カメラのズレや配置の取り違え(数十mm以上)は棄却する。px固定にしないのは
-# カメラ距離(px/mm)に依存させないため
-CALIBRATION_MAX_REPROJ_MM = 5.0
+# 採用条件: 検出コーナーの再投影誤差の実寸換算(mm)。タグ貼付・印刷スケールの
+# 誤差は許容し、カメラのズレや配置の取り違え(数十mm以上)は棄却する。px固定に
+# しないのはカメラ距離(px/mm)に依存させないため。
+# 実測(A3印刷マット)では印刷歪み+貼付誤差で7mm台の残差が出るため、現物の
+# 工作精度を許容できる値にしている(超過時はタグ別の想定→実測がログに出る)。
+# 上限側の根拠: カメラ30mmずれ+コーナー1つ遮蔽の新旧混在で残差は約12mmになる
+# (test_calibration_rejects_mixed_stale_observations)ため、それ未満に保つこと
+CALIBRATION_MAX_REPROJ_MM = 9.0
 
 
 @dataclass(frozen=True)
@@ -164,7 +168,8 @@ class FramePipeline:
                 f"再投影誤差 {error_mm:.1f}mm相当({error_px:.1f}px, "
                 f"閾値{CALIBRATION_MAX_REPROJ_MM}mm)で棄却。誤差が大きいままの場合、"
                 "四隅タグの物理配置(位置・ID対応・寸法)が layout.py の"
-                " MAT_TAG_CENTERS_MM と一致しているか確認すること",
+                " MAT_TAG_CENTERS_MM と一致しているか確認すること。"
+                f" タグ別の想定→実測(mm): {self._describe_offsets(camera, corners)}",
             )
             self._mat_corners = {
                 tag_id: obs
@@ -205,6 +210,40 @@ class FramePipeline:
             side = sum(float(np.linalg.norm(c[i] - c[(i + 1) % 4])) for i in range(4)) / 4
             scales.append(side / MAT_TAG_BLACK_MM)
         return max(float(np.median(scales)), 1e-6)
+
+    @staticmethod
+    def measured_mat_centers(
+        camera: CameraModel, corners: dict[int, npt.NDArray[np.float64]]
+    ) -> dict[int, tuple[float, float]]:
+        """検出したタグ中心をマット平面(z=0)へ逆投影し、マット座標(mm)で返す。
+
+        棄却時の現場診断用: どのタグが想定からどちらへずれているかを示す。
+        推定カメラ自体が妥協解のため絶対値ではなく相対パターンを読むこと
+        (全タグが外向き=印刷が想定より大きい、1つだけ大=そのタグの貼付ずれ、等)。
+        """
+        k_inv = np.linalg.inv(camera.k)
+        origin = camera.cam_pos_mat
+        result: dict[int, tuple[float, float]] = {}
+        for tag_id, c in corners.items():
+            uv = c.mean(axis=0)
+            ray = camera.r_cam_from_mat.T @ (k_inv @ np.array([uv[0], uv[1], 1.0]))
+            if abs(ray[2]) < 1e-9:
+                continue
+            p = origin + (-origin[2] / ray[2]) * ray
+            result[tag_id] = (float(p[0]), float(p[1]))
+        return result
+
+    @classmethod
+    def _describe_offsets(
+        cls, camera: CameraModel, corners: dict[int, npt.NDArray[np.float64]]
+    ) -> str:
+        measured = cls.measured_mat_centers(camera, corners)
+        parts = []
+        for tag_id in sorted(measured):
+            ex, ey = MAT_TAG_CENTERS_MM[tag_id]
+            mx, my = measured[tag_id]
+            parts.append(f"{tag_id}: ({ex:.0f},{ey:.0f})→({mx:.0f},{my:.0f})")
+        return " / ".join(parts)
 
     @staticmethod
     def _reprojection_error(

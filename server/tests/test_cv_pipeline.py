@@ -13,6 +13,7 @@ import numpy as np
 import pytest
 from app.cv.detector import TagDetection, TagDetector
 from app.cv.interface import BOX_IDS, CvBoardUpdate, CvFrame, CvMessage
+from app.cv.layout import MAT_TAG_BLACK_MM, MAT_TAG_CENTERS_MM
 from app.cv.pipeline import CALIBRATION_REFRESH_MS, FramePipeline
 from app.cv.tracker import LOST_HOLD_MS, STABLE_MS
 
@@ -245,3 +246,86 @@ def test_calibration_refresh_interval(d: PipeDriver) -> None:
     assert d.pipeline._camera is first
     d.feed("empty", Scene(), repeat=CALIBRATION_REFRESH_MS // DT + 2)
     assert d.pipeline._camera is not first
+
+
+def test_measured_mat_centers_recovers_tag_positions(d: PipeDriver) -> None:
+    """棄却診断用の逆投影が、検出したタグ中心のマット座標を正しく復元する。"""
+    d.feed("empty", Scene(), repeat=2)
+    camera = d.pipeline._camera
+    assert camera is not None
+    # 既知のずれ(+8, -6)mm を与えたタグ中心を投影し、逆投影で復元できること
+    offset = np.array([8.0, -6.0])
+    corners_px: dict[int, np.ndarray] = {}
+    for tag_id, (cx, cy) in MAT_TAG_CENTERS_MM.items():
+        center = np.array([cx, cy]) + offset
+        half = MAT_TAG_BLACK_MM / 2.0
+        pts = np.array(
+            [
+                [center[0] - half, center[1] - half, 0.0],
+                [center[0] + half, center[1] - half, 0.0],
+                [center[0] + half, center[1] + half, 0.0],
+                [center[0] - half, center[1] + half, 0.0],
+            ]
+        )
+        corners_px[tag_id] = camera.project(pts)
+    measured = FramePipeline.measured_mat_centers(camera, corners_px)
+    for tag_id, (cx, cy) in MAT_TAG_CENTERS_MM.items():
+        mx, my = measured[tag_id]
+        assert abs(mx - (cx + offset[0])) < 0.5
+        assert abs(my - (cy + offset[1])) < 0.5
+
+
+def _synthetic_mat_detections(
+    camera: object, offsets: dict[int, tuple[float, float]]
+) -> list[TagDetection]:
+    """物理配置をずらした四隅タグのコーナー検出を、指定カメラの投影で合成する。"""
+    from app.cv.geometry import TAG_CORNER_LOCAL, CameraModel
+
+    assert isinstance(camera, CameraModel)
+    half = MAT_TAG_BLACK_MM / 2.0
+    dets = []
+    for tag_id, (cx, cy) in MAT_TAG_CENTERS_MM.items():
+        dx, dy = offsets.get(tag_id, (0.0, 0.0))
+        corners_mat = np.hstack(
+            [
+                TAG_CORNER_LOCAL * half + np.array([cx + dx, cy + dy]),
+                np.zeros((4, 1)),
+            ]
+        )
+        dets.append(
+            TagDetection(
+                tag_id=tag_id,
+                corners_px=camera.project(corners_mat),
+                decision_margin=100.0,
+            )
+        )
+    return dets
+
+
+def test_calibration_accepts_fabrication_error_within_9mm(d: PipeDriver) -> None:
+    """印刷歪み・貼付誤差相当(右側タグが約6mm外側)は許容して成立する(実測A3マット相当)。"""
+    d.feed("empty", Scene(), repeat=2)
+    camera = d.pipeline._camera
+    assert camera is not None
+    d2 = PipeDriver()
+    # 注: ずらす組合せによっては焦点距離の自己推定が崩れて残差が数十mmに跳ね、
+    # 自己検証で棄却される(例: 201を(6,-3)+202を(6,0))。ここでは推定が安定する
+    # 実測相当のパターン(残差約7.5mm)を使う
+    dets = _synthetic_mat_detections(camera, {201: (0.0, -3.0), 202: (6.0, 0.0)})
+    d2.pipeline.process(dets, 0, make_camera().image_size)
+    assert d2.pipeline.calibrated
+
+
+def test_calibration_rejects_large_offset_with_diagnostic_log(
+    d: PipeDriver, caplog: pytest.LogCaptureFixture
+) -> None:
+    """タグ1枚の大きな貼付ずれ(30mm)は棄却され、タグ別の想定→実測が診断ログに出る。"""
+    d.feed("empty", Scene(), repeat=2)
+    camera = d.pipeline._camera
+    assert camera is not None
+    d2 = PipeDriver()
+    dets = _synthetic_mat_detections(camera, {201: (30.0, -30.0)})
+    with caplog.at_level("WARNING", logger="app.cv.pipeline"):
+        d2.pipeline.process(dets, 0, make_camera().image_size)
+    assert not d2.pipeline.calibrated
+    assert any("タグ別の想定→実測" in rec.message for rec in caplog.records)
