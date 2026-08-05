@@ -95,6 +95,8 @@ export function reduceDisplay(state: DisplayState, msg: DisplayMessage): Display
       }
       return state
     default:
+      // sfx は状態を持たない(DisplayApp が deriveDisplaySfx で再生)。
+      // 未知の type は無視(契約)
       return state
   }
 }

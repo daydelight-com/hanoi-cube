@@ -69,7 +69,8 @@ export function reduceController(
     case 'type_name':
       return { ...state, nameText: clampName(action.text) }
     default:
-      // sfx(S6で対応)・未知の type は無視(契約)
+      // sfx は状態を持たない(ControllerApp が deriveControllerSfx で再生)。
+      // 未知の type は無視(契約)
       return state
   }
 }

@@ -7,6 +7,8 @@ import { useEffect, useReducer, useRef, useState } from 'react'
 import type { ButtonName, ControllerMessage } from '../contracts/ws'
 import { t } from '../i18n/strings'
 import { ControllerSocket } from '../display/socket'
+import { deriveControllerSfx } from '../sfx/controllerSfx'
+import { sfx } from '../sfx/engine'
 import { clampName, initialControllerState, nameToRestore, reduceController } from './store'
 import './controller.css'
 
@@ -17,9 +19,13 @@ export function ControllerApp() {
   // 切断中のローカル編集を再接続 snapshot 後に復元・再送するための最終入力値
   const lastTypedRef = useRef<string | null>(null)
 
+  // AudioContext の遅延アンロック(§5.12: セッション開始時の初回タッチ)
+  useEffect(() => sfx.install(), [])
+
   useEffect(() => {
     const socket = new ControllerSocket({
       onMessage: (msg: ControllerMessage) => {
+        for (const id of deriveControllerSfx(msg)) sfx.play(id)
         dispatch(msg)
         if (msg.type === 'input_mode') lastTypedRef.current = null
         const restore = nameToRestore(msg, lastTypedRef.current)
@@ -46,6 +52,8 @@ export function ControllerApp() {
   }, [])
 
   const sendButton = (button: ButtonName) => {
+    // pad_button は押下ローカル再生(ws-messages.md §4・§5 注記)
+    sfx.play('pad_button')
     socketRef.current?.send({ type: 'button', payload: { button } })
   }
 
@@ -87,7 +95,10 @@ export function ControllerApp() {
             dispatch({ type: 'type_name', text })
             socketRef.current?.send({ type: 'name_text', payload: { text: clampName(text) } })
           }}
-          onDone={() => socketRef.current?.send({ type: 'name_done', payload: {} })}
+          onDone={() => {
+            sfx.play('pad_button')
+            socketRef.current?.send({ type: 'name_done', payload: {} })
+          }}
         />
       ) : (
         <div className="pad-buttons">

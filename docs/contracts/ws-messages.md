@@ -64,9 +64,34 @@
 `cursor` `decide` `back` `count` `go` `judge_success` `judge_fail` `judge_dup` `tick10`
 `timeup` `rank_tick` `fanfare` `key_touch` `pad_button` `pad_flash`
 
-- 効果音はイベントに付随して確定的に決まるものが多い(判定結果・画面遷移)。クライアントは
-  `judge` / `screen` 等から自律的に鳴らしてよいが、サーバーが `sfx` を明示送信した場合はそれに従う。
-  どちらで鳴らすかの最終決定は S6(効果音セッション)で行い、本契約の表に追記する。
+- **発火方式(S6で確定)**: 全効果音を**クライアント自律発火**とする。判定・画面遷移・タイマーは
+  既存メッセージ(`judge` / `screen` / `countdown` / `timer` / `name` / `lang` / `flash`)から
+  確定的に導出できるため、サーバーは現状 `sfx` を送信しない。`sfx` メッセージは将来の
+  上書きチャネルとして契約に残し、クライアントは受信したら無条件に再生する。
+  ガードを満たさない操作はサーバーが何も送らないため、音も自然に出ない(screens.md §3 注記)。
+
+| SfxId | 再生側 | 発火トリガー(クライアント自律) |
+|---|---|---|
+| `cursor` | display | `screen` 受信で同一画面の focus / page / selection(非null)が変化。mode_select 中の `lang` 受信(言語トグル) |
+| `decide` | display | `screen` 受信での前進遷移(idle_title→mode_select、mode_select→rule_dialog/practice、practice→rule_dialog、result→ranking、ranking→qr、qr→idle_title)、result の input_mode 変化(入力⇄完了) |
+| `back` | display | `screen` 受信での後退遷移(rule_dialog→呼び出し元、practice→mode_select) |
+| `count` | display | `countdown` 受信(value 3/2/1) |
+| `go` | display | `countdown` 受信(value go。GO! のクライアント表示と同時) |
+| `judge_success` | display | `judge` 受信(result=scored。points に応じて豪華に) |
+| `judge_fail` | display | `judge` 受信(result=unclearable) |
+| `judge_dup` | display | `judge` 受信(result=duplicate_same / duplicate_mirror) |
+| `tick10` | display | `timer` 受信(0 < remaining_ms < 10000) |
+| `timeup` | display | `timer` 受信(remaining_ms ≦ 0) |
+| `rank_tick` | display | idle_ranking のせり上がり演出(クライアントタイマー。1行=1秒) |
+| `fanfare` | display | 同演出の1位到達時(クライアントタイマー) |
+| `key_touch` | display | `name` 受信で text が変化(ミラー表示と同時) |
+| `pad_button` | controller | ボタン押下のローカル再生(かんりょうボタン含む。§5 注記の通り) |
+| `pad_flash` | controller | `flash` 受信(フラッシュ演出と同時) |
+
+- mode_select→game_countdown の遷移は `decide` を鳴らさない(直後の `count`「3」が
+  フィードバックを兼ねる)。game_countdown→game_play は `go`、game_play→result は
+  `timeup` が代替するため遷移音なし。idle_title⇄idle_ranking はタイムアウト遷移と
+  区別できないため無音。
 
 ## 5. サーバー → iPad(/ws/controller)
 

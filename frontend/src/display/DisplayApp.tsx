@@ -7,6 +7,8 @@ import type { DisplayMessage } from '../contracts/ws'
 import type { BoardScene } from '../three/BoardScene'
 import { BoardCanvas } from '../three/BoardCanvas'
 import { t } from '../i18n/strings'
+import { deriveDisplaySfx } from '../sfx/displaySfx'
+import { sfx } from '../sfx/engine'
 import { ScreenView } from './screens/ScreenView'
 import { DisplaySocket } from './socket'
 import { initialDisplayState, reduceDisplay } from './store'
@@ -17,7 +19,13 @@ export function DisplayApp() {
   const [connected, setConnected] = useState(false)
   const [fps, setFps] = useState(0)
   const sceneRef = useRef<BoardScene | null>(null)
+  // 効果音導出用の直前状態。React の描画バッチに依存せずメッセージ単位で
+  // prev → next を追うため、リデューサをここでも畳み込む(純関数なので同値)
+  const sfxStateRef = useRef(initialDisplayState)
   const showHud = new URLSearchParams(location.search).has('hud')
+
+  // AudioContext の遅延アンロック(§5.12: Mac での初回クリック/キー操作)
+  useEffect(() => sfx.install(), [])
 
   useEffect(() => {
     const socket = new DisplaySocket({
@@ -27,6 +35,8 @@ export function DisplayApp() {
           sceneRef.current?.setBoxes(msg.payload.boxes)
           return
         }
+        for (const e of deriveDisplaySfx(sfxStateRef.current, msg)) sfx.play(e.id, e)
+        sfxStateRef.current = reduceDisplay(sfxStateRef.current, msg)
         dispatch(msg)
       },
       onStatus: setConnected,
