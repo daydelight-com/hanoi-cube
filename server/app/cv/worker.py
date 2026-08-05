@@ -12,6 +12,7 @@ CvBoardUpdate は確定盤面の変化イベントで喪失できないため、
 from __future__ import annotations
 
 import contextlib
+import json
 import logging
 import queue
 import time
@@ -39,6 +40,10 @@ class CvWorkerConfig:
     height: int = 1080
     video_fps: float = 30.0  # 動画入力の t_ms 換算(メタデータが無い場合の既定)
     tag_master_path: str | None = None  # None なら tag_master.tag_master_path()
+    # キャリブレーションの保存先。前回の推定を再起動時に読み込むため、
+    # 稼働中に四隅タグが箱で隠れ続けても(一度設営時に成立していれば)動ける。
+    # None で無効(テスト等)
+    calibration_path: str | None = None
 
 
 def worker_main(config: CvWorkerConfig, out: MpQueue[CvMessage]) -> None:
@@ -56,6 +61,14 @@ def worker_main(config: CvWorkerConfig, out: MpQueue[CvMessage]) -> None:
     master = load_tag_master(Path(config.tag_master_path) if config.tag_master_path else None)
     detector = TagDetector(master)
     pipeline = FramePipeline(master)
+
+    calib_path = Path(config.calibration_path) if config.calibration_path else None
+    if calib_path is not None and calib_path.exists():
+        try:
+            pipeline.restore_calibration(json.loads(calib_path.read_text()))
+            logger.info("保存済みキャリブレーションを読み込んだ: %s", calib_path)
+        except (ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+            logger.warning("キャリブレーションファイルを無視(%s): %s", exc, calib_path)
 
     if config.video_path is not None:
         cap = cv2.VideoCapture(config.video_path)
@@ -76,7 +89,8 @@ def worker_main(config: CvWorkerConfig, out: MpQueue[CvMessage]) -> None:
         cap.get(cv2.CAP_PROP_FRAME_HEIGHT),
     )
 
-    was_calibrated = False
+    was_calibrated = pipeline.calibrated  # 復元済みなら「完了」ログは出さない
+    calibration_saved = False
     frame_idx = 0
     pending_boards: deque[CvBoardUpdate] = deque()
     try:
@@ -104,6 +118,13 @@ def worker_main(config: CvWorkerConfig, out: MpQueue[CvMessage]) -> None:
             if pipeline.calibrated and not was_calibrated:
                 was_calibrated = True
                 logger.info("キャリブレーション完了(%dフレーム目)", frame_idx)
+            if calib_path is not None and not calibration_saved and pipeline.has_fresh_calibration:
+                data = pipeline.export_calibration()
+                if data is not None:
+                    calib_path.parent.mkdir(parents=True, exist_ok=True)
+                    calib_path.write_text(json.dumps(data))
+                    calibration_saved = True
+                    logger.info("キャリブレーションを保存した: %s", calib_path)
             if frame_idx % _STATUS_LOG_FRAMES == 0:
                 mat_count = sum(1 for d in detections if d.tag_id in MAT_TAG_IDS)
                 logger.info(
@@ -111,7 +132,9 @@ def worker_main(config: CvWorkerConfig, out: MpQueue[CvMessage]) -> None:
                     frame_idx,
                     len(detections),
                     mat_count,
-                    "済" if pipeline.calibrated else "未(四隅タグが全て見えるまで待機)",
+                    "済"
+                    if pipeline.calibrated
+                    else "未(四隅を一度ずつ見せれば成立し、以後は保存される)",
                 )
             frame_idx += 1
         # 動画終端: 残った盤面イベントを送り切ってから終了する(親停止時は10秒で諦める)

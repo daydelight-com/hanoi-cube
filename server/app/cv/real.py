@@ -15,21 +15,30 @@ import time
 from multiprocessing.queues import Queue as MpQueue
 
 from app.cv.interface import CvBoardUpdate, CvMessage
+from app.cv.tag_master import DEFAULT_TAG_MASTER_PATH
 from app.cv.worker import QUEUE_MAX, CvWorkerConfig, worker_main
 
 logger = logging.getLogger(__name__)
 
 _RESTART_BACKOFF_S = 3.0
 
+DEFAULT_CALIBRATION_PATH = DEFAULT_TAG_MASTER_PATH.parent / "cv_calibration.json"
+
 
 def config_from_env() -> CvWorkerConfig:
-    """環境変数からワーカー設定を組み立てる(HANOI_CV_CAMERA / _VIDEO / _WIDTH / _HEIGHT)。"""
+    """環境変数からワーカー設定を組み立てる。
+
+    HANOI_CV_CAMERA / _VIDEO / _WIDTH / _HEIGHT / HANOI_TAG_MASTER /
+    HANOI_CV_CALIBRATION(空文字で永続化無効。既定 output/cv_calibration.json)
+    """
     return CvWorkerConfig(
         camera_index=int(os.environ.get("HANOI_CV_CAMERA", "0")),
         video_path=os.environ.get("HANOI_CV_VIDEO") or None,
         width=int(os.environ.get("HANOI_CV_WIDTH", "1920")),
         height=int(os.environ.get("HANOI_CV_HEIGHT", "1080")),
         tag_master_path=os.environ.get("HANOI_TAG_MASTER") or None,
+        calibration_path=os.environ.get("HANOI_CV_CALIBRATION", str(DEFAULT_CALIBRATION_PATH))
+        or None,
     )
 
 

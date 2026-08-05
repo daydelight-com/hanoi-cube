@@ -7,6 +7,8 @@
 
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pytest
 from app.cv.detector import TagDetection, TagDetector
@@ -209,6 +211,30 @@ def test_yaw_estimated_from_rotated_box(d: PipeDriver) -> None:
     assert yaw_mod90_deg("small-2") == pytest.approx(25.0, abs=3.0)
     upright = yaw_mod90_deg("large-1")
     assert upright < 3.0 or upright > 87.0
+
+
+def test_calibration_persistence_roundtrip(d: PipeDriver) -> None:
+    """保存したキャリブレーションを復元すれば、四隅を一度も見せずに盤面が確定する
+    (小さいマットでは箱に隠れて四隅がそろいにくいため。カメラ・マット固定の前提)。"""
+    d.feed("empty", Scene(), repeat=2)
+    data = json.loads(json.dumps(d.pipeline.export_calibration()))  # JSON経由を模す
+
+    d2 = PipeDriver()
+    d2.pipeline.restore_calibration(data)
+    assert d2.pipeline.calibrated
+    assert not d2.pipeline.has_fresh_calibration  # 復元は「新規成立」として保存されない
+    updates = boards(d2.feed("staging", all_staging_scene(), repeat=STABLE_REPEAT))
+    assert len(updates) == 1
+    assert updates[0].staging_box_ids == list(BOX_IDS)
+
+
+def test_calibration_restore_rejects_mismatched_layout(d: PipeDriver) -> None:
+    d.feed("empty", Scene(), repeat=2)
+    data = d.pipeline.export_calibration()
+    assert data is not None
+    data["mat_size_mm"] = [400.0, 300.0]  # layout.py 変更後の想定
+    with pytest.raises(ValueError):
+        PipeDriver().pipeline.restore_calibration(data)
 
 
 def test_calibration_refresh_interval(d: PipeDriver) -> None:

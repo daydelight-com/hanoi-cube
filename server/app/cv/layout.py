@@ -1,30 +1,43 @@
 """マット座標系のレイアウト定数(契約: cv-interface.md §2)。
 
 マット左手前隅が原点、x=右、y=奥(塔)方向、z=上、単位mm。
-モックCV(mock.py)の合成レイアウトとフロント表示(frontend/src/three/layout.ts)は
-この値と同値を使う。実CVではマット四隅タグからのホモグラフィでこの座標系へ変換する。
 
-マット四隅タグの中心位置(MAT_TAG_CENTERS_MM)は印刷するマットの実寸と一致させること。
-マット印刷物を作成・変更したらここを更新する(S8時点ではマット未印刷のため設計値)。
+**会場のマット実寸に合わせるときは MAT_SIZE_MM だけを変える**(塔位置・待機帯・
+エリア判定・四隅タグ位置はすべてここから導出される)。変更したら:
+  - 四隅タグを実物の各隅から MAT_TAG_INSET_MM 内側(タグ中心)に貼り直す
+  - フロント表示の写し frontend/src/three/layout.ts も同値に合わせる
+モックCV(mock.py)の合成レイアウトも本モジュールの値を使う。
+
+既定値 600x400 のときの導出値は S8 以前の固定値と同一
+(塔x=150/300/450, 塔y=280, 待機y=80, 待機帯上限170, 塔バンド±70/±80)。
 """
 
 from __future__ import annotations
 
+# ============ 設営時に合わせる設定値(ここだけ変える) ============
 MAT_SIZE_MM: tuple[float, float] = (600.0, 400.0)
+# ================================================================
 
-TOWER_X_MM: dict[str, float] = {"A": 150.0, "B": 300.0, "C": 450.0}
-TOWER_Y_MM = 280.0
-STAGING_Y_MM = 80.0
-STAGING_X0_MM = 60.0
-STAGING_PITCH_MM = 60.0
+_W, _H = MAT_SIZE_MM
+
+# ---- 塔(A/B/C)。横に等間隔、奥側 ----
+TOWER_SPACING_MM = _W / 4
+TOWER_X_MM: dict[str, float] = {"A": _W / 4, "B": _W / 2, "C": _W * 3 / 4}
+TOWER_Y_MM = _H * 0.7
+
+# ---- 待機エリア(手前の帯)。モック・表示用の代表位置 ----
+STAGING_Y_MM = _H * 0.2
+STAGING_X0_MM = _W * 0.1
+STAGING_PITCH_MM = _W * 0.1
 
 # ---- エリア分類(実CV) ----
 # 塔エリア: |x - TOWER_X_MM[t]| <= TOWER_HALF_X_MM かつ |y - TOWER_Y_MM| <= TOWER_HALF_Y_MM
-# 待機エリア: y <= STAGING_Y_MAX_MM(マット手前側の帯)
-# どちらでもない位置(境界の不感帯・マット外・持ち上げ中)は area=None(移動中扱い)
-TOWER_HALF_X_MM = 70.0
-TOWER_HALF_Y_MM = 80.0
-STAGING_Y_MAX_MM = 170.0
+# (半幅は塔間隔から導出し、隣の塔と重ならないようにする)
+# 待機エリア: y <= STAGING_Y_MAX_MM(塔バンド手前に30mmの不感帯を挟む)
+# どちらでもない位置(不感帯・マット外・持ち上げ中)は area=None(移動中扱い)
+TOWER_HALF_X_MM = TOWER_SPACING_MM / 2 - 5.0
+TOWER_HALF_Y_MM = _H * 0.2
+STAGING_Y_MAX_MM = TOWER_Y_MM - TOWER_HALF_Y_MM - 30.0
 
 # 積み判定: 下の箱(または地面)の上面と底面の差がこの範囲なら「載っている」とみなす。
 # 超えていれば宙に浮いている(持ち上げ・下ろし途中)として塔に数えない。
@@ -35,9 +48,9 @@ STACK_GAP_TOL_MM = 25.0
 # シール50mm角(タグ46mm+余白2mm)を四隅に貼る想定で、中心を各辺から30mm内側に置く。
 MAT_TAG_INSET_MM = 30.0
 MAT_TAG_CENTERS_MM: dict[int, tuple[float, float]] = {
-    200: (MAT_TAG_INSET_MM, MAT_SIZE_MM[1] - MAT_TAG_INSET_MM),  # 左上(左奥)
-    201: (MAT_SIZE_MM[0] - MAT_TAG_INSET_MM, MAT_SIZE_MM[1] - MAT_TAG_INSET_MM),  # 右上(右奥)
-    202: (MAT_SIZE_MM[0] - MAT_TAG_INSET_MM, MAT_TAG_INSET_MM),  # 右下(右手前)
+    200: (MAT_TAG_INSET_MM, _H - MAT_TAG_INSET_MM),  # 左上(左奥)
+    201: (_W - MAT_TAG_INSET_MM, _H - MAT_TAG_INSET_MM),  # 右上(右奥)
+    202: (_W - MAT_TAG_INSET_MM, MAT_TAG_INSET_MM),  # 右下(右手前)
     203: (MAT_TAG_INSET_MM, MAT_TAG_INSET_MM),  # 左下(左手前)
 }
 MAT_TAG_IDS = frozenset(MAT_TAG_CENTERS_MM)

@@ -139,7 +139,14 @@ def cv_run(tmp_path_factory: pytest.TempPathFactory) -> tuple[list[CvBoardUpdate
     master_path = tmp / "tag_master.json"
     master_path.write_text(json.dumps(synthetic_tag_master_json()))
 
-    cv = RealCv(CvWorkerConfig(video_path=str(video), tag_master_path=str(master_path)))
+    calibration_path = tmp / "cv_calibration.json"
+    cv = RealCv(
+        CvWorkerConfig(
+            video_path=str(video),
+            tag_master_path=str(master_path),
+            calibration_path=str(calibration_path),
+        )
+    )
     updates: list[CvBoardUpdate] = []
     frames: list[CvFrame] = []
     deadline = time.time() + 120
@@ -157,6 +164,7 @@ def cv_run(tmp_path_factory: pytest.TempPathFactory) -> tuple[list[CvBoardUpdate
     finally:
         cv.close()
     assert time.time() < deadline, "CVワーカーが時間内に動画を処理し終えなかった"
+    assert calibration_path.exists(), "キャリブレーションが保存されていない"
     return updates, frames
 
 

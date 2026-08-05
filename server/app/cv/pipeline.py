@@ -25,7 +25,7 @@ import numpy.typing as npt
 from app.cv.detector import TagDetection
 from app.cv.geometry import CameraModel, box_estimate, calibrate
 from app.cv.interface import BOX_EDGE_MM, CvMessage
-from app.cv.layout import MAT_TAG_CENTERS_MM, MAT_TAG_IDS
+from app.cv.layout import MAT_SIZE_MM, MAT_TAG_CENTERS_MM, MAT_TAG_IDS
 from app.cv.tag_master import TagMaster
 from app.cv.tracker import BoardTracker, BoxSighting
 
@@ -63,8 +63,50 @@ class FramePipeline:
         return self._camera is not None
 
     @property
+    def has_fresh_calibration(self) -> bool:
+        """このプロセスで(復元でなく)実際に推定が成立したか。保存の判断に使う。"""
+        return self._last_calibrated_ms is not None
+
+    @property
     def tracker(self) -> BoardTracker:
         return self._tracker
+
+    # ---- キャリブレーションの保存・復元(カメラ・マットは固定の前提) ----
+    # マットが小さい会場では箱に隠れて四隅がそろいにくい。一度成立した推定を
+    # ファイルに保存し、再起動時は空マットを見せなくても動けるようにする。
+
+    def export_calibration(self) -> dict[str, object] | None:
+        if self._camera is None or self._image_size is None:
+            return None
+        return {
+            "mat_size_mm": list(MAT_SIZE_MM),
+            "image_size": list(self._image_size),
+            "k": self._camera.k.tolist(),
+            "r_cam_from_mat": self._camera.r_cam_from_mat.tolist(),
+            "t_cam_from_mat": self._camera.t_cam_from_mat.tolist(),
+        }
+
+    def restore_calibration(self, data: dict[str, object]) -> None:
+        """保存済みキャリブレーションを復元する。レイアウト・解像度が合わなければ ValueError。"""
+        mat_size = data["mat_size_mm"]
+        if not isinstance(mat_size, list) or [float(v) for v in mat_size] != list(MAT_SIZE_MM):
+            raise ValueError(
+                f"マット寸法が不一致(保存={mat_size} 現在={list(MAT_SIZE_MM)})。"
+                "layout.py 変更後は再キャリブレーションが必要"
+            )
+        image_size = data["image_size"]
+        if not isinstance(image_size, list) or len(image_size) != 2:
+            raise ValueError("キャリブレーションデータの image_size が不正")
+        camera = CameraModel(
+            k=np.asarray(data["k"], dtype=np.float64),
+            r_cam_from_mat=np.asarray(data["r_cam_from_mat"], dtype=np.float64),
+            t_cam_from_mat=np.asarray(data["t_cam_from_mat"], dtype=np.float64),
+        )
+        if camera.k.shape != (3, 3) or camera.r_cam_from_mat.shape != (3, 3):
+            raise ValueError("キャリブレーションデータの形が不正")
+        self._camera = camera
+        self._image_size = (int(image_size[0]), int(image_size[1]))
+        self._last_calibrated_ms = None  # 四隅がそろえば新しい推定で上書きされる
 
     def process(
         self,
