@@ -21,10 +21,12 @@ from multiprocessing.queues import Queue as MpQueue
 from pathlib import Path
 
 from app.cv.interface import CvBoardUpdate, CvMessage
+from app.cv.layout import MAT_TAG_IDS
 
 logger = logging.getLogger(__name__)
 
 QUEUE_MAX = 256
+_STATUS_LOG_FRAMES = 150  # 約5秒ごとに検出状況をログする(現場での診断用)
 
 
 @dataclass(frozen=True)
@@ -67,6 +69,12 @@ def worker_main(config: CvWorkerConfig, out: MpQueue[CvMessage]) -> None:
     if not cap.isOpened():
         logger.error("入力を開けない: %s", config.video_path or config.camera_index)
         return
+    logger.info(
+        "入力を開いた: %s (%.0fx%.0f)",
+        config.video_path or f"camera={config.camera_index}",
+        cap.get(cv2.CAP_PROP_FRAME_WIDTH),
+        cap.get(cv2.CAP_PROP_FRAME_HEIGHT),
+    )
 
     was_calibrated = False
     frame_idx = 0
@@ -96,6 +104,15 @@ def worker_main(config: CvWorkerConfig, out: MpQueue[CvMessage]) -> None:
             if pipeline.calibrated and not was_calibrated:
                 was_calibrated = True
                 logger.info("キャリブレーション完了(%dフレーム目)", frame_idx)
+            if frame_idx % _STATUS_LOG_FRAMES == 0:
+                mat_count = sum(1 for d in detections if d.tag_id in MAT_TAG_IDS)
+                logger.info(
+                    "frame=%d 検出タグ=%d(マット%d/4) キャリブレーション=%s",
+                    frame_idx,
+                    len(detections),
+                    mat_count,
+                    "済" if pipeline.calibrated else "未(四隅タグが全て見えるまで待機)",
+                )
             frame_idx += 1
         # 動画終端: 残った盤面イベントを送り切ってから終了する(親停止時は10秒で諦める)
         flush_deadline = time.monotonic() + 10.0
