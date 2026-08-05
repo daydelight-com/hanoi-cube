@@ -1,6 +1,6 @@
 // マット座標系(cv-interface.md §2)と three.js 座標系の対応。
-// マット寸法・塔/待機エリア位置はモックCV(server/app/cv/mock.py 冒頭)の合成レイアウトと同値。
-// 実CV(S8)ではキャリブレーション結果に依らずマット座標系(mm)で届くため、この定数は表示専用。
+// マット寸法・塔/待機エリア位置は server/app/cv/layout.py(モックCV・実CV共通の正)と同値。
+// 実CVではキャリブレーション結果に依らずマット座標系(mm)で届くため、この定数は表示専用。
 
 import * as THREE from 'three'
 

@@ -8,7 +8,6 @@ S0以降も削除しない。
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from itertools import pairwise
 
 from app.core.board import format_board, parse_board
 from app.cv.interface import (
@@ -19,23 +18,25 @@ from app.cv.interface import (
     Area,
     BoxId,
     BoxObservation,
-    BoxSize,
     CvBoardUpdate,
     CvFrame,
     CvMessage,
     Violation,
 )
 
-# モックが合成するマット座標系レイアウト(mm)。実CVではキャリブレーションで決まる
-MAT_SIZE_MM = (600.0, 400.0)
-TOWER_X_MM: dict[str, float] = {"A": 150.0, "B": 300.0, "C": 450.0}
-TOWER_Y_MM = 280.0
-STAGING_Y_MM = 80.0
-STAGING_X0_MM = 60.0
-STAGING_PITCH_MM = 60.0
+# モックが合成するマット座標系レイアウト(mm)は layout.py と共有する
+from app.cv.layout import (
+    STAGING_PITCH_MM,
+    STAGING_X0_MM,
+    STAGING_Y_MM,
+    TOWER_X_MM,
+    TOWER_Y_MM,
+)
+from app.cv.tracker import violations_for
+
 HELD_POS_MM = (300.0, 180.0, 120.0)  # 掴んでいる箱の合成位置(宙に浮かせる)
 
-_SIZE_ORDER: dict[BoxSize, int] = {"large": 3, "medium": 2, "small": 1}
+
 _TOWERS: tuple[str, str, str] = ("A", "B", "C")
 
 
@@ -191,17 +192,7 @@ class MockCv:
         self._pending.append(update)
 
     def _violations(self) -> list[Violation]:
-        violations: list[Violation] = []
-        for tower, stack in self._state.stacks.items():
-            sizes = [BOX_SIZE_OF[b] for b in stack]
-            if any(
-                _SIZE_ORDER[upper] >= _SIZE_ORDER[lower]
-                for lower, upper in pairwise(sizes)
-                if upper != lower
-            ):
-                violations.append(Violation(tower=tower, type="size_order"))  # type: ignore[arg-type]
-            if len(set(sizes)) < len(sizes):
-                violations.append(Violation(tower=tower, type="duplicate_size"))  # type: ignore[arg-type]
-            if len(stack) > 3:
-                violations.append(Violation(tower=tower, type="overflow"))  # type: ignore[arg-type]
-        return violations
+        # 違反判定は実CV(tracker.py)と共有する
+        return violations_for(
+            {t: [BOX_SIZE_OF[b] for b in stack] for t, stack in self._state.stacks.items()}
+        )

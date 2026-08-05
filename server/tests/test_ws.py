@@ -117,6 +117,32 @@ def test_mock_endpoints_disabled_by_env(monkeypatch: pytest.MonkeyPatch) -> None
         assert res.status_code == 403
 
 
+class _StubCv:
+    """CvSource 準拠のスタブ(実CV選択のテストでワーカーを起動させないため)。"""
+
+    def poll(self) -> list[Any]:
+        return []
+
+
+def test_make_cv_selects_by_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    import app.cv.real
+    from app.api.main import _make_cv
+    from app.cv.mock import MockCv
+
+    assert isinstance(_make_cv(), MockCv)  # 既定はモック(縮退経路)
+    monkeypatch.setattr(app.cv.real, "RealCv", _StubCv)
+    monkeypatch.setenv("HANOI_CV", "real")
+    assert isinstance(_make_cv(), _StubCv)
+
+
+def test_mock_endpoints_conflict_when_cv_is_real() -> None:
+    app = create_app(start_loop=False)
+    with TestClient(app) as client:
+        app.state.game.cv = _StubCv()  # 実CV相当に差し替え
+        res = client.post("/api/mock/board", json={"board": "L/MS/L"})
+        assert res.status_code == 409
+
+
 def test_api_ranking_empty() -> None:
     with TestClient(create_app(start_loop=False)) as client:
         assert client.get("/api/ranking").json() == {"entries": []}

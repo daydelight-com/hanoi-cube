@@ -1,7 +1,9 @@
 """FastAPIアプリのエントリポイント(WSエンドポイント・状態機械の起動)。
 
-CVソースは既定でモック(app/cv/mock.py)。実CV(S8)は CvSource 準拠の実装に
-差し替える。開発中はモック操作用のHTTPエンドポイント(/api/mock/*)で盤面を動かせる。
+CVソースは既定でモック(app/cv/mock.py)。HANOI_CV=real で実CV(app/cv/real.py、
+カメラ+別プロセスワーカー)に切り替える。モックは本番の縮退経路として残す
+(CLAUDE.md 規則6)。開発中はモック操作用のHTTPエンドポイント(/api/mock/*)で
+盤面を動かせる。
 """
 
 from __future__ import annotations
@@ -18,9 +20,20 @@ from pydantic import BaseModel
 from app.api import ws
 from app.api.ws import GameServer, Hub, run_loop
 from app.core.precompute import load_table
+from app.cv.interface import CvSource
 from app.cv.mock import MockCv
 from app.state.machine import DEFAULT_RECORD_URL_BASE, StateMachine
 from app.state.store import MemoryStore
+
+
+def _make_cv() -> CvSource:
+    """環境変数 HANOI_CV でCVソースを選ぶ(mock=既定 / real=実CV)。"""
+    if os.environ.get("HANOI_CV", "mock") == "real":
+        # 実CV系の依存(opencv等)はモック運用時に読み込まない
+        from app.cv.real import RealCv
+
+        return RealCv()
+    return MockCv()
 
 
 class MockBoardRequest(BaseModel):
@@ -48,7 +61,7 @@ def create_app(*, start_loop: bool = True) -> FastAPI:
             now_ms=ws.now_ms(),
             record_url_base=os.environ.get("HANOI_RECORD_URL_BASE", DEFAULT_RECORD_URL_BASE),
         )
-        server = GameServer(machine=machine, hub=Hub(), cv=MockCv(), store=store)
+        server = GameServer(machine=machine, hub=Hub(), cv=_make_cv(), store=store)
         app.state.game = server
         task = asyncio.create_task(run_loop(server)) if start_loop else None
         try:
@@ -58,6 +71,9 @@ def create_app(*, start_loop: bool = True) -> FastAPI:
                 task.cancel()
                 with contextlib.suppress(asyncio.CancelledError):
                     await task
+            close = getattr(server.cv, "close", None)
+            if callable(close):
+                close()  # 実CVのワーカープロセスを止める
 
     app = FastAPI(title="Hanoi Cube Server", lifespan=lifespan)
     app.include_router(ws.router)
