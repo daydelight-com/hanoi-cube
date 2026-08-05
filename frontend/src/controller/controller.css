@@ -22,9 +22,15 @@
 .pad-buttons {
   display: flex;
   align-items: center;
-  gap: 8vw;
+  gap: 10vw;
   /* ホームインジケータ領域を避ける(§6) */
   padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.pad-arrows {
+  display: flex;
+  align-items: center;
+  gap: 5vw;
 }
 
 .pad-button {

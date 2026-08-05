@@ -35,7 +35,7 @@ specification.md §5 の機械可読版。状態機械(`server/app/state/`、S2)
 | 2 | idle_title | enter | | | mode_select |
 | 3 | idle_ranking | timeout:ranking(1位表示+3s) | | | idle_title |
 | 4 | idle_ranking | enter | | | idle_title |
-| 5 | mode_select | left / right | | focus移動(rules⇄practice⇄game⇄lang。端のループ有無はS4で調整) | mode_select |
+| 5 | mode_select | left / right | | focus移動(rules→practice→game→lang。端はループする。S5で確定) | mode_select |
 | 6 | mode_select | enter | focus=rules | | rule_dialog(from=mode_select, page=0) |
 | 7 | mode_select | enter | focus=practice | スコア等を初期化 | practice |
 | 8 | mode_select | enter | focus=game | play_id 採番、スコア初期化 | game_countdown |

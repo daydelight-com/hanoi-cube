@@ -212,11 +212,9 @@ class StateMachine:
         return []
 
     def _button_mode_select(self, button: ButtonName, now_ms: int) -> list[Outbound]:
-        if button in ("left", "right"):  # 行5(端はループしない。S4で調整可)
+        if button in ("left", "right"):  # 行5(端はループ。S5で確定)
             i = _MODE_FOCUS_ORDER.index(self._mode_focus)
-            j = max(0, min(len(_MODE_FOCUS_ORDER) - 1, i + (1 if button == "right" else -1)))
-            if i == j:
-                return []
+            j = (i + (1 if button == "right" else -1)) % len(_MODE_FOCUS_ORDER)
             self._mode_focus = _MODE_FOCUS_ORDER[j]
             return [self._screen_msg()]
         if self._mode_focus == "rules":  # 行6

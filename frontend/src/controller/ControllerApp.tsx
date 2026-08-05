@@ -91,14 +91,17 @@ export function ControllerApp() {
         />
       ) : (
         <div className="pad-buttons">
-          <PadButton className="pad-button--arrow" onPress={() => sendButton('left')}>
-            ◀
-          </PadButton>
+          {/* 矢印2つを左に並べ、その右に決定ボタンを置く */}
+          <div className="pad-arrows">
+            <PadButton className="pad-button--arrow" onPress={() => sendButton('left')}>
+              ◀
+            </PadButton>
+            <PadButton className="pad-button--arrow" onPress={() => sendButton('right')}>
+              ▶
+            </PadButton>
+          </div>
           <PadButton className="pad-button--enter" onPress={() => sendButton('enter')}>
             OK
-          </PadButton>
-          <PadButton className="pad-button--arrow" onPress={() => sendButton('right')}>
-            ▶
           </PadButton>
         </div>
       )}

@@ -156,17 +156,19 @@ def test_row4_idle_ranking_enter_to_idle_title(d: Driver) -> None:
     assert screen_of(d.press("enter")) == "idle_title"
 
 
-def test_row5_mode_select_focus_moves_and_clamps(d: Driver) -> None:
+def test_row5_mode_select_focus_moves_and_wraps(d: Driver) -> None:
     d.to_mode_select()
-    assert d.press("left") == []  # 左端でクランプ
+    out = d.press("left")  # 左端からはループして lang へ
+    assert sent(out, "screen")[-1].payload["ctx"]["focus"] == "lang"
+    out = d.press("right")  # 右端からはループして rules へ
+    assert sent(out, "screen")[-1].payload["ctx"]["focus"] == "rules"
     focuses = []
     for _ in range(4):
         out = d.press("right")
-        if out:
-            focuses.append(sent(out, "screen")[-1].payload["ctx"]["focus"])
-    assert focuses == ["practice", "game", "lang"]  # 右端でクランプ(4回目は無視)
+        focuses.append(sent(out, "screen")[-1].payload["ctx"]["focus"])
+    assert focuses == ["practice", "game", "lang", "rules"]  # 1周してrulesへ戻る
     out = d.press("left")
-    assert sent(out, "screen")[-1].payload["ctx"]["focus"] == "game"
+    assert sent(out, "screen")[-1].payload["ctx"]["focus"] == "lang"
 
 
 def test_row6_mode_select_enter_rules_to_rule_dialog(d: Driver) -> None:
