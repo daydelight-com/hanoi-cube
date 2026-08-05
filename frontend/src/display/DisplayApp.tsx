@@ -3,6 +3,8 @@
 // デバッグHUDは ?hud を付けたときのみ表示(開発用)。
 
 import { useEffect, useReducer, useRef, useState } from 'react'
+import { bgm } from '../bgm/engine'
+import { bgmTrackForScreen } from '../bgm/screenBgm'
 import type { DisplayMessage } from '../contracts/ws'
 import type { BoardScene } from '../three/BoardScene'
 import { BoardCanvas } from '../three/BoardCanvas'
@@ -24,8 +26,18 @@ export function DisplayApp() {
   const sfxStateRef = useRef(initialDisplayState)
   const showHud = new URLSearchParams(location.search).has('hud')
 
-  // AudioContext の遅延アンロック(§5.12: Mac での初回クリック/キー操作)
-  useEffect(() => sfx.install(), [])
+  // AudioContext の遅延アンロック(§5.12: Mac での初回クリック/キー操作)。
+  useEffect(() => {
+    const uninstallSfx = sfx.install()
+    const uninstallBgm = bgm.install()
+    return () => {
+      uninstallBgm()
+      uninstallSfx()
+    }
+  }, [])
+
+  const bgmTrack = bgmTrackForScreen(state.screen?.screen ?? null)
+  useEffect(() => bgm.setTrack(bgmTrack), [bgmTrack])
 
   useEffect(() => {
     const socket = new DisplaySocket({

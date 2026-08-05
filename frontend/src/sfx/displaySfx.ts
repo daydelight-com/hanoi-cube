@@ -4,8 +4,7 @@
 //
 // ガードを満たさない操作はサーバーが何も送らないため、ここに届いた時点で
 // 「音を出してよいイベント」だけが来る(screens.md §3 注記)。
-// snapshot は再接続復元のため無音。rank_tick / fanfare はメッセージ起点ではなく
-// せり上がり演出のタイマー起点(IdleRankingScreen 側)。
+// snapshot と待機ランキングの自動遷移・せり上がり演出は無音。
 
 import type { DisplayMessage, ScreenId, ScreenState, SfxId } from '../contracts/ws'
 import type { DisplayState } from '../display/store'

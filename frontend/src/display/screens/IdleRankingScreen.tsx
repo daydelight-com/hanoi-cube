@@ -5,9 +5,8 @@
 import { useEffect, useRef } from 'react'
 import type { Lang, RankingEntry } from '../../contracts/ws'
 import { t } from '../../i18n/strings'
-import { sfx } from '../../sfx/engine'
 import { Blink } from '../ui/Retro'
-import { idleRankingScrollMs, idleRankingTickTimes } from './idleRankingTiming'
+import { idleRankingScrollMs } from './idleRankingTiming'
 
 export function RankingTable({
   lang,
@@ -68,17 +67,6 @@ export function IdleRankingScreen({ lang, entries }: { lang: Lang; entries: Rank
     // 終点はコンテナ末尾(1位)が画面中央やや上に来る位置。CSS keyframes では
     // 終点が要素高に依存して書けないため transition + calc で指定する
     el.style.transform = 'translateY(calc(45vh - 100%))'
-  }, [entries])
-
-  // せり上がりに合わせた効果音(§5.12: 1行ごとのティック、1位表示でファンファーレ)。
-  // タイマー起点はサーバーと同式の演出時間(idleRankingTiming)に合わせる
-  useEffect(() => {
-    if (entries.length === 0) return
-    const timers = idleRankingTickTimes(entries.length).map((at) =>
-      setTimeout(() => sfx.play('rank_tick'), at),
-    )
-    timers.push(setTimeout(() => sfx.play('fanfare'), idleRankingScrollMs(entries.length)))
-    return () => timers.forEach(clearTimeout)
   }, [entries])
 
   if (entries.length === 0) {

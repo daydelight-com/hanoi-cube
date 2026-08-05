@@ -70,6 +70,10 @@ try {
   await shot(display, 'idle-title')
   await shot(pad, 'pad-buttons')
 
+  // ディスプレイ側の実ユーザー操作でAudioContextをアンロックする。
+  // 画面操作はiPad側なので、このクリック自体はゲーム状態を変えない。
+  await display.locator('.retro-root').click({ position: { x: 20, y: 20 } })
+
   // 2. タイトル → モード選択
   await ok()
   await waitText(display, 'モードをえらんでね')
@@ -162,6 +166,25 @@ try {
   }
   if (problems.length > 0) throw new Error(`効果音の発火検証に失敗: ${problems.join(', ')}`)
   console.log(`sfx: display=${displaySfx.length}発火 pad=${padSfx.length}発火 (検証OK)`)
+
+  // 13. BGMの画面フェーズ連動に加え、手順1のクリックでAudioContextが実際に起動し、
+  //     各曲のノートをスケジュールしたことも検証する。
+  const bgmHistory = await display.evaluate(() => window.__bgmHistory ?? [])
+  const expectedBgm = ['waiting', null, 'gameplay', 'result', 'waiting']
+  if (JSON.stringify(bgmHistory) !== JSON.stringify(expectedBgm)) {
+    throw new Error(`BGM切替履歴が不正: ${JSON.stringify(bgmHistory)}`)
+  }
+  const bgmPlayback = await display.evaluate(() => window.__bgm?.playbackState)
+  const expectedStarted = ['waiting', 'gameplay', 'result', 'waiting']
+  if (
+    bgmPlayback?.context !== 'running' ||
+    bgmPlayback.activeTrack !== 'waiting' ||
+    bgmPlayback.scheduledNotes < 1 ||
+    JSON.stringify(bgmPlayback.startedTracks) !== JSON.stringify(expectedStarted)
+  ) {
+    throw new Error(`BGM再生エンジンが不正: ${JSON.stringify(bgmPlayback)}`)
+  }
+  console.log(`bgm: ${bgmHistory.map((id) => id ?? 'countdown-silence').join(' → ')} (検証OK)`)
 
   console.log('E2E full play: PASS')
 } finally {
