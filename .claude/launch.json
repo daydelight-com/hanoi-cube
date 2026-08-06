@@ -12,6 +12,29 @@
       "runtimeExecutable": "env",
       "runtimeArgs": ["HANOI_CV=real", "make", "dev"],
       "port": 5173
+    },
+    {
+      "name": "record-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "cloud/record", "run", "dev", "--", "--port", "5175"],
+      "port": 5175
+    },
+    {
+      "name": "record-dev-emulator",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "VITE_FIREBASE_PROJECT_ID=demo-hanoi",
+        "VITE_FIRESTORE_EMULATOR_HOST=127.0.0.1:8080",
+        "npm",
+        "--prefix",
+        "cloud/record",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5175"
+      ],
+      "port": 5175
     }
   ]
 }

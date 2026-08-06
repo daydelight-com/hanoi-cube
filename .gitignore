@@ -15,3 +15,6 @@ dist/
 
 # ローカルDB(S2以降)
 *.sqlite3
+
+# Firebaseエミュレータのログ
+*-debug.log
