@@ -180,9 +180,10 @@ export const RULE_PAGES: Record<Lang, RulePage[]> = {
     {
       title: '「クリアかのう」とは',
       lines: [
-        'ひだりから (a, b, c) この はこが',
-        'ぎゃくの (c, b, a) に なるように',
-        'はこを うごかせたら クリア!',
+        'ならべた かたちを',
+        'ひだりみぎ ひっくりかえした かたちに',
+        'うごかせたら クリア!',
+        '(さいしょから おなじ かたちでも 1こは うごかそう)',
       ],
     },
     {
@@ -222,9 +223,10 @@ export const RULE_PAGES: Record<Lang, RulePage[]> = {
     {
       title: 'WHAT IS "CLEARABLE"?',
       lines: [
-        'With counts (a, b, c) from the left,',
-        'move the boxes to reach (c, b, a)',
+        'Move the boxes to reach',
+        'the left-right mirrored layout',
         'and you clear it!',
+        '(Already mirrored? Still move at least one box.)',
       ],
     },
     {

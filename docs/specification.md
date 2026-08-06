@@ -3,7 +3,7 @@
 PyCon JP 出展ブース向け体験ゲーム「Hanoi Cube(仮称)」のシステム仕様書。
 
 - ゲームルールの正式定義: [docs/game/hanoi_arrange_rules.md](game/hanoi_arrange_rules.md)
-- 得点表(全166クラス): [docs/game/score_ranking.md](game/score_ranking.md)
+- 得点表(全124クラス): [docs/game/score_ranking.md](game/score_ranking.md)
 
 本書はシステム(ハードウェア構成・ソフトウェア・画面・通信・データ)の仕様を定める。実装には本書のレビュー後に着手する。
 

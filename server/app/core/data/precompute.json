@@ -251,20 +251,40 @@
    "board": "/S/LM",
    "index": 14,
    "clearable": true,
-   "min_moves": 3,
+   "min_moves": 7,
    "min_path": [
-    {
-     "size": "M",
-     "from": "C",
-     "to": "A"
-    },
     {
      "size": "S",
      "from": "B",
      "to": "A"
     },
     {
+     "size": "M",
+     "from": "C",
+     "to": "B"
+    },
+    {
+     "size": "S",
+     "from": "A",
+     "to": "B"
+    },
+    {
      "size": "L",
+     "from": "C",
+     "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "M",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "S",
      "from": "C",
      "to": "B"
     }
@@ -367,19 +387,19 @@
    "min_moves": 3,
    "min_path": [
     {
-     "size": "M",
-     "from": "B",
-     "to": "A"
-    },
-    {
      "size": "S",
      "from": "C",
-     "to": "A"
+     "to": "B"
     },
     {
      "size": "L",
      "from": "C",
-     "to": "B"
+     "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "A"
     }
    ],
    "mirror": "LS/M/",
@@ -464,19 +484,19 @@
    "min_moves": 3,
    "min_path": [
     {
-     "size": "L",
-     "from": "B",
-     "to": "A"
-    },
-    {
      "size": "S",
      "from": "C",
-     "to": "A"
+     "to": "B"
     },
     {
      "size": "M",
      "from": "C",
-     "to": "B"
+     "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "A"
     }
    ],
    "mirror": "MS/L/",
@@ -733,7 +753,7 @@
    "board": "/LS/LM",
    "index": 46,
    "clearable": true,
-   "min_moves": 5,
+   "min_moves": 7,
    "min_path": [
     {
      "size": "S",
@@ -758,7 +778,17 @@
     {
      "size": "S",
      "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "M",
+     "from": "B",
      "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "C",
+     "to": "B"
     }
    ],
    "mirror": "LM/LS/",
@@ -1097,20 +1127,30 @@
    "board": "S//LM",
    "index": 70,
    "clearable": true,
-   "min_moves": 3,
+   "min_moves": 5,
    "min_path": [
+    {
+     "size": "M",
+     "from": "C",
+     "to": "B"
+    },
     {
      "size": "S",
      "from": "A",
      "to": "B"
     },
     {
-     "size": "M",
+     "size": "L",
      "from": "C",
      "to": "A"
     },
     {
      "size": "S",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "M",
      "from": "B",
      "to": "A"
     }
@@ -1154,50 +1194,18 @@
   {
    "board": "S/S/M",
    "index": 74,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "M/S/S",
    "canonical_key": "M/S/S"
   },
   {
    "board": "S/S/L",
    "index": 75,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "L/S/S",
    "canonical_key": "L/S/S"
   },
@@ -1348,25 +1356,9 @@
   {
    "board": "S/M/LM",
    "index": 86,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "B"
-    },
-    {
-     "size": "M",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LM/M/S",
    "canonical_key": "LM/M/S"
   },
@@ -1491,20 +1483,30 @@
    "board": "S/L/LM",
    "index": 94,
    "clearable": true,
-   "min_moves": 3,
+   "min_moves": 5,
    "min_path": [
+    {
+     "size": "M",
+     "from": "C",
+     "to": "B"
+    },
     {
      "size": "S",
      "from": "A",
      "to": "B"
     },
     {
-     "size": "M",
+     "size": "L",
      "from": "C",
      "to": "A"
     },
     {
      "size": "S",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "M",
      "from": "B",
      "to": "A"
     }
@@ -1548,50 +1550,18 @@
   {
    "board": "S/MS/M",
    "index": 98,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "M/MS/S",
    "canonical_key": "M/MS/S"
   },
   {
    "board": "S/MS/L",
    "index": 99,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "L/MS/S",
    "canonical_key": "L/MS/S"
   },
@@ -1658,50 +1628,18 @@
   {
    "board": "S/LS/M",
    "index": 106,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "M/LS/S",
    "canonical_key": "M/LS/S"
   },
   {
    "board": "S/LS/L",
    "index": 107,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "L/LS/S",
    "canonical_key": "L/LS/S"
   },
@@ -1852,25 +1790,9 @@
   {
    "board": "S/LM/LM",
    "index": 118,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "B"
-    },
-    {
-     "size": "M",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LM/LM/S",
    "canonical_key": "LM/LM/S"
   },
@@ -1910,50 +1832,18 @@
   {
    "board": "S/LMS/M",
    "index": 122,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "M/LMS/S",
    "canonical_key": "M/LMS/S"
   },
   {
    "board": "S/LMS/L",
    "index": 123,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "L/LMS/S",
    "canonical_key": "L/LMS/S"
   },
@@ -2102,12 +1992,32 @@
    "board": "M//LS",
    "index": 133,
    "clearable": true,
-   "min_moves": 1,
+   "min_moves": 5,
    "min_path": [
+    {
+     "size": "M",
+     "from": "A",
+     "to": "B"
+    },
     {
      "size": "S",
      "from": "C",
+     "to": "B"
+    },
+    {
+     "size": "L",
+     "from": "C",
      "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "M",
+     "from": "B",
+     "to": "C"
     }
    ],
    "mirror": "LS//M",
@@ -2149,25 +2059,9 @@
   {
    "board": "M/S/S",
    "index": 137,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "S/S/M",
    "canonical_key": "M/S/S"
   },
@@ -2175,7 +2069,7 @@
    "board": "M/S/M",
    "index": 138,
    "clearable": true,
-   "min_moves": 3,
+   "min_moves": 7,
    "min_path": [
     {
      "size": "S",
@@ -2190,7 +2084,27 @@
     {
      "size": "S",
      "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "M",
+     "from": "A",
      "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "M",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "C",
+     "to": "B"
     }
    ],
    "mirror": "M/S/M",
@@ -2200,8 +2114,23 @@
    "board": "M/S/L",
    "index": 139,
    "clearable": true,
-   "min_moves": 3,
+   "min_moves": 7,
    "min_path": [
+    {
+     "size": "S",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "L",
+     "from": "C",
+     "to": "B"
+    },
+    {
+     "size": "S",
+     "from": "A",
+     "to": "B"
+    },
     {
      "size": "M",
      "from": "A",
@@ -2210,10 +2139,15 @@
     {
      "size": "S",
      "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "L",
+     "from": "B",
      "to": "A"
     },
     {
-     "size": "M",
+     "size": "S",
      "from": "C",
      "to": "B"
     }
@@ -2239,35 +2173,18 @@
   {
    "board": "M/S/LS",
    "index": 141,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LS/S/M",
    "canonical_key": "LS/S/M"
   },
   {
    "board": "M/S/LM",
    "index": 142,
-   "clearable": true,
-   "min_moves": 2,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "M",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LM/S/M",
    "canonical_key": "LM/S/M"
   },
@@ -2304,17 +2221,17 @@
     {
      "size": "S",
      "from": "C",
-     "to": "A"
+     "to": "B"
     },
     {
      "size": "M",
-     "from": "B",
+     "from": "A",
      "to": "C"
     },
     {
      "size": "S",
-     "from": "A",
-     "to": "B"
+     "from": "B",
+     "to": "A"
     }
    ],
    "mirror": "S/M/M",
@@ -2332,25 +2249,9 @@
   {
    "board": "M/M/L",
    "index": 147,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "M",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "M",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "M",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "L/M/M",
    "canonical_key": "L/M/M"
   },
@@ -2372,15 +2273,9 @@
   {
    "board": "M/M/LS",
    "index": 149,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LS/M/M",
    "canonical_key": "LS/M/M"
   },
@@ -2511,12 +2406,32 @@
    "board": "M/L/LS",
    "index": 157,
    "clearable": true,
-   "min_moves": 1,
+   "min_moves": 5,
    "min_path": [
+    {
+     "size": "M",
+     "from": "A",
+     "to": "B"
+    },
     {
      "size": "S",
      "from": "C",
+     "to": "B"
+    },
+    {
+     "size": "L",
+     "from": "C",
      "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "M",
+     "from": "B",
+     "to": "C"
     }
    ],
    "mirror": "LS/L/M",
@@ -2558,25 +2473,9 @@
   {
    "board": "M/MS/S",
    "index": 161,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "S/MS/M",
    "canonical_key": "M/MS/S"
   },
@@ -2592,40 +2491,9 @@
   {
    "board": "M/MS/L",
    "index": 163,
-   "clearable": true,
-   "min_moves": 6,
-   "min_path": [
-    {
-     "size": "M",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
-    },
-    {
-     "size": "M",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "M",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "L/MS/M",
    "canonical_key": "L/MS/M"
   },
@@ -2647,15 +2515,9 @@
   {
    "board": "M/MS/LS",
    "index": 165,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LS/MS/M",
    "canonical_key": "LS/MS/M"
   },
@@ -2695,25 +2557,9 @@
   {
    "board": "M/LS/S",
    "index": 169,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "S/LS/M",
    "canonical_key": "M/LS/S"
   },
@@ -2721,7 +2567,7 @@
    "board": "M/LS/M",
    "index": 170,
    "clearable": true,
-   "min_moves": 3,
+   "min_moves": 7,
    "min_path": [
     {
      "size": "S",
@@ -2736,7 +2582,27 @@
     {
      "size": "S",
      "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "M",
+     "from": "A",
      "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "M",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "C",
+     "to": "B"
     }
    ],
    "mirror": "M/LS/M",
@@ -2746,12 +2612,27 @@
    "board": "M/LS/L",
    "index": 171,
    "clearable": true,
-   "min_moves": 3,
+   "min_moves": 7,
    "min_path": [
+    {
+     "size": "S",
+     "from": "B",
+     "to": "C"
+    },
     {
      "size": "M",
      "from": "A",
-     "to": "C"
+     "to": "B"
+    },
+    {
+     "size": "S",
+     "from": "C",
+     "to": "B"
+    },
+    {
+     "size": "L",
+     "from": "C",
+     "to": "A"
     },
     {
      "size": "S",
@@ -2760,7 +2641,12 @@
     },
     {
      "size": "M",
-     "from": "C",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "A",
      "to": "B"
     }
    ],
@@ -2785,35 +2671,18 @@
   {
    "board": "M/LS/LS",
    "index": 173,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LS/LS/M",
    "canonical_key": "LS/LS/M"
   },
   {
    "board": "M/LS/LM",
    "index": 174,
-   "clearable": true,
-   "min_moves": 2,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "M",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LM/LS/M",
    "canonical_key": "LM/LS/M"
   },
@@ -2850,17 +2719,17 @@
     {
      "size": "S",
      "from": "C",
-     "to": "A"
+     "to": "B"
     },
     {
      "size": "M",
-     "from": "B",
+     "from": "A",
      "to": "C"
     },
     {
      "size": "S",
-     "from": "A",
-     "to": "B"
+     "from": "B",
+     "to": "A"
     }
    ],
    "mirror": "S/LM/M",
@@ -2878,25 +2747,9 @@
   {
    "board": "M/LM/L",
    "index": 179,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "M",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "M",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "M",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "L/LM/M",
    "canonical_key": "L/LM/M"
   },
@@ -2918,15 +2771,9 @@
   {
    "board": "M/LM/LS",
    "index": 181,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LS/LM/M",
    "canonical_key": "LS/LM/M"
   },
@@ -2966,25 +2813,9 @@
   {
    "board": "M/LMS/S",
    "index": 185,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "S/LMS/M",
    "canonical_key": "M/LMS/S"
   },
@@ -3000,40 +2831,9 @@
   {
    "board": "M/LMS/L",
    "index": 187,
-   "clearable": true,
-   "min_moves": 6,
-   "min_path": [
-    {
-     "size": "M",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
-    },
-    {
-     "size": "M",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "M",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "L/LMS/M",
    "canonical_key": "L/LMS/M"
   },
@@ -3055,15 +2855,9 @@
   {
    "board": "M/LMS/LS",
    "index": 189,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LS/LMS/M",
    "canonical_key": "LS/LMS/M"
   },
@@ -3179,12 +2973,32 @@
    "board": "L//MS",
    "index": 196,
    "clearable": true,
-   "min_moves": 1,
+   "min_moves": 5,
    "min_path": [
+    {
+     "size": "L",
+     "from": "A",
+     "to": "B"
+    },
     {
      "size": "S",
      "from": "C",
+     "to": "B"
+    },
+    {
+     "size": "M",
+     "from": "C",
      "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "L",
+     "from": "B",
+     "to": "C"
     }
    ],
    "mirror": "MS//L",
@@ -3263,25 +3077,9 @@
   {
    "board": "L/S/S",
    "index": 201,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "S/S/L",
    "canonical_key": "L/S/S"
   },
@@ -3289,7 +3087,7 @@
    "board": "L/S/M",
    "index": 202,
    "clearable": true,
-   "min_moves": 3,
+   "min_moves": 7,
    "min_path": [
     {
      "size": "S",
@@ -3304,7 +3102,27 @@
     {
      "size": "S",
      "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "L",
+     "from": "A",
      "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "M",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "C",
+     "to": "B"
     }
    ],
    "mirror": "M/S/L",
@@ -3314,7 +3132,7 @@
    "board": "L/S/L",
    "index": 203,
    "clearable": true,
-   "min_moves": 3,
+   "min_moves": 7,
    "min_path": [
     {
      "size": "S",
@@ -3329,7 +3147,27 @@
     {
      "size": "S",
      "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "L",
+     "from": "A",
      "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "L",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "C",
+     "to": "B"
     }
    ],
    "mirror": "L/S/L",
@@ -3338,15 +3176,9 @@
   {
    "board": "L/S/MS",
    "index": 204,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "MS/S/L",
    "canonical_key": "L/S/MS"
   },
@@ -3411,19 +3243,19 @@
    "min_moves": 3,
    "min_path": [
     {
-     "size": "M",
-     "from": "B",
-     "to": "A"
-    },
-    {
      "size": "S",
      "from": "C",
      "to": "B"
     },
     {
-     "size": "M",
+     "size": "L",
      "from": "A",
      "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "A"
     }
    ],
    "mirror": "S/M/L",
@@ -3432,25 +3264,9 @@
   {
    "board": "L/M/M",
    "index": 210,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "M",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "M",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "M",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "M/M/L",
    "canonical_key": "L/M/M"
   },
@@ -3458,7 +3274,7 @@
    "board": "L/M/L",
    "index": 211,
    "clearable": true,
-   "min_moves": 3,
+   "min_moves": 7,
    "min_path": [
     {
      "size": "M",
@@ -3473,7 +3289,27 @@
     {
      "size": "M",
      "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "L",
+     "from": "A",
      "to": "C"
+    },
+    {
+     "size": "M",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "L",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "M",
+     "from": "C",
+     "to": "B"
     }
    ],
    "mirror": "L/M/L",
@@ -3482,15 +3318,9 @@
   {
    "board": "L/M/MS",
    "index": 212,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "MS/M/L",
    "canonical_key": "L/M/MS"
   },
@@ -3573,17 +3403,17 @@
     {
      "size": "S",
      "from": "C",
-     "to": "A"
+     "to": "B"
     },
     {
      "size": "L",
-     "from": "B",
+     "from": "A",
      "to": "C"
     },
     {
      "size": "S",
-     "from": "A",
-     "to": "B"
+     "from": "B",
+     "to": "A"
     }
    ],
    "mirror": "S/L/L",
@@ -3598,17 +3428,17 @@
     {
      "size": "M",
      "from": "C",
-     "to": "A"
+     "to": "B"
     },
     {
      "size": "L",
-     "from": "B",
+     "from": "A",
      "to": "C"
     },
     {
      "size": "M",
-     "from": "A",
-     "to": "B"
+     "from": "B",
+     "to": "A"
     }
    ],
    "mirror": "M/L/L",
@@ -3627,8 +3457,38 @@
    "board": "L/L/MS",
    "index": 220,
    "clearable": true,
-   "min_moves": 1,
+   "min_moves": 7,
    "min_path": [
+    {
+     "size": "S",
+     "from": "C",
+     "to": "A"
+    },
+    {
+     "size": "M",
+     "from": "C",
+     "to": "B"
+    },
+    {
+     "size": "S",
+     "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "L",
+     "from": "A",
+     "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "M",
+     "from": "B",
+     "to": "A"
+    },
     {
      "size": "S",
      "from": "C",
@@ -3711,65 +3571,18 @@
   {
    "board": "L/MS/S",
    "index": 225,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "S/MS/L",
    "canonical_key": "L/MS/S"
   },
   {
    "board": "L/MS/M",
    "index": 226,
-   "clearable": true,
-   "min_moves": 6,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
-    },
-    {
-     "size": "M",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "M",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "B"
-    },
-    {
-     "size": "M",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "M/MS/L",
    "canonical_key": "L/MS/M"
   },
@@ -3777,7 +3590,7 @@
    "board": "L/MS/L",
    "index": 227,
    "clearable": true,
-   "min_moves": 6,
+   "min_moves": 15,
    "min_path": [
     {
      "size": "S",
@@ -3808,6 +3621,51 @@
      "size": "M",
      "from": "C",
      "to": "B"
+    },
+    {
+     "size": "S",
+     "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "L",
+     "from": "C",
+     "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "M",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "C",
+     "to": "A"
+    },
+    {
+     "size": "L",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "A",
+     "to": "C"
+    },
+    {
+     "size": "M",
+     "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "S",
+     "from": "C",
+     "to": "B"
     }
    ],
    "mirror": "L/MS/L",
@@ -3816,15 +3674,9 @@
   {
    "board": "L/MS/MS",
    "index": 228,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "MS/MS/L",
    "canonical_key": "L/MS/MS"
   },
@@ -3885,25 +3737,9 @@
   {
    "board": "L/LS/S",
    "index": 233,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "S/LS/L",
    "canonical_key": "L/LS/S"
   },
@@ -3911,7 +3747,7 @@
    "board": "L/LS/M",
    "index": 234,
    "clearable": true,
-   "min_moves": 3,
+   "min_moves": 7,
    "min_path": [
     {
      "size": "S",
@@ -3926,7 +3762,27 @@
     {
      "size": "S",
      "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "L",
+     "from": "A",
      "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "M",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "C",
+     "to": "B"
     }
    ],
    "mirror": "M/LS/L",
@@ -3944,15 +3800,9 @@
   {
    "board": "L/LS/MS",
    "index": 236,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "MS/LS/L",
    "canonical_key": "L/LS/MS"
   },
@@ -4017,19 +3867,19 @@
    "min_moves": 3,
    "min_path": [
     {
-     "size": "M",
-     "from": "B",
-     "to": "A"
-    },
-    {
      "size": "S",
      "from": "C",
      "to": "B"
     },
     {
-     "size": "M",
+     "size": "L",
      "from": "A",
      "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "A"
     }
    ],
    "mirror": "S/LM/L",
@@ -4038,25 +3888,9 @@
   {
    "board": "L/LM/M",
    "index": 242,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "M",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "M",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "M",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "M/LM/L",
    "canonical_key": "L/LM/M"
   },
@@ -4072,15 +3906,9 @@
   {
    "board": "L/LM/MS",
    "index": 244,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "MS/LM/L",
    "canonical_key": "L/LM/MS"
   },
@@ -4157,65 +3985,18 @@
   {
    "board": "L/LMS/S",
    "index": 249,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "S/LMS/L",
    "canonical_key": "L/LMS/S"
   },
   {
    "board": "L/LMS/M",
    "index": 250,
-   "clearable": true,
-   "min_moves": 6,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
-    },
-    {
-     "size": "M",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "M",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "B"
-    },
-    {
-     "size": "M",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "M/LMS/L",
    "canonical_key": "L/LMS/M"
   },
@@ -4231,15 +4012,9 @@
   {
    "board": "L/LMS/MS",
    "index": 252,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "MS/LMS/L",
    "canonical_key": "L/LMS/MS"
   },
@@ -4335,12 +4110,32 @@
    "board": "MS//L",
    "index": 259,
    "clearable": true,
-   "min_moves": 1,
+   "min_moves": 5,
    "min_path": [
+    {
+     "size": "L",
+     "from": "C",
+     "to": "B"
+    },
     {
      "size": "S",
      "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "M",
+     "from": "A",
      "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "L",
+     "from": "B",
+     "to": "A"
     }
    ],
    "mirror": "L//MS",
@@ -4374,65 +4169,18 @@
   {
    "board": "MS//LS",
    "index": 261,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LS//MS",
    "canonical_key": "LS//MS"
   },
   {
    "board": "MS//LM",
    "index": 262,
-   "clearable": true,
-   "min_moves": 6,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "M",
-     "from": "A",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "M",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "M",
-     "from": "B",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LM//MS",
    "canonical_key": "LM//MS"
   },
@@ -4481,15 +4229,9 @@
   {
    "board": "MS/S/L",
    "index": 267,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "L/S/MS",
    "canonical_key": "L/S/MS"
   },
@@ -4514,25 +4256,9 @@
   {
    "board": "MS/S/LM",
    "index": 270,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LM/S/MS",
    "canonical_key": "LM/S/MS"
   },
@@ -4597,15 +4323,9 @@
   {
    "board": "MS/M/L",
    "index": 275,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "L/M/MS",
    "canonical_key": "L/M/MS"
   },
@@ -4637,25 +4357,9 @@
   {
    "board": "MS/M/LS",
    "index": 277,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LS/M/MS",
    "canonical_key": "LS/M/MS"
   },
@@ -4730,8 +4434,38 @@
    "board": "MS/L/L",
    "index": 283,
    "clearable": true,
-   "min_moves": 1,
+   "min_moves": 7,
    "min_path": [
+    {
+     "size": "S",
+     "from": "A",
+     "to": "C"
+    },
+    {
+     "size": "M",
+     "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "S",
+     "from": "C",
+     "to": "B"
+    },
+    {
+     "size": "L",
+     "from": "C",
+     "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "M",
+     "from": "B",
+     "to": "C"
+    },
     {
      "size": "S",
      "from": "A",
@@ -4769,65 +4503,18 @@
   {
    "board": "MS/L/LS",
    "index": 285,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LS/L/MS",
    "canonical_key": "LS/L/MS"
   },
   {
    "board": "MS/L/LM",
    "index": 286,
-   "clearable": true,
-   "min_moves": 6,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "M",
-     "from": "A",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "M",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "M",
-     "from": "B",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LM/L/MS",
    "canonical_key": "LM/L/MS"
   },
@@ -4876,15 +4563,9 @@
   {
    "board": "MS/MS/L",
    "index": 291,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "L/MS/MS",
    "canonical_key": "L/MS/MS"
   },
@@ -4909,25 +4590,9 @@
   {
    "board": "MS/MS/LM",
    "index": 294,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LM/MS/MS",
    "canonical_key": "LM/MS/MS"
   },
@@ -4976,15 +4641,9 @@
   {
    "board": "MS/LS/L",
    "index": 299,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "L/LS/MS",
    "canonical_key": "L/LS/MS"
   },
@@ -5009,25 +4668,9 @@
   {
    "board": "MS/LS/LM",
    "index": 302,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LM/LS/MS",
    "canonical_key": "LM/LS/MS"
   },
@@ -5092,15 +4735,9 @@
   {
    "board": "MS/LM/L",
    "index": 307,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "L/LM/MS",
    "canonical_key": "L/LM/MS"
   },
@@ -5132,25 +4769,9 @@
   {
    "board": "MS/LM/LS",
    "index": 309,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LS/LM/MS",
    "canonical_key": "LS/LM/MS"
   },
@@ -5208,15 +4829,9 @@
   {
    "board": "MS/LMS/L",
    "index": 315,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "L/LMS/MS",
    "canonical_key": "L/LMS/MS"
   },
@@ -5241,25 +4856,9 @@
   {
    "board": "MS/LMS/LM",
    "index": 318,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LM/LMS/MS",
    "canonical_key": "LM/LMS/MS"
   },
@@ -5310,12 +4909,32 @@
    "board": "LS//M",
    "index": 322,
    "clearable": true,
-   "min_moves": 1,
+   "min_moves": 5,
    "min_path": [
+    {
+     "size": "M",
+     "from": "C",
+     "to": "B"
+    },
     {
      "size": "S",
      "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "L",
+     "from": "A",
      "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "M",
+     "from": "B",
+     "to": "A"
     }
    ],
    "mirror": "M//LS",
@@ -5339,25 +4958,9 @@
   {
    "board": "LS//MS",
    "index": 324,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "MS//LS",
    "canonical_key": "LS//MS"
   },
@@ -5441,15 +5044,9 @@
   {
    "board": "LS/S/M",
    "index": 330,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "M/S/LS",
    "canonical_key": "LS/S/M"
   },
@@ -5489,25 +5086,9 @@
   {
    "board": "LS/S/LM",
    "index": 334,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LM/S/LS",
    "canonical_key": "LM/S/LS"
   },
@@ -5557,15 +5138,9 @@
   {
    "board": "LS/M/M",
    "index": 338,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "M/M/LS",
    "canonical_key": "LS/M/M"
   },
@@ -5587,25 +5162,9 @@
   {
    "board": "LS/M/MS",
    "index": 340,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "MS/M/LS",
    "canonical_key": "LS/M/MS"
   },
@@ -5706,12 +5265,32 @@
    "board": "LS/L/M",
    "index": 346,
    "clearable": true,
-   "min_moves": 1,
+   "min_moves": 5,
    "min_path": [
+    {
+     "size": "M",
+     "from": "C",
+     "to": "B"
+    },
     {
      "size": "S",
      "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "L",
+     "from": "A",
      "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "M",
+     "from": "B",
+     "to": "A"
     }
    ],
    "mirror": "M/L/LS",
@@ -5735,25 +5314,9 @@
   {
    "board": "LS/L/MS",
    "index": 348,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "MS/L/LS",
    "canonical_key": "LS/L/MS"
   },
@@ -5837,15 +5400,9 @@
   {
    "board": "LS/MS/M",
    "index": 354,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "M/MS/LS",
    "canonical_key": "LS/MS/M"
   },
@@ -5885,25 +5442,9 @@
   {
    "board": "LS/MS/LM",
    "index": 358,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LM/MS/LS",
    "canonical_key": "LM/MS/LS"
   },
@@ -5937,15 +5478,9 @@
   {
    "board": "LS/LS/M",
    "index": 362,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "M/LS/LS",
    "canonical_key": "LS/LS/M"
   },
@@ -5985,25 +5520,9 @@
   {
    "board": "LS/LS/LM",
    "index": 366,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LM/LS/LS",
    "canonical_key": "LM/LS/LS"
   },
@@ -6053,15 +5572,9 @@
   {
    "board": "LS/LM/M",
    "index": 370,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "M/LM/LS",
    "canonical_key": "LS/LM/M"
   },
@@ -6083,25 +5596,9 @@
   {
    "board": "LS/LM/MS",
    "index": 372,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "MS/LM/LS",
    "canonical_key": "LS/LM/MS"
   },
@@ -6185,15 +5682,9 @@
   {
    "board": "LS/LMS/M",
    "index": 378,
-   "clearable": true,
-   "min_moves": 1,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "M/LMS/LS",
    "canonical_key": "LS/LMS/M"
   },
@@ -6233,25 +5724,9 @@
   {
    "board": "LS/LMS/LM",
    "index": 382,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LM/LMS/LS",
    "canonical_key": "LM/LMS/LS"
   },
@@ -6293,20 +5768,30 @@
    "board": "LM//S",
    "index": 385,
    "clearable": true,
-   "min_moves": 3,
+   "min_moves": 5,
    "min_path": [
+    {
+     "size": "M",
+     "from": "A",
+     "to": "B"
+    },
     {
      "size": "S",
      "from": "C",
      "to": "B"
     },
     {
-     "size": "M",
+     "size": "L",
      "from": "A",
      "to": "C"
     },
     {
      "size": "S",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "M",
      "from": "B",
      "to": "C"
     }
@@ -6341,40 +5826,9 @@
   {
    "board": "LM//MS",
    "index": 388,
-   "clearable": true,
-   "min_moves": 6,
-   "min_path": [
-    {
-     "size": "M",
-     "from": "A",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "M",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "M",
-     "from": "B",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "MS//LM",
    "canonical_key": "LM//MS"
   },
@@ -6447,20 +5901,40 @@
    "board": "LM/S/",
    "index": 392,
    "clearable": true,
-   "min_moves": 3,
+   "min_moves": 7,
    "min_path": [
-    {
-     "size": "M",
-     "from": "A",
-     "to": "C"
-    },
     {
      "size": "S",
      "from": "B",
      "to": "C"
     },
     {
+     "size": "M",
+     "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "S",
+     "from": "C",
+     "to": "B"
+    },
+    {
      "size": "L",
+     "from": "A",
+     "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "M",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "S",
      "from": "A",
      "to": "B"
     }
@@ -6480,20 +5954,9 @@
   {
    "board": "LM/S/M",
    "index": 394,
-   "clearable": true,
-   "min_moves": 2,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
-    },
-    {
-     "size": "M",
-     "from": "A",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "M/S/LM",
    "canonical_key": "LM/S/M"
   },
@@ -6515,50 +5978,18 @@
   {
    "board": "LM/S/MS",
    "index": 396,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "MS/S/LM",
    "canonical_key": "LM/S/MS"
   },
   {
    "board": "LM/S/LS",
    "index": 397,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LS/S/LM",
    "canonical_key": "LM/S/LS"
   },
@@ -6566,7 +5997,7 @@
    "board": "LM/S/LM",
    "index": 398,
    "clearable": true,
-   "min_moves": 3,
+   "min_moves": 7,
    "min_path": [
     {
      "size": "S",
@@ -6581,7 +6012,27 @@
     {
      "size": "S",
      "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "M",
+     "from": "A",
      "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "M",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "C",
+     "to": "B"
     }
    ],
    "mirror": "LM/S/LM",
@@ -6614,25 +6065,9 @@
   {
    "board": "LM/M/S",
    "index": 401,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "M",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "S/M/LM",
    "canonical_key": "LM/M/S"
   },
@@ -6678,17 +6113,17 @@
     {
      "size": "S",
      "from": "C",
-     "to": "A"
+     "to": "B"
     },
     {
      "size": "M",
-     "from": "B",
+     "from": "A",
      "to": "C"
     },
     {
      "size": "S",
-     "from": "A",
-     "to": "B"
+     "from": "B",
+     "to": "A"
     }
    ],
    "mirror": "LS/M/LM",
@@ -6747,20 +6182,30 @@
    "board": "LM/L/S",
    "index": 409,
    "clearable": true,
-   "min_moves": 3,
+   "min_moves": 5,
    "min_path": [
+    {
+     "size": "M",
+     "from": "A",
+     "to": "B"
+    },
     {
      "size": "S",
      "from": "C",
      "to": "B"
     },
     {
-     "size": "M",
+     "size": "L",
      "from": "A",
      "to": "C"
     },
     {
      "size": "S",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "M",
      "from": "B",
      "to": "C"
     }
@@ -6795,40 +6240,9 @@
   {
    "board": "LM/L/MS",
    "index": 412,
-   "clearable": true,
-   "min_moves": 6,
-   "min_path": [
-    {
-     "size": "M",
-     "from": "A",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "M",
-     "from": "C",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "M",
-     "from": "B",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "MS/L/LM",
    "canonical_key": "LM/L/MS"
   },
@@ -6942,50 +6356,18 @@
   {
    "board": "LM/MS/MS",
    "index": 420,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "MS/MS/LM",
    "canonical_key": "LM/MS/MS"
   },
   {
    "board": "LM/MS/LS",
    "index": 421,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LS/MS/LM",
    "canonical_key": "LM/MS/LS"
   },
@@ -7017,15 +6399,35 @@
    "board": "LM/LS/",
    "index": 424,
    "clearable": true,
-   "min_moves": 5,
+   "min_moves": 7,
    "min_path": [
+    {
+     "size": "S",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "L",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "M",
+     "from": "A",
+     "to": "C"
+    },
     {
      "size": "S",
      "from": "B",
      "to": "C"
     },
     {
-     "size": "M",
+     "size": "L",
      "from": "A",
      "to": "B"
     },
@@ -7033,16 +6435,6 @@
      "size": "S",
      "from": "C",
      "to": "B"
-    },
-    {
-     "size": "L",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
     }
    ],
    "mirror": "/LS/LM",
@@ -7060,20 +6452,9 @@
   {
    "board": "LM/LS/M",
    "index": 426,
-   "clearable": true,
-   "min_moves": 2,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
-    },
-    {
-     "size": "M",
-     "from": "A",
-     "to": "B"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "M/LS/LM",
    "canonical_key": "LM/LS/M"
   },
@@ -7095,50 +6476,18 @@
   {
    "board": "LM/LS/MS",
    "index": 428,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "MS/LS/LM",
    "canonical_key": "LM/LS/MS"
   },
   {
    "board": "LM/LS/LS",
    "index": 429,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LS/LS/LM",
    "canonical_key": "LM/LS/LS"
   },
@@ -7146,7 +6495,7 @@
    "board": "LM/LS/LM",
    "index": 430,
    "clearable": true,
-   "min_moves": 3,
+   "min_moves": 7,
    "min_path": [
     {
      "size": "S",
@@ -7161,7 +6510,27 @@
     {
      "size": "S",
      "from": "A",
+     "to": "B"
+    },
+    {
+     "size": "M",
+     "from": "A",
      "to": "C"
+    },
+    {
+     "size": "S",
+     "from": "B",
+     "to": "C"
+    },
+    {
+     "size": "M",
+     "from": "B",
+     "to": "A"
+    },
+    {
+     "size": "S",
+     "from": "C",
+     "to": "B"
     }
    ],
    "mirror": "LM/LS/LM",
@@ -7194,25 +6563,9 @@
   {
    "board": "LM/LM/S",
    "index": 433,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "M",
-     "from": "A",
-     "to": "C"
-    },
-    {
-     "size": "S",
-     "from": "B",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "S/LM/LM",
    "canonical_key": "LM/LM/S"
   },
@@ -7258,17 +6611,17 @@
     {
      "size": "S",
      "from": "C",
-     "to": "A"
+     "to": "B"
     },
     {
      "size": "M",
-     "from": "B",
+     "from": "A",
      "to": "C"
     },
     {
      "size": "S",
-     "from": "A",
-     "to": "B"
+     "from": "B",
+     "to": "A"
     }
    ],
    "mirror": "LS/LM/LM",
@@ -7343,50 +6696,18 @@
   {
    "board": "LM/LMS/MS",
    "index": 444,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "MS/LMS/LM",
    "canonical_key": "LM/LMS/MS"
   },
   {
    "board": "LM/LMS/LS",
    "index": 445,
-   "clearable": true,
-   "min_moves": 3,
-   "min_path": [
-    {
-     "size": "S",
-     "from": "B",
-     "to": "A"
-    },
-    {
-     "size": "S",
-     "from": "C",
-     "to": "B"
-    },
-    {
-     "size": "S",
-     "from": "A",
-     "to": "C"
-    }
-   ],
+   "clearable": false,
+   "min_moves": null,
+   "min_path": null,
    "mirror": "LS/LMS/LM",
    "canonical_key": "LM/LMS/LS"
   },

@@ -27,10 +27,10 @@ from app.state.machine import (
 )
 from app.state.store import MemoryStore
 
-# S1テスト済みの検証値: L/MS/L=24点(4箱*6手)、LMS//=21点(3箱*7手)、
+# S1テスト済みの検証値: L/MS/L=60点(4箱*15手)、LMS//=21点(3箱*7手)、
 # //LMS はその鏡像、LMS/MS/L はクリア不可
 SCORED_BOARD = "L/MS/L"
-SCORED_POINTS = 24
+SCORED_POINTS = 60
 MIRROR_A = "LMS//"
 MIRROR_A_POINTS = 21
 MIRROR_B = "//LMS"

@@ -1,9 +1,9 @@
 """事前計算テーブル(contracts/game-core-api.md §3)のテスト。
 
 DoDの核: 独立実装の総当たりBFSとの照合で512盤面全一致。
-検算値(ルールブック§7 / game-core-api.md §4): クリア可能304/512、鏡像同一視で
-166クラス、最短手数の最大は7手(LMS//)、総得点プール1556点。
-score_ranking.md の全166クラスとも照合する。
+検算値(ルールブック§7 / game-core-api.md §4): クリア可能220/512、鏡像同一視で
+124クラス、最短手数の最大は15手(L/MS/L)、総得点プール1282点。
+score_ranking.md の全124クラスとも照合する。
 """
 
 import json
@@ -79,7 +79,7 @@ def _counts(board: str) -> tuple[int, ...]:
 
 @cache
 def _independent_min_moves(board: str) -> int | None:
-    """全点距離を計算してから目標状態(枚数反転かつ箱が初期と別の塔にある)の最小距離を取る。"""
+    """全点距離を計算してから目標状態(初期の鏡像かつ箱が初期と別の塔にある)の最小距離を取る。"""
     start = _independent_labelled(board)
     distances = {start: 0}
     queue = deque([start])
@@ -89,12 +89,13 @@ def _independent_min_moves(board: str) -> int | None:
             if nxt not in distances:
                 distances[nxt] = distances[current] + 1
                 queue.append(nxt)
-    goal_counts = _counts(board)[::-1]
+    # 目標のサイズ列は mirror_board() から独立に作る(実装の _size_towers を使わない)
+    goal_sizes = tuple(mirror_board(board).split("/"))
     home = {box: i for i, tower in enumerate(start) for box in tower}
     goals = [
         state
         for state in distances
-        if tuple(len(t) for t in state) == goal_counts
+        if tuple("".join(b[0] for b in tower) for tower in state) == goal_sizes
         and any(home[box] != i for i, tower in enumerate(state) for box in tower)
     ]
     return min((distances[g] for g in goals), default=None)
@@ -124,14 +125,14 @@ def test_committed_json_matches_regeneration(table: PrecomputeTable) -> None:
 
 def test_reference_totals(table: PrecomputeTable) -> None:
     clearable = [e for e in table.boards if e.clearable]
-    assert len(clearable) == 304
+    assert len(clearable) == 220
 
     keys = {e.canonical_key for e in clearable}
-    assert len(keys) == 166
+    assert len(keys) == 124
 
     max_moves = max(e.min_moves for e in clearable if e.min_moves is not None)
-    assert max_moves == 7
-    assert {e.board for e in clearable if e.min_moves == 7} == {"LMS//", "//LMS"}
+    assert max_moves == 15
+    assert {e.board for e in clearable if e.min_moves == 15} == {"L/MS/L"}  # 左右対称・自己鏡像
 
     # 総得点プール(鏡像同一視。canonical_key は自身も盤面文字列)
     pool = 0
@@ -139,7 +140,7 @@ def test_reference_totals(table: PrecomputeTable) -> None:
         entry = table.entry(key)
         assert entry.min_moves is not None
         pool += box_count(key) * entry.min_moves
-    assert pool == 1556
+    assert pool == 1282
 
 
 def test_no_zero_move_clear(table: PrecomputeTable) -> None:
@@ -150,22 +151,31 @@ def test_no_zero_move_clear(table: PrecomputeTable) -> None:
             assert entry.min_path is not None and len(entry.min_path) >= 1
 
 
-def test_same_size_swap_counts_as_clear(table: PrecomputeTable) -> None:
-    # クリア条件2は箱の個体で見る(ルールブック§5)。同サイズの箱を塔間で入れ替えると
-    # 盤面文字列は初期と同一のままだが、箱は動いているのでクリアが成立する
-    for board, moves in (("LMS/LM/LMS", 3), ("LMS//LMS", 3), ("S//S", 3), ("L/LMS/M", 6)):
+def test_self_mirror_boards_need_actual_movement(table: PrecomputeTable) -> None:
+    # 左右対称(鏡像が自分自身)の盤面は条件1が最初から成立するため、条件2が
+    # 「実際に箱を動かすこと」を要求する(ルールブック§5)。同サイズの入れ替えで成立する
+    for board, moves in (("LMS/LM/LMS", 3), ("LMS//LMS", 3), ("S//S", 3), ("L/MS/L", 15)):
+        assert mirror_board(board) == board, board
         entry = table.entry(board)
         assert entry.clearable, board
         assert entry.min_moves == moves, board
 
 
+def test_counts_reversed_but_not_mirrored_is_unclearable(table: PrecomputeTable) -> None:
+    # 条件1はサイズまで含めた鏡像。枚数だけ反転できてもサイズ配置が一致しなければクリア不可
+    for board in ("L/LMS/M", "LMS/MS/L"):
+        entry = table.entry(board)
+        assert not entry.clearable, board
+        assert entry.min_moves is None and entry.min_path is None
+
+
 def test_frozen_and_immobile_boards_are_unclearable(table: PrecomputeTable) -> None:
-    # 合法手が尽きる盤面、および枚数条件を保ったまま箱を動かせない盤面はクリア不可
+    # 合法手が尽きる盤面、および条件1を保ったまま箱を動かせない盤面はクリア不可
     for board in (
         "LMS/MS/LMS",  # 3塔とも最上段が小・空塔なし → 合法手が1手も無い
         "LMS/LS/LMS",
         "S/S/S",
-        "/LMS/",  # 枚数 (0,3,0) を保てるのは初期状態そのものだけ
+        "/LMS/",  # 鏡像は自分自身だが、箱を動かすと必ず形が崩れる
         "//",
     ):
         entry = table.entry(board)
@@ -215,9 +225,9 @@ def test_min_paths_are_legal_and_reach_goal(table: PrecomputeTable) -> None:
                 assert _ORDER.index(dst[-1][0]) > _ORDER.index(move.size)
             towers[move.to] = (*dst, towers[move.from_][-1])
             towers[move.from_] = towers[move.from_][:-1]
-        # クリア条件(§5): 枚数が左右反転し、かつ箱が1個以上は初期と別の塔にある
+        # クリア条件(§5): 盤面が初期の鏡像になり、かつ箱が1個以上は初期と別の塔にある
         final = "/".join("".join(b[0] for b in towers[t]) for t in "ABC")
-        assert _counts(final) == _counts(entry.board)[::-1]
+        assert final == mirror_board(entry.board)
         assert any(home[box] != name for name, tower in towers.items() for box in tower)
 
 
@@ -252,7 +262,7 @@ def test_json_move_uses_from_alias() -> None:
 
 
 # ---------------------------------------------------------------------------
-# score_ranking.md(全166クラス)との照合
+# score_ranking.md(全124クラス)との照合
 # ---------------------------------------------------------------------------
 
 _KANJI_TO_CHAR = {"大": "L", "中": "M", "小": "S"}
@@ -283,7 +293,7 @@ def _ranking_rows() -> list[tuple[int, int, int, str]]:
 
 def test_score_ranking_document_matches_table(table: PrecomputeTable) -> None:
     rows = _ranking_rows()
-    assert len(rows) == 166
+    assert len(rows) == 124
 
     seen_keys = set()
     for points, boxes, moves, board in rows:
@@ -294,6 +304,6 @@ def test_score_ranking_document_matches_table(table: PrecomputeTable) -> None:
         assert boxes * moves == points, board
         seen_keys.add(entry.canonical_key)
 
-    # 代表166行の正準キー集合 = テーブル上のクリア可能クラス全体
+    # 代表124行の正準キー集合 = テーブル上のクリア可能クラス全体
     clearable_keys = {e.canonical_key for e in table.boards if e.clearable}
     assert seen_keys == clearable_keys

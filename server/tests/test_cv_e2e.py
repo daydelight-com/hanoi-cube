@@ -214,7 +214,7 @@ def test_playthrough_with_state_machine(cv_run: tuple[list[CvBoardUpdate], list[
     d.machine.on_cv_message(violation, d.now)
     assert not sent(d.press("enter"), "judge")
 
-    # 解消 → 最終盤面 "L/MS/L" で判定 → 24点(S1で検証済みのスコア)
+    # 解消 → 最終盤面 "L/MS/L" で判定 → SCORED_POINTS(S1で検証済みのスコア)
     for update in updates[-2:]:
         d.advance(500)
         d.machine.on_cv_message(update, d.now)

@@ -117,23 +117,32 @@ def _legal_moves(towers: _Boxes) -> list[tuple[Move, _Boxes]]:
     return results
 
 
+def _size_towers(towers: _Boxes) -> tuple[str, str, str]:
+    """個体つき盤面をサイズ列(塔文字列3つ)に落とす。"""
+    a, b, c = ("".join(box[0] for box in tower) for tower in towers)
+    return (a, b, c)
+
+
 def solve(board: str) -> tuple[int, list[Move]] | None:
     """初期盤面からのBFSで最短クリア手順を求める。クリア不可なら None。
 
-    クリア条件(ルールブック§5): 枚数配置 (a,b,c) が (c,b,a) になり、かつ
-    **少なくとも1個の箱が初期状態とは別の塔にある**こと。
+    クリア条件(ルールブック§5):
+      1. 盤面が初期盤面の**左右反転(鏡像)**になっていること。枚数だけでなく
+         どのサイズがどの塔にあるかまで一致させる(`mirror_board(board)` と同じ形)。
+      2. **少なくとも1個の箱が初期状態とは別の塔にある**こと。
 
-    条件2は箱の個体で見る。同サイズの箱を塔間で入れ替えただけの盤面は盤面文字列としては
-    初期と同一だが、箱は動いているのでクリアとして成立する(例: `LMS/LM/LMS` は3手)。
+    条件2は箱の個体で見る。左右対称な盤面(鏡像が自分自身)では条件1が最初から
+    成立してしまうため、条件2が「実際に動かすこと」を要求する役割を持つ
+    (例: `LMS/LM/LMS` は3手、`L/MS/L` は15手)。
     """
     start = label_boxes(parse_board(board))
-    goal_counts = tuple(len(t) for t in reversed(start))
+    goal_sizes = tuple(reversed(_size_towers(start)))
     home = {box: i for i, tower in enumerate(start) for box in tower}
     parent: dict[_Boxes, tuple[_Boxes, Move] | None] = {start: None}
     queue: deque[_Boxes] = deque([start])
     while queue:
         current = queue.popleft()
-        if tuple(len(t) for t in current) == goal_counts and any(
+        if _size_towers(current) == goal_sizes and any(
             home[box] != i for i, tower in enumerate(current) for box in tower
         ):
             path: list[Move] = []

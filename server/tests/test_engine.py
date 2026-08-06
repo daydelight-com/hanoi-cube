@@ -2,9 +2,9 @@
 
 ルールブック§5・§6 の例をテストケース化する:
 - LMS/LM/L はクリア可能で最短3手(§5 クリア手順の例)
-- L/MS/L は 24点(4箱 * 6手。得点ランキング1位)
+- L/MS/L は 60点(4箱 * 15手。得点ランキング1位)
 - LMS/MS/L はクリア不可(§5 クリア不可の例)
-- 対称枚数配置の0手クリア禁止(§5 条件2)
+- 左右対称(自己鏡像)盤面の0手クリア禁止(§5 条件2)
 - 同一盤面の再判定は duplicate_same、鏡像は duplicate_mirror(§6)
 """
 
@@ -30,13 +30,22 @@ def test_rulebook_example_is_min_3_moves(table: PrecomputeTable) -> None:
     assert result.canonical_key == canonical_key("LMS/LM/L")
 
 
-def test_top_scoring_board_is_30_points(table: PrecomputeTable) -> None:
-    # ランキング1位: [大]/[大,中,小]/[中] = 5箱 * 6手 = 30点
-    result = judge("L/LMS/M", EMPTY, EMPTY, table)
+def test_top_scoring_board_is_60_points(table: PrecomputeTable) -> None:
+    # ランキング1位: [大]/[中,小]/[大] = 4箱 * 15手 = 60点(最短手数の最大でもある)
+    result = judge("L/MS/L", EMPTY, EMPTY, table)
     assert result.result == "scored"
-    assert result.points == 30
-    assert result.min_moves == 6
-    assert score("L/LMS/M", table) == 30
+    assert result.points == 60
+    assert result.min_moves == 15
+    assert score("L/MS/L", table) == 60
+
+
+def test_counts_reversed_but_not_mirrored_is_unclearable(table: PrecomputeTable) -> None:
+    # §5 条件1はサイズまで含めた鏡像。枚数 (1,3,1) は最初から反転済みだが、
+    # [大]/[大,中,小]/[中] を鏡像の [中]/[大,中,小]/[大] にはできない
+    result = judge("L/LMS/M", EMPTY, EMPTY, table)
+    assert result.result == "unclearable"
+    assert result.points == 0
+    assert result.min_moves is None
 
 
 def test_rulebook_unclearable_example(table: PrecomputeTable) -> None:
@@ -49,9 +58,9 @@ def test_rulebook_unclearable_example(table: PrecomputeTable) -> None:
     assert min_path("LMS/MS/L", table) is None
 
 
-def test_symmetric_placement_needs_actual_box_movement(table: PrecomputeTable) -> None:
-    # §5 条件2: 左右対称な枚数配置でも0手クリアは不可。ただし同サイズの箱を塔間で
-    # 入れ替えれば「箱が別の塔にある」を満たすため、実際に動かせばクリアになる
+def test_self_mirror_placement_needs_actual_box_movement(table: PrecomputeTable) -> None:
+    # §5 条件2: 左右対称(鏡像が自分自身)の盤面は条件1が最初から成立するが、
+    # 0手クリアは不可。同サイズの箱を塔間で入れ替えて実際に動かせばクリアになる
     result = judge("LMS//LMS", EMPTY, EMPTY, table)
     assert result.result == "scored"
     assert result.min_moves == 3
