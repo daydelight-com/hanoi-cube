@@ -57,25 +57,30 @@ class UploadSink(Protocol):
     def upload(self, record: PlayRecord) -> None: ...
 
 
-class FirestoreSink:
-    """Firebase Admin SDK による plays/{play_id} への set()(仕様§8.2)。
+def make_firestore_client() -> Any:
+    """環境変数から Firestore クライアントを構成する(アップローダとリセットで共用)。
 
     認証はサービスアカウント(HANOI_FIREBASE_CREDENTIALS のJSONパス)。
     FIRESTORE_EMULATOR_HOST 設定時は Admin SDK がエミュレータへ接続する
     (この場合は認証不要。HANOI_FIREBASE_PROJECT でプロジェクトIDを指定)。
     """
+    import firebase_admin
+    from firebase_admin import credentials, firestore
+
+    cred_path = os.environ.get("HANOI_FIREBASE_CREDENTIALS")
+    cred = credentials.Certificate(cred_path) if cred_path else None
+    options: dict[str, Any] = {}
+    if project := os.environ.get("HANOI_FIREBASE_PROJECT"):
+        options["projectId"] = project
+    app = firebase_admin.initialize_app(cred, options or None)
+    return firestore.client(app)
+
+
+class FirestoreSink:
+    """Firebase Admin SDK による plays/{play_id} への set()(仕様§8.2)。"""
 
     def __init__(self) -> None:
-        import firebase_admin
-        from firebase_admin import credentials, firestore
-
-        cred_path = os.environ.get("HANOI_FIREBASE_CREDENTIALS")
-        cred = credentials.Certificate(cred_path) if cred_path else None
-        options: dict[str, Any] = {}
-        if project := os.environ.get("HANOI_FIREBASE_PROJECT"):
-            options["projectId"] = project
-        app = firebase_admin.initialize_app(cred, options or None)
-        self._db = firestore.client(app)
+        self._db = make_firestore_client()
 
     def upload(self, record: PlayRecord) -> None:
         self._db.collection("plays").document(record.play_id).set(play_document(record))
