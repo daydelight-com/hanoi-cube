@@ -18,3 +18,6 @@ dist/
 
 # Firebaseエミュレータのログ
 *-debug.log
+
+# Firebaseサービスアカウント鍵(秘密情報。絶対にコミットしない)
+service-account.json
