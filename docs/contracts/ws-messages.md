@@ -11,7 +11,7 @@
 
 | type | 送信タイミング | payload |
 |---|---|---|
-| `snapshot` | 接続直後・再接続直後 | `{ screen, ctx, lang, board }`(§3。board = 最新の確定盤面) |
+| `snapshot` | 接続直後・再接続直後 | `{ screen, ctx, lang, board, camera_side }`(§3。board = 最新の確定盤面) |
 | `screen` | 画面遷移のたび | `{ screen, ctx }` |
 | `lang` | 言語切替・リセット時 | `{ lang: "ja" \| "en" }` |
 | `boxes` | 約30fps(全画面で常時) | `{ t_ms, boxes: BoxObservation[] }`(cv-interface.md §2 と同型) |
@@ -52,12 +52,19 @@
 // snapshot: lang と最新の確定盤面(board メッセージと同型)を含む。
 // 静止盤面のまま再接続しても board を待たずに全状態を復元できるようにする
 { "screen": "game_play", "ctx": { ... }, "lang": "ja",
+  "camera_side": "back",   // "back" | "front"。カメラの設置側(環境変数 HANOI_CAMERA_SIDE、既定 back)
   "board": { "t_ms": 0, "towers": ["", "", ""], "board": "//", "legal": true,
              "violations": [], "staging_box_ids": [ ... ] } }   // 未確定なら null
 { "screen": "game_play", "ctx": { ... } }                        // screen
 ```
 
 `screen` は screens.md の画面ID。`ctx` は画面ごとの表示データ(screens.md §3 に画面別の ctx 型を定義)。
+
+`camera_side` はカメラがマットのどちら側にあるかを表す(`back`=マット奥側=待機エリアがプレイヤー側、既定 /
+`front`=マット待機エリア側=プレイヤーはマット奥側)。運用前提「カメラは常にプレイヤーの反対側」のもと、
+ディスプレイは `front` のとき3D視点を180°反転(塔側から)して描画し、常にプレイヤー視点の表示にする。
+値はサーバー起動時に確定し変化しないため `snapshot` のみで伝える(専用メッセージは設けない)。
+コントローラ snapshot(§5)には含めない。
 
 ## 4. SfxId(仕様§5.12)
 

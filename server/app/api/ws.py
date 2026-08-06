@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 
-from app.api.messages import ButtonPayload, InboundMessage, NameTextPayload, Outbound
+from app.api.messages import ButtonPayload, CameraSide, InboundMessage, NameTextPayload, Outbound
 from app.cv.interface import CvBoardUpdate, CvFrame, CvSource
 from app.state.machine import StateMachine
 from app.state.store import PlayStore
@@ -57,6 +57,8 @@ class GameServer:
     hub: Hub
     cv: CvSource
     store: PlayStore
+    # カメラの設置側(ws-messages.md §3)。ゲーム状態ではないため状態機械には持たせない
+    camera_side: CameraSide = "back"
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
     async def dispatch(self, outbounds: list[Outbound]) -> None:
@@ -99,7 +101,13 @@ async def ws_display(websocket: WebSocket) -> None:
     async with server.lock:
         # 登録前に snapshot を送り、最初の受信メッセージが必ず snapshot になるようにする
         await websocket.send_json(
-            {"type": "snapshot", "payload": server.machine.display_snapshot()}
+            {
+                "type": "snapshot",
+                "payload": {
+                    **server.machine.display_snapshot(),
+                    "camera_side": server.camera_side,
+                },
+            }
         )
         server.hub.display.add(websocket)
     try:

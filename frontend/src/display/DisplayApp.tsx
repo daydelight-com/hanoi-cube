@@ -59,7 +59,11 @@ export function DisplayApp() {
   const board = state.board
   return (
     <div className="retro-root" style={{ background: 'var(--crt-bg)' }}>
-      <BoardCanvas onScene={(scene) => (sceneRef.current = scene)} onFps={setFps} />
+      <BoardCanvas
+        onScene={(scene) => (sceneRef.current = scene)}
+        onFps={setFps}
+        cameraSide={state.cameraSide}
+      />
       <ScreenView lang={state.lang} screen={state.screen} lastJudge={state.lastJudge} />
       {!connected && state.screen !== null && (
         <div className="retro-disconnected">{t(state.lang, 'disconnected')}</div>
@@ -83,7 +87,7 @@ export function DisplayApp() {
         >
           {[
             `ws: ${connected ? 'connected' : 'disconnected'}  fps: ${fps.toFixed(0)}`,
-            `screen: ${state.screen?.screen ?? '-'}  lang: ${state.lang}`,
+            `screen: ${state.screen?.screen ?? '-'}  lang: ${state.lang}  camera: ${state.cameraSide}`,
             board
               ? `board: ${board.board || '//'}  legal: ${board.legal}` +
                 (board.violations.length

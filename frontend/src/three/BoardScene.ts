@@ -4,6 +4,7 @@
 import * as THREE from 'three'
 import type { BoxObservation, BoxId, BoxSize } from '../contracts/cv'
 import { BOX_EDGE_MM } from '../contracts/cv'
+import type { CameraSide } from '../contracts/ws'
 import { FACE_BY_MATERIAL_INDEX } from './faces'
 import {
   MAT_SIZE_MM,
@@ -37,6 +38,7 @@ export class BoardScene {
   private renderer: THREE.WebGLRenderer
   private scene = new THREE.Scene()
   private camera: THREE.PerspectiveCamera
+  private sun: THREE.DirectionalLight
   private lastTickMs: number | null = null
   private boxes = new Map<BoxId, BoxEntry>()
   private faceTextures = new Map<BoxId, Map<number, THREE.Texture>>()
@@ -52,20 +54,30 @@ export class BoardScene {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
     this.camera = new THREE.PerspectiveCamera(45, 1, 10, 5000)
-    // カメラ距離は幅600mmマット時の値をマット幅に比例させ、寸法によらず同じ画角比で映す
-    const camScale = MAT_SIZE_MM.x / 600
-    this.camera.position.set(0, 520 * camScale, 640 * camScale)
-    this.camera.lookAt(0, 40 * camScale, 0)
-
     this.scene.background = new THREE.Color('#060d06')
     this.scene.add(new THREE.AmbientLight(0xffffff, 0.9))
-    const sun = new THREE.DirectionalLight(0xffffff, 1.6)
-    sun.position.set(-250, 600, 400)
-    this.scene.add(sun)
+    this.sun = new THREE.DirectionalLight(0xffffff, 1.6)
+    this.scene.add(this.sun)
+    this.setCameraSide('back')
 
     this.buildMat()
     void this.loadTextures()
     this.renderer.setAnimationLoop(() => this.tick())
+  }
+
+  /**
+   * 視点をカメラ設置側から決める(ws-messages.md §3)。back=待機エリア側(+z)からの
+   * 既定視点。front=カメラが待機エリア側にある設営で、プレイヤーは反対側にいるため
+   * 塔側(-z)から見た視点に180°反転する。座標データは変換しない(視点だけ変える)。
+   */
+  setCameraSide(side: CameraSide): void {
+    const sign = side === 'front' ? -1 : 1
+    // カメラ距離は幅600mmマット時の値をマット幅に比例させ、寸法によらず同じ画角比で映す
+    const camScale = MAT_SIZE_MM.x / 600
+    this.camera.position.set(0, 520 * camScale, sign * 640 * camScale)
+    this.camera.lookAt(0, 40 * camScale, 0)
+    // 反転視点でも「向かって左・手前上方からの光」に見えるよう x/z とも反転する
+    this.sun.position.set(sign * -250, 600, sign * 400)
   }
 
   /** 最新フレームの箱位置を目標値として設定する(WSの boxes メッセージから呼ぶ) */

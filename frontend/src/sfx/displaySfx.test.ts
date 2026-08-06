@@ -6,7 +6,7 @@ import type { DisplayState } from '../display/store'
 import { deriveDisplaySfx } from './displaySfx'
 
 function stateOf(screen: ScreenState | null): DisplayState {
-  return { screen, lang: 'ja', board: null, lastJudge: null }
+  return { screen, lang: 'ja', board: null, lastJudge: null, cameraSide: 'back' }
 }
 
 function screenMsg(payload: ScreenState): DisplayMessage {
@@ -235,7 +235,7 @@ describe('deriveDisplaySfx: countdown / timer / judge / name / lang / sfx', () =
     expect(
       deriveDisplaySfx(stateOf(null), {
         type: 'snapshot',
-        payload: { screen: 'idle_title', ctx: {}, lang: 'ja', board: null },
+        payload: { screen: 'idle_title', ctx: {}, lang: 'ja', board: null, camera_side: 'back' },
       }),
     ).toEqual([])
   })

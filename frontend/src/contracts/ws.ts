@@ -4,6 +4,8 @@ import type { BoxObservation, CvBoardUpdate } from './cv'
 
 export type Lang = 'ja' | 'en'
 export type ButtonName = 'left' | 'right' | 'enter'
+// カメラの設置側(back=マット奥側=既定 / front=待機エリア側。front のとき3D視点を180°反転)
+export type CameraSide = 'back' | 'front'
 
 // ---- 画面ID・画面別ctx(screens.md) ----
 
@@ -91,7 +93,11 @@ export type DisplayMessage =
   | {
       type: 'snapshot'
       // board = 最新の確定盤面(未確定なら null)。再接続時の復元に使う
-      payload: ScreenState & { lang: Lang; board: Omit<CvBoardUpdate, 'kind'> | null }
+      payload: ScreenState & {
+        lang: Lang
+        board: Omit<CvBoardUpdate, 'kind'> | null
+        camera_side: CameraSide
+      }
     }
   | { type: 'screen'; payload: ScreenState }
   | { type: 'lang'; payload: { lang: Lang } }

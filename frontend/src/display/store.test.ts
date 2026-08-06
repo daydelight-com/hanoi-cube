@@ -8,6 +8,7 @@ const snapshot: DisplayMessage = {
     screen: 'game_play',
     ctx: { score: 12, fail_count: 1, remaining_ms: 43000 },
     lang: 'en',
+    camera_side: 'front',
     board: {
       t_ms: 100,
       towers: ['LMS', '', 'L'],
@@ -38,14 +39,25 @@ function at(screen: DisplayState['screen']): DisplayState {
 }
 
 describe('reduceDisplay', () => {
-  it('snapshot で screen / lang / board を一括上書きする', () => {
+  it('snapshot で screen / lang / board / cameraSide を一括上書きする', () => {
     const s = reduceDisplay(initialDisplayState, snapshot)
+    // camera_side が screen へ混入しないこと(toEqual の完全一致で担保)
     expect(s.screen).toEqual({
       screen: 'game_play',
       ctx: { score: 12, fail_count: 1, remaining_ms: 43000 },
     })
     expect(s.lang).toBe('en')
     expect(s.board?.board).toBe('LMS//L')
+    expect(s.cameraSide).toBe('front')
+  })
+
+  it('snapshot 再受信で cameraSide が上書きされる(サーバー再起動後の再接続)', () => {
+    const s1 = reduceDisplay(initialDisplayState, snapshot)
+    const s2 = reduceDisplay(s1, {
+      ...snapshot,
+      payload: { ...snapshot.payload, camera_side: 'back' },
+    } as DisplayMessage)
+    expect(s2.cameraSide).toBe('back')
   })
 
   it('screen / lang / board を個別に更新する', () => {

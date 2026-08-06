@@ -6,7 +6,7 @@
 // 追い越しフレーム対策)。
 
 import type { CvBoardUpdate } from '../contracts/cv'
-import type { DisplayMessage, Judge, Lang, ScreenState } from '../contracts/ws'
+import type { CameraSide, DisplayMessage, Judge, Lang, ScreenState } from '../contracts/ws'
 
 export type ConfirmedBoard = Omit<CvBoardUpdate, 'kind'>
 
@@ -18,6 +18,8 @@ export interface DisplayState {
   board: ConfirmedBoard | null
   /** 最後に受信した判定結果(演出用。seq で新旧を区別する) */
   lastJudge: Judge | null
+  /** カメラの設置側(front のとき3D視点を180°反転してプレイヤー視点にする) */
+  cameraSide: CameraSide
 }
 
 export const initialDisplayState: DisplayState = {
@@ -25,6 +27,7 @@ export const initialDisplayState: DisplayState = {
   lang: 'ja',
   board: null,
   lastJudge: null,
+  cameraSide: 'back',
 }
 
 /** 受信メッセージを状態に畳み込む。未知の type は無視する(契約) */
@@ -32,8 +35,9 @@ export function reduceDisplay(state: DisplayState, msg: DisplayMessage): Display
   const screen = state.screen
   switch (msg.type) {
     case 'snapshot': {
-      const { lang, board, ...rest } = msg.payload
-      return { screen: rest as ScreenState, lang, board, lastJudge: null }
+      // camera_side は必ず分割代入で抜く(rest = ScreenState への混入防止)
+      const { lang, board, camera_side, ...rest } = msg.payload
+      return { screen: rest as ScreenState, lang, board, lastJudge: null, cameraSide: camera_side }
     }
     case 'screen':
       // 画面が変わったら判定演出を捨てる(練習の判定が本番入場時に再表示される等の

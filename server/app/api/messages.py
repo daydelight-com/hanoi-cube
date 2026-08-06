@@ -11,6 +11,7 @@ from typing import Any, Literal
 from pydantic import BaseModel
 
 Lang = Literal["ja", "en"]
+CameraSide = Literal["back", "front"]
 ButtonName = Literal["left", "right", "enter"]
 CountdownValue = Literal["3", "2", "1", "go"]
 InputMode = Literal["buttons", "name"]

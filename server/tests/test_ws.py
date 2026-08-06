@@ -32,6 +32,7 @@ def test_display_and_controller_snapshot_on_connect() -> None:
             assert msg["payload"]["screen"] == "idle_title"
             assert msg["payload"]["lang"] == "ja"
             assert msg["payload"]["board"] is None
+            assert msg["payload"]["camera_side"] == "back"  # 既定(ws-messages.md §3)
         with client.websocket_connect("/ws/controller") as controller:
             msg = controller.receive_json()
             assert msg["type"] == "snapshot"
@@ -41,6 +42,28 @@ def test_display_and_controller_snapshot_on_connect() -> None:
                 "input_mode": "buttons",
                 "name_text": "",
             }
+
+
+def test_display_snapshot_camera_side_front(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("HANOI_CAMERA_SIDE", "front")
+    with (
+        TestClient(create_app(start_loop=False)) as client,
+        client.websocket_connect("/ws/display") as display,
+    ):
+        assert display.receive_json()["payload"]["camera_side"] == "front"
+
+
+def test_camera_side_invalid_falls_back_to_back(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    monkeypatch.setenv("HANOI_CAMERA_SIDE", "left")
+    with (
+        caplog.at_level("WARNING", logger="app.api.main"),
+        TestClient(create_app(start_loop=False)) as client,
+        client.websocket_connect("/ws/display") as display,
+    ):
+        assert display.receive_json()["payload"]["camera_side"] == "back"
+    assert any("HANOI_CAMERA_SIDE" in rec.message for rec in caplog.records)
 
 
 def test_button_relays_to_display_and_snapshot_restores_after_reconnect() -> None:

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import logging
 import os
 from collections.abc import AsyncIterator, Callable
 from typing import Any
@@ -18,6 +19,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from app.api import ws
+from app.api.messages import CameraSide
 from app.api.ws import GameServer, Hub, run_loop
 from app.cloud.uploader import Uploader, make_sink
 from app.core.precompute import load_table
@@ -28,6 +30,18 @@ from app.state.sqlite_store import SqliteStore
 
 # ローカルDBの既定パス(仕様§7.1。output/ と *.sqlite3 はgitignore済み)
 DEFAULT_DB_PATH = "output/plays.sqlite3"
+
+logger = logging.getLogger(__name__)
+
+
+def _camera_side() -> CameraSide:
+    """環境変数 HANOI_CAMERA_SIDE を読む(back=カメラ奥側=既定 / front=カメラ待機エリア側)。"""
+    raw = os.environ.get("HANOI_CAMERA_SIDE", "back")
+    if raw == "front":
+        return "front"
+    if raw != "back":
+        logger.warning("HANOI_CAMERA_SIDE が不正: %r。back として扱う", raw)
+    return "back"
 
 
 def _make_cv() -> CvSource:
@@ -65,7 +79,9 @@ def create_app(*, start_loop: bool = True) -> FastAPI:
             now_ms=ws.now_ms(),
             record_url_base=os.environ.get("HANOI_RECORD_URL_BASE", DEFAULT_RECORD_URL_BASE),
         )
-        server = GameServer(machine=machine, hub=Hub(), cv=_make_cv(), store=store)
+        server = GameServer(
+            machine=machine, hub=Hub(), cv=_make_cv(), store=store, camera_side=_camera_side()
+        )
         app.state.game = server
         task = asyncio.create_task(run_loop(server)) if start_loop else None
         # クラウドアップロード(未設定なら無効)。失敗してもゲームは止めない(仕様§3.2-1)
