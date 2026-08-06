@@ -29,8 +29,12 @@ def config_from_env() -> CvWorkerConfig:
     """環境変数からワーカー設定を組み立てる。
 
     HANOI_CV_CAMERA / _VIDEO / _WIDTH / _HEIGHT / HANOI_TAG_MASTER /
-    HANOI_CV_CALIBRATION(空文字で永続化無効。既定 output/cv_calibration.json)
+    HANOI_CV_CALIBRATION(空文字で永続化無効。既定 output/cv_calibration.json)/
+    HANOI_CAMERA_SIDE(back=既定/front。実測カメラ位置と食い違えば警告)
     """
+    camera_side = os.environ.get("HANOI_CAMERA_SIDE", "back")
+    if camera_side not in ("back", "front"):
+        camera_side = "back"  # 不正値の警告は API 側(main._camera_side)が出す。表示側と揃える
     return CvWorkerConfig(
         camera_index=int(os.environ.get("HANOI_CV_CAMERA", "0")),
         video_path=os.environ.get("HANOI_CV_VIDEO") or None,
@@ -39,6 +43,7 @@ def config_from_env() -> CvWorkerConfig:
         tag_master_path=os.environ.get("HANOI_TAG_MASTER") or None,
         calibration_path=os.environ.get("HANOI_CV_CALIBRATION", str(DEFAULT_CALIBRATION_PATH))
         or None,
+        camera_side=camera_side,
     )
 
 

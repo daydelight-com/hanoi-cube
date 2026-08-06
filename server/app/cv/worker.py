@@ -44,6 +44,8 @@ class CvWorkerConfig:
     # 稼働中に四隅タグが箱で隠れ続けても(一度設営時に成立していれば)動ける。
     # None で無効(テスト等)
     calibration_path: str | None = None
+    # HANOI_CAMERA_SIDE(back/front)。実測カメラ位置と食い違えば警告する(設営確認用)
+    camera_side: str = "back"
 
 
 def worker_main(config: CvWorkerConfig, out: MpQueue[CvMessage]) -> None:
@@ -60,7 +62,7 @@ def worker_main(config: CvWorkerConfig, out: MpQueue[CvMessage]) -> None:
 
     master = load_tag_master(Path(config.tag_master_path) if config.tag_master_path else None)
     detector = TagDetector(master)
-    pipeline = FramePipeline(master)
+    pipeline = FramePipeline(master, expected_camera_side=config.camera_side)
 
     calib_path = Path(config.calibration_path) if config.calibration_path else None
     if calib_path is not None and calib_path.exists():

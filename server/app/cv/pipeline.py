@@ -55,7 +55,7 @@ class _CornerObservation:
 class FramePipeline:
     """検出結果列 → (キャリブレーション+幾何+盤面構成) → CvMessage 列。"""
 
-    def __init__(self, master: TagMaster) -> None:
+    def __init__(self, master: TagMaster, *, expected_camera_side: str | None = None) -> None:
         self._master = master
         self._tracker = BoardTracker()
         self._camera: CameraModel | None = None
@@ -63,6 +63,9 @@ class FramePipeline:
         self._mat_corners: dict[int, _CornerObservation] = {}
         self._last_calibrated_ms: int | None = None
         self._last_reject_log_ms: int | None = None
+        # HANOI_CAMERA_SIDE の設定値("back"/"front")。None はチェックなし(テスト等)。
+        # 設定と実測カメラ位置が食い違えば警告し、設営ミス(表示の180°逆)に気付けるようにする
+        self._expected_camera_side = expected_camera_side
 
     @property
     def calibrated(self) -> bool:
@@ -113,6 +116,7 @@ class FramePipeline:
         self._camera = camera
         self._image_size = (int(image_size[0]), int(image_size[1]))
         self._last_calibrated_ms = None  # 四隅がそろえば新しい推定で上書きされる
+        self._warn_if_side_mismatch(camera)
 
     def process(
         self,
@@ -178,6 +182,8 @@ class FramePipeline:
             }
             return
         cam_pos = camera.cam_pos_mat
+        if self._camera is None:  # 初回成立時のみ(定期更新で警告を繰り返さない)
+            self._warn_if_side_mismatch(camera)
         # 初回のみINFO(1秒ごとの定期更新でログを埋めない)
         logger.log(
             logging.INFO if self._camera is None else logging.DEBUG,
@@ -192,6 +198,23 @@ class FramePipeline:
         )
         self._camera = camera
         self._last_calibrated_ms = t_ms
+
+    def _warn_if_side_mismatch(self, camera: CameraModel) -> None:
+        """カメラ位置の実測が HANOI_CAMERA_SIDE と食い違えば警告する(表示の180°逆対策)。"""
+        if self._expected_camera_side is None:
+            return
+        cam_pos = camera.cam_pos_mat
+        actual = "front" if cam_pos[1] < MAT_SIZE_MM[1] / 2 else "back"
+        if actual != self._expected_camera_side:
+            logger.warning(
+                "カメラ側の設定と実測が食い違う: HANOI_CAMERA_SIDE=%s だがカメラ位置"
+                " y=%.0fmm は %s 側(マット奥行き %.0fmm)。表示がプレイヤーから180°逆に"
+                "見える。環境変数かマットの向き(待機エリア=プレイヤー側)を確認すること",
+                self._expected_camera_side,
+                cam_pos[1],
+                actual,
+                MAT_SIZE_MM[1],
+            )
 
     def _log_reject(self, t_ms: int, reason: str) -> None:
         """棄却理由をログする(連続棄却で埋まらないよう更新間隔に合わせて間引く)。"""

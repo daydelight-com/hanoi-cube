@@ -20,6 +20,7 @@ from app.cv.tracker import LOST_HOLD_MS, STABLE_MS
 from tests.cv_scene import (
     BoxPose,
     Scene,
+    SceneCamera,
     make_camera,
     render_scene,
     scene_from_layout,
@@ -37,11 +38,13 @@ def all_staging_scene() -> Scene:
 class PipeDriver:
     """シーン→検出(キャッシュ)→パイプラインを時刻を進めながら流すヘルパー。"""
 
-    def __init__(self) -> None:
+    def __init__(
+        self, *, expected_camera_side: str | None = None, camera: SceneCamera | None = None
+    ) -> None:
         master = synthetic_tag_master()
         self.detector = TagDetector(master)
-        self.pipeline = FramePipeline(master)
-        self.camera = make_camera()
+        self.pipeline = FramePipeline(master, expected_camera_side=expected_camera_side)
+        self.camera = camera or make_camera()
         self.now = 0
         self._cache: dict[str, list[TagDetection]] = {}
 
@@ -227,6 +230,43 @@ def test_calibration_persistence_roundtrip(d: PipeDriver) -> None:
     updates = boards(d2.feed("staging", all_staging_scene(), repeat=STABLE_REPEAT))
     assert len(updates) == 1
     assert updates[0].staging_box_ids == list(BOX_IDS)
+
+
+def test_camera_side_mismatch_warns(caplog: pytest.LogCaptureFixture) -> None:
+    """合成カメラ(y=-500 = front側)と設定 back の食い違いで警告が出る(設営確認用)。"""
+    d2 = PipeDriver(expected_camera_side="back")
+    with caplog.at_level("WARNING", logger="app.cv.pipeline"):
+        d2.feed("empty", Scene(), repeat=2)
+    assert d2.pipeline.calibrated
+    assert any("カメラ側の設定と実測が食い違う" in rec.message for rec in caplog.records)
+
+
+def test_camera_side_match_and_unset_do_not_warn(caplog: pytest.LogCaptureFixture) -> None:
+    # 手前(front)側カメラ: 設定 front と一致 / 未設定(None)はチェックなし
+    for driver in (PipeDriver(expected_camera_side="front"), PipeDriver()):
+        with caplog.at_level("WARNING", logger="app.cv.pipeline"):
+            driver.feed("empty", Scene(), repeat=2)
+        assert driver.pipeline.calibrated
+    # 奥(back)側カメラ: 既定設定 back と一致(本番想定の設営)
+    back_cam = make_camera(position=(300.0, 900.0, 600.0))
+    back_driver = PipeDriver(expected_camera_side="back", camera=back_cam)
+    with caplog.at_level("WARNING", logger="app.cv.pipeline"):
+        back_driver.feed("empty", Scene(), repeat=2)
+    assert back_driver.pipeline.calibrated
+    assert not any("食い違う" in rec.message for rec in caplog.records)
+
+
+def test_camera_side_mismatch_warns_on_restore(
+    d: PipeDriver, caplog: pytest.LogCaptureFixture
+) -> None:
+    """保存済みキャリブレーション運用(四隅を見せない起動)でも食い違い警告が出る。"""
+    d.feed("empty", Scene(), repeat=2)
+    data = d.pipeline.export_calibration()
+    assert data is not None
+    d2 = PipeDriver(expected_camera_side="back")
+    with caplog.at_level("WARNING", logger="app.cv.pipeline"):
+        d2.pipeline.restore_calibration(data)
+    assert any("カメラ側の設定と実測が食い違う" in rec.message for rec in caplog.records)
 
 
 def test_calibration_restore_rejects_mismatched_layout(d: PipeDriver) -> None:
