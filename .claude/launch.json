@@ -8,6 +8,12 @@
       "port": 5173
     },
     {
+      "name": "hanoi-cube-dev-front",
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["HANOI_CAMERA_SIDE=front", "make", "dev"],
+      "port": 5173
+    },
+    {
       "name": "hanoi-cube-dev-real",
       "runtimeExecutable": "env",
       "runtimeArgs": ["HANOI_CV=real", "make", "dev"],
