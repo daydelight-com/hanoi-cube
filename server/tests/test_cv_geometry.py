@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pytest
 from app.cv import geometry
@@ -114,8 +116,13 @@ def test_box_bottom_center_accuracy(detector: Detector) -> None:
         box_id = BOX_IDS[d.tag_id // 6]
         size = BOX_SIZE_OF[box_id]
         black = 20.8 if size == "small" else 16.0
-        p, _yaw = geometry.box_estimate(
-            d.corners.astype(np.float64), black, size, BOX_EDGE_MM[size], model
+        p, _up_face, _yaw = geometry.box_estimate(
+            d.corners.astype(np.float64),
+            black,
+            size,
+            BOX_EDGE_MM[size],
+            model,
+            face=d.tag_id % 6 + 1,
         )
         estimates.setdefault(box_id, []).append(p)
 
@@ -123,3 +130,93 @@ def test_box_bottom_center_accuracy(detector: Detector) -> None:
     for box_id, ps in estimates.items():
         err = np.abs(np.mean(ps, axis=0) - truth[box_id])
         assert err.max() < 10.0, f"{box_id}: err={err}"
+
+
+@pytest.mark.parametrize(
+    ("up_face", "yaw_deg"),
+    [
+        (1, 0.0),  # 正立
+        (6, 0.0),  # ひっくり返し(底面が上)
+        (2, 0.0),  # 横倒し(面2が上)
+        (3, 30.0),  # 横倒し+回転
+        (1, 155.0),  # 正立で大きく回転(mod 90° では表せない向き)
+    ],
+)
+def test_box_orientation_recovered(detector: Detector, up_face: int, yaw_deg: float) -> None:
+    """どの面が上でも、見えている各タグから (up_face, ヨー) が復元できる。"""
+    cam = make_camera()
+    scene = Scene(
+        boxes=[BoxPose(box_id="large-1", pos=(300.0, 200.0, 0.0), yaw_deg=yaw_deg, up_face=up_face)]
+    )
+    img, _ = render_scene(scene, cam)
+    box_dets = [d for d in detector.detect(img) if d.tag_id < 200 and d.hamming <= 1]
+    assert len(box_dets) >= 2  # 上面+側面が見えている
+    mat_img, _ = render_scene(Scene(), cam)
+    mat = {
+        d.tag_id: d.corners.astype(np.float64) for d in detector.detect(mat_img) if d.tag_id >= 200
+    }
+    model = geometry.calibrate(mat, cam.image_size)
+    for d in box_dets:
+        _p, est_face, est_yaw = geometry.box_estimate(
+            d.corners.astype(np.float64), 16.0, "large", 75.0, model, face=d.tag_id % 6 + 1
+        )
+        assert est_face == up_face, f"tag {d.tag_id}: up_face {est_face} != {up_face}"
+        yaw_err = (math.degrees(est_yaw) - yaw_deg + 180.0) % 360.0 - 180.0
+        assert abs(yaw_err) < 5.0, f"tag {d.tag_id}: yaw err {yaw_err:.1f}°"
+
+
+def test_tilted_box_not_buried() -> None:
+    """手で回している最中の軽い傾きで、鏡映側のIPPE解へ飛んで箱が地面に沈まない。
+
+    側面タグを厳密に投影して box_estimate に通す(検出器なしの純幾何)。
+    傾きノイズで側面を上面と誤認すると底面 z が約 -edge/2 になり、
+    3D表示で箱が半分埋まって見える(実箱検証で発覚した回帰)。
+    """
+    cam = make_camera()
+    model = geometry.CameraModel(k=cam.k, r_cam_from_mat=cam.r, t_cam_from_mat=cam.t)
+    edge, black, inset = 75.0, 16.0, 75.0 / 2 - 12.0
+    for pos in [(300.0, 200.0), (150.0, 280.0), (450.0, 80.0)]:
+        for tilt_deg in (-20.0, -16.0, -12.0, -6.0, 0.0, 6.0, 12.0, 16.0, 20.0):
+            for yaw_deg in range(0, 360, 20):
+                yaw, tilt = math.radians(yaw_deg), math.radians(tilt_deg)
+                rz = np.array(
+                    [
+                        [math.cos(yaw), -math.sin(yaw), 0.0],
+                        [math.sin(yaw), math.cos(yaw), 0.0],
+                        [0.0, 0.0, 1.0],
+                    ]
+                )
+                rx = np.array(
+                    [
+                        [1.0, 0.0, 0.0],
+                        [0.0, math.cos(tilt), -math.sin(tilt)],
+                        [0.0, math.sin(tilt), math.cos(tilt)],
+                    ]
+                )
+                r_box = rx @ rz  # 正立+手ブレ相当の傾き
+                center = np.array([pos[0], pos[1], edge / 2])
+                t_in_box = geometry.TAG_IN_BOX[2]
+                u, v = r_box @ t_in_box[:, 0], r_box @ t_in_box[:, 1]
+                tag_center = center + r_box @ np.array([inset, -edge / 2, inset])
+                # 入射角が浅い(ほぼ真横〜裏向き)ケースは実検出ではデコード不能なので除外
+                normal = r_box @ t_in_box[:, 2]
+                to_cam = cam.position - tag_center
+                if float(normal @ to_cam) / float(np.linalg.norm(to_cam)) < 0.25:
+                    continue
+                corners_px = cam.project(
+                    np.array(
+                        [
+                            tag_center + u * (lx * black / 2) + v * (ly * black / 2)
+                            for lx, ly in geometry.TAG_CORNER_LOCAL
+                        ]
+                    )
+                )
+                p, est_face, est_yaw = geometry.box_estimate(
+                    corners_px, black, "large", edge, model, face=2
+                )
+                label = f"pos={pos} tilt={tilt_deg} yaw={yaw_deg}"
+                assert p[2] > -20.0, f"{label}: 底面z={p[2]:.0f}mm(埋まり)"
+                if abs(tilt_deg) <= 12.0:  # 大傾き(持ち替え中相当)は埋まり検査のみ
+                    assert est_face == 1, f"{label}: up_face={est_face}"
+                    yaw_err = (math.degrees(est_yaw) - yaw_deg + 180.0) % 360.0 - 180.0
+                    assert abs(yaw_err) < 10.0, f"{label}: yaw_err={yaw_err:.0f}°"

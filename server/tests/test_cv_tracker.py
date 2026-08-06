@@ -321,19 +321,19 @@ def test_lifted_box_in_staging_area_is_moving() -> None:
     assert box_in_frame(frame, "medium-2")["area"] is None
 
 
-def test_yaw_quat_unwraps_mod_90() -> None:
-    """ヨー(mod 90°)観測は前回値に近い代表へ展開され、正立付近で90°飛ばない。"""
+def test_yaw_quat_unwraps_at_pi_boundary() -> None:
+    """±180°境界のヨー観測は前回値に近い代表へ展開され、表示が一回転しない。"""
     import math
 
     d = Driver()
 
-    def with_yaw(yaw90_deg: float) -> BoxSighting:
+    def with_yaw(yaw_deg: float) -> BoxSighting:
         base = sight("large-1", 150.0, 280.0, 0.0)
         return BoxSighting(
             box_id=base.box_id,
             pos_mm=base.pos_mm,
             seen_tag_ids=base.seen_tag_ids,
-            yaw90_rad=math.radians(yaw90_deg),
+            yaw_rad=math.radians(yaw_deg),
         )
 
     def frame_yaw_deg(messages: list[CvMessage]) -> float:
@@ -341,9 +341,31 @@ def test_yaw_quat_unwraps_mod_90() -> None:
         qz, qw = box["quat"][2], box["quat"][3]  # type: ignore[index]
         return math.degrees(2 * math.atan2(qz, qw))
 
-    assert frame_yaw_deg(d.feed([with_yaw(2.0)])) == pytest.approx(2.0, abs=0.1)
-    # 89° の観測(=正立から -1° のノイズ)は 90° 側でなく -1° として扱われる
-    assert frame_yaw_deg(d.feed([with_yaw(89.0)])) == pytest.approx(-1.0, abs=0.1)
+    assert frame_yaw_deg(d.feed([with_yaw(178.0)])) == pytest.approx(178.0, abs=0.1)
+    # -179° の観測(=178° から +3° のノイズ)は 181° として連続に扱われる
+    assert frame_yaw_deg(d.feed([with_yaw(-179.0)])) == pytest.approx(181.0, abs=0.1)
+
+
+def test_flipped_box_quat_composition() -> None:
+    """up_face+ヨーの観測が quat(Rz(yaw)@基準姿勢)として CvFrame に反映される。"""
+    import math
+
+    d = Driver()
+    base = sight("large-1", 150.0, 280.0, 0.0)
+    obs = BoxSighting(
+        box_id=base.box_id,
+        pos_mm=base.pos_mm,
+        seen_tag_ids=base.seen_tag_ids,
+        up_face=6,
+        yaw_rad=math.radians(90.0),
+    )
+    box = box_in_frame(frames(d.feed([obs]))[0], "large-1")
+    quat = box["quat"]
+    assert isinstance(quat, tuple)
+    # Rz(90°) ⊗ Rx(180°) = (√2/2, √2/2, 0, 0)
+    expected = (math.sqrt(0.5), math.sqrt(0.5), 0.0, 0.0)
+    err = max(abs(a - b) for a, b in zip(quat, expected, strict=True))
+    assert err < 1e-6
 
 
 def test_frame_passthrough_fields() -> None:

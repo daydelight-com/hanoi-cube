@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import cv2
@@ -30,6 +31,62 @@ Arr = npt.NDArray[np.float64]
 TAG_CORNER_LOCAL: Arr = np.array(
     [[-1.0, -1.0], [1.0, -1.0], [1.0, 1.0], [-1.0, 1.0]], dtype=np.float64
 )
+
+# ---- 面規約(正: frontend/src/three/faces.ts。S3 要判断で確定した対応) ----
+# 箱ローカル軸(無回転時=マット座標軸と一致)での各面の外向き法線:
+#   面1=+z(上) 面2=-y(手前) 面3=+x(右) 面4=+y(奥) 面5=-x(左) 面6=-z(底)
+FACE_NORMAL_LOCAL: dict[int, tuple[float, float, float]] = {
+    1: (0.0, 0.0, 1.0),
+    2: (0.0, -1.0, 0.0),
+    3: (1.0, 0.0, 0.0),
+    4: (0.0, 1.0, 0.0),
+    5: (-1.0, 0.0, 0.0),
+    6: (0.0, 0.0, -1.0),
+}
+
+# 各面のタグ座標系(x=右, y=上, z=外向き法線)を箱ローカル軸で表した回転行列
+# (列 = タグx, タグy, タグz)。貼付規約(タグシート貼り付けガイド・operations.md):
+#   - 側面(2〜5): 箱を面1が上になる向きに置いて、図柄が正立するように貼る(タグy=箱+z)
+#   - 面1: 上面に、図柄の上端が面4(奥)を向くように貼る
+#   - 面6: 箱を手前(面2側)へ2回倒して面6を上に向け、図柄の上端を奥へ向けて貼る
+#     (=タグy=箱-y)
+# この規約が守られていれば、タグ1枚の姿勢から箱の完全な姿勢(どの面が上か+ヨー)が
+# 一意に復元できる。守られていない箱は面テクスチャの表示が回って見える(位置・盤面
+# 判定には影響しない)。
+TAG_IN_BOX: dict[int, Arr] = {
+    1: np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]).T,
+    2: np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, -1.0, 0.0]]).T,
+    3: np.array([[0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]]).T,
+    4: np.array([[-1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, 1.0, 0.0]]).T,
+    5: np.array([[0.0, -1.0, 0.0], [0.0, 0.0, 1.0], [-1.0, 0.0, 0.0]]).T,
+    6: np.array([[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]]).T,
+}
+
+# 「面Nが上」の基準姿勢(ヨー0)の回転行列(箱ローカル→マット)。
+# 完全姿勢は Rz(yaw) @ UP_FACE_BASE[up_face] で表す。tracker が quat 化する際も同じ分解
+UP_FACE_BASE: dict[int, Arr] = {
+    1: np.eye(3),
+    # Rx(-90°): 箱-y(面2の法線)→ +z
+    2: np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, -1.0, 0.0]]),
+    # Ry(-90°): 箱+x(面3の法線)→ +z
+    3: np.array([[0.0, 0.0, -1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]]),
+    # Rx(+90°): 箱+y(面4の法線)→ +z
+    4: np.array([[1.0, 0.0, 0.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0]]),
+    # Ry(+90°): 箱-x(面5の法線)→ +z
+    5: np.array([[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [-1.0, 0.0, 0.0]]),
+    # Rx(180°): 箱-z(面6の法線)→ +z
+    6: np.array([[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]]),
+}
+
+# 箱ローカル軸(軸インデックス, 符号)→ その方向を法線とする面番号
+_FACE_BY_AXIS: dict[tuple[int, int], int] = {
+    (2, +1): 1,
+    (1, -1): 2,
+    (0, +1): 3,
+    (1, +1): 4,
+    (0, -1): 5,
+    (2, -1): 6,
+}
 
 
 def homography(src_xy: Arr, dst_xy: Arr) -> Arr:
@@ -189,6 +246,19 @@ def tag_pose_mat(corners_px: Arr, black_mm: float, camera: CameraModel) -> tuple
     R の第3列がタグ面法線。IPPEの2解の曖昧性により法線はまれに大きく誤るため、
     呼び出し側は法線を物理制約(水平か鉛直)へスナップすること。
     """
+    r, t = tag_pose_candidates(corners_px, black_mm, camera)[0]
+    return r, t
+
+
+def tag_pose_candidates(
+    corners_px: Arr, black_mm: float, camera: CameraModel
+) -> list[tuple[Arr, Arr]]:
+    """検出コーナーからタグの (R, 中心位置) の候補をマット座標系で返す。
+
+    IPPEは平面姿勢の2解を返す(再投影誤差の小さい順)。誤差が拮抗すると
+    第1解が物理的に誤ることがあるため、呼び出し側は物理制約(箱は軸平行)で
+    選別すること(box_estimate が行う)。
+    """
     half = black_mm / 2.0
     # IPPE_SQUARE の物体点順序は 左上→右上→右下→左下(y=上)= TAG_CORNER_LOCAL の [3,2,1,0]
     obj = np.array([[-half, half, 0.0], [half, half, 0.0], [half, -half, 0.0], [-half, -half, 0.0]])
@@ -196,13 +266,28 @@ def tag_pose_mat(corners_px: Arr, black_mm: float, camera: CameraModel) -> tuple
     _, rvecs, tvecs, _ = cv2.solvePnPGeneric(
         obj, img_pts, camera.k, None, flags=cv2.SOLVEPNP_IPPE_SQUARE
     )
-    r_cam, _ = cv2.Rodrigues(rvecs[0])  # 解は再投影誤差の小さい順
-    t_cam = np.asarray(tvecs[0], dtype=np.float64).ravel()
-    return camera.rot_to_mat(np.asarray(r_cam, dtype=np.float64)), camera.to_mat(t_cam)
+    candidates: list[tuple[Arr, Arr]] = []
+    for rvec, tvec in zip(rvecs, tvecs, strict=True):
+        r_cam, _ = cv2.Rodrigues(rvec)
+        t_cam = np.asarray(tvec, dtype=np.float64).ravel()
+        candidates.append(
+            (camera.rot_to_mat(np.asarray(r_cam, dtype=np.float64)), camera.to_mat(t_cam))
+        )
+    return candidates
 
 
 # 面法線を上面とみなす |nz| の下限(それ未満は側面として水平にスナップ)
 _TOP_FACE_NZ = 0.6
+
+# IPPE第2解へ乗り換えるのに必要なスコア(法線スナップ角+物理ペナルティ)の改善
+# マージン[rad相当]。軽い傾き(手で回している最中)のノイズで鏡映解へ飛ばないための
+# 不感帯で、真に取り違えた第1解(上面タグの法線が横を向く等、改善 0.3 以上)だけを救う
+_SOLUTION_SWITCH_MARGIN = 0.25
+
+# 底面中心がこの深さ[mm]よりマット下に潜る解は物理的に不可能(箱は常にマット上)。
+# 鏡映解が側面タグを上面と誤認すると底面が -19〜-40mm 程度に沈むため棄却できる。
+# 正しい姿勢の z 誤差は ±10mm 以内(test_box_bottom_center_accuracy)なので誤爆しない
+_BURIED_Z_MM = 15.0
 
 
 def box_estimate(
@@ -211,35 +296,93 @@ def box_estimate(
     size: str,
     edge_mm: float,
     camera: CameraModel,
-) -> tuple[Arr, float]:
-    """タグ検出1枚から (箱の底面中心[マット座標mm], ヨー角 mod 90°[rad]) を推定する。
+    face: int = 1,
+) -> tuple[Arr, int, float]:
+    """タグ検出1枚から (箱の底面中心[マット座標mm], 上を向いている面番号, ヨー[rad]) を推定する。
 
     位置: 面の右上隅貼り(大・中)のオフセットをタグ座標系で補正し、面中心から
     面法線の逆向きに半辺入った点を箱中心、その直下 edge/2 を底面とみなす。
     置かれた箱は軸平行に立っている前提で、法線は鉛直(上面)か水平(側面)に
     スナップしてIPPEの法線誤差・曖昧性を吸収する(持ち上げ中は近似)。
 
-    ヨー: どの面のタグかは物理的な貼付対応が不定なため、鉛直軸まわりの回転を
-    90°の剰余でのみ推定する(立方体の3D表示にはこれで十分)。側面タグは法線の
-    方位角、上面タグはタグx軸の方位角を使う。
+    姿勢: タグID→面番号(tag_master)と貼付規約(TAG_IN_BOX)から箱の回転
+    R_box = R_tag @ TAG_IN_BOX[face]^T を復元し、軸平行前提でスナップして
+    (up_face, yaw) に分解する(完全姿勢 = Rz(yaw) @ UP_FACE_BASE[up_face])。
+    ひっくり返し・横倒しもタグ1枚で追える。持ち上げて傾けている最中は
+    最近傍の軸平行姿勢への近似になる。
     """
-    r_mat, p_mat = tag_pose_mat(corners_px, black_mm, camera)
+    # IPPEの2解から、物理制約に合う解を選ぶ。誤差が拮抗した第1解が誤ると法線が
+    # 大きく外れ、旧実装のスナップでは位置しか救えない(面ベースの姿勢復元では
+    # 解選別が必須)。判定材料は3つ:
+    #   - 可視タグの法線はカメラ側を向く(裏向き解は大ペナルティ)
+    #   - 底面中心はマット下に潜れない(鏡映解が側面タグを上面と誤認すると
+    #     約 -edge/2 に沈む。実箱検証で「回すと箱が埋まる」として発覚した回帰)
+    #   - 軸平行に置かれた箱の面法線は鉛直か水平(スナップ角が小さいほど良い)
+    # 再投影誤差最良の第1解を既定とし、代替解はスコアがマージンを超えて明確に
+    # 良い場合のみ採用する(手回し中の軽い傾きノイズで鏡映解へ飛ばないため)
+    best: tuple[float, Arr, Arr] | None = None
+    for r_cand, p_cand in tag_pose_candidates(corners_px, black_mm, camera):
+        penalty = 0.0
+        if float(np.dot(r_cand[:, 2], camera.cam_pos_mat - p_cand)) < 0:
+            # 裏向きの解。タグy軸まわり180°で法線だけ反転させた近似を
+            # 最後の砦として残す(両解とも裏向きの縮退対策)
+            r_cand = r_cand @ np.diag([-1.0, 1.0, -1.0])
+            penalty += 2.0
+        center_cand = _bottom_center(r_cand, p_cand, size, edge_mm)
+        if center_cand[2] < -_BURIED_Z_MM:
+            penalty += 1.0
+        score = penalty + _normal_snap_angle(r_cand[:, 2])
+        if best is None or score < best[0] - _SOLUTION_SWITCH_MARGIN:
+            best = (score, r_cand, center_cand)
+    assert best is not None  # IPPEは常に1解以上返す
+    _, r_mat, box_center = best
+
+    up_face, yaw = _decompose_box_rotation(r_mat @ TAG_IN_BOX[face].T)
+    return box_center, up_face, yaw
+
+
+def _bottom_center(r_mat: Arr, p_mat: Arr, size: str, edge_mm: float) -> Arr:
+    """タグ姿勢(マット座標)から箱の底面中心を求める。
+
+    面の右上隅貼り(大・中)のオフセットをタグ座標系で補正し、面中心から
+    面法線の逆向きに半辺入った点を箱中心、その直下 edge/2 を底面とみなす。
+    法線は鉛直(上面)か水平(側面)にスナップして誤差を吸収する(持ち上げ中は近似)。
+    """
     d = FACE_CENTER_OFFSET_MM[size]
     # タグ座標系 x=右, y=上: 面中心はタグ中心から左下 (-d, -d)
     offset: Arr = r_mat @ np.array([-d, -d, 0.0])
     face_center = p_mat + offset
     normal = r_mat[:, 2]
-    to_cam = camera.cam_pos_mat - p_mat
-    if float(np.dot(normal, to_cam)) < 0:
-        normal = -normal
     if abs(float(normal[2])) >= _TOP_FACE_NZ:
-        yaw_src = r_mat[:, 0]  # 上面: タグx軸(面内回転)から方位を取る
-        normal = np.array([0.0, 0.0, 1.0])  # 上面(カメラは上方にあるため下面は見えない)
+        snapped = np.array([0.0, 0.0, 1.0])  # 上面(カメラは上方にあるため下面は見えない)
     else:
-        yaw_src = normal  # 側面: 法線の方位がヨー(+面の向きの90°倍)
-        normal = np.array([normal[0], normal[1], 0.0])
-        normal /= max(float(np.linalg.norm(normal)), 1e-9)
-    yaw_mod90 = float(np.arctan2(yaw_src[1], yaw_src[0])) % (np.pi / 2)
-    box_center: Arr = face_center - normal * (edge_mm / 2.0)
+        snapped = np.array([normal[0], normal[1], 0.0])
+        snapped /= max(float(np.linalg.norm(snapped)), 1e-9)
+    box_center: Arr = face_center - snapped * (edge_mm / 2.0)
     box_center[2] -= edge_mm / 2.0  # 底面中心
-    return box_center, yaw_mod90
+    return box_center
+
+
+def _normal_snap_angle(normal: Arr) -> float:
+    """タグ面法線が物理制約(鉛直または水平)からずれている角度[rad]。IPPE 2解の選別に使う。
+
+    軸平行に置かれた箱の面法線は必ず鉛直(上面)か水平(側面)になる。鏡映側の
+    誤った解は法線が斜めを向くため、この角度が大きくなる。回転行列全体の軸平行性で
+    測ると「別の軸がたまたま鉛直に近い」誤解を見逃す(実箱検証で箱が沈んだ回帰)。
+    """
+    nz = min(abs(float(normal[2])), 1.0)
+    return min(math.acos(nz), math.asin(nz))
+
+
+def _decompose_box_rotation(r_box: Arr) -> tuple[int, float]:
+    """箱の回転(箱ローカル→マット)を軸平行前提で (up_face, yaw) に分解する。
+
+    最も上(+z)を向いている箱ローカル軸から up_face を決め、残差の鉛直軸まわり
+    成分をヨーとして取り出す(R_box ≈ Rz(yaw) @ UP_FACE_BASE[up_face])。
+    """
+    axis = int(np.argmax(np.abs(r_box[2, :])))
+    sign = 1 if r_box[2, axis] >= 0 else -1
+    up_face = _FACE_BY_AXIS[(axis, sign)]
+    residual = r_box @ UP_FACE_BASE[up_face].T  # ≈ Rz(yaw)(+傾きノイズ)
+    yaw = float(np.arctan2(residual[1, 0] - residual[0, 1], residual[0, 0] + residual[1, 1]))
+    return up_face, yaw

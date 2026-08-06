@@ -88,8 +88,9 @@ export class BoardScene {
       const t = entry.target
       matPosToThree(obs.pos_mm, t.center)
       matQuatToThree(obs.quat, t.quat)
-      // pos_mm は底面中心。箱ローカル上方向に半辺ぶん進めて中心にする
-      t.center.add(_up.set(0, edge / 2, 0).applyQuaternion(t.quat))
+      // pos_mm はワールド座標の底面中心(ひっくり返しでも接地面側)。
+      // ワールド上方向に半辺ぶん進めて箱中心にする(箱ローカル上方向ではない)
+      t.center.add(_up.set(0, edge / 2, 0))
       t.visible = obs.visible
     }
   }

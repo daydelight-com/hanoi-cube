@@ -52,6 +52,19 @@ class _CornerObservation:
     t_ms: int
 
 
+def _mean_yaw(yaws: list[float]) -> float:
+    """ヨーの円環平均(単位ベクトル平均で ±π の不連続を回避)。
+
+    観測同士が打ち消し合う縮退(例: 0°と180°)ではベクトル和がほぼゼロになり、
+    丸め誤差だけから任意の角度が出てしまうため、先頭の観測値へフォールバックする
+    (タグ誤推定・貼付規約違反時に表示が不定に暴れないための保険)。
+    """
+    vec = np.mean([[np.cos(y), np.sin(y)] for y in yaws], axis=0)
+    if float(np.linalg.norm(vec)) < 0.5:
+        return yaws[0]
+    return float(np.arctan2(vec[1], vec[0]))
+
+
 class FramePipeline:
     """検出結果列 → (キャリブレーション+幾何+盤面構成) → CvMessage 列。"""
 
@@ -281,27 +294,37 @@ class FramePipeline:
     def _resolve_boxes(
         self, detections: list[TagDetection], camera: CameraModel
     ) -> list[BoxSighting]:
-        by_box: dict[str, list[tuple[int, npt.NDArray[np.float64], float]]] = {}
+        by_box: dict[str, list[tuple[int, npt.NDArray[np.float64], int, float]]] = {}
         for det in detections:
             spec = self._master.box_tags.get(det.tag_id)
             if spec is None:
                 continue
-            pos, yaw90 = box_estimate(
-                det.corners_px, spec.black_mm, spec.size, BOX_EDGE_MM[spec.size], camera
+            pos, up_face, yaw = box_estimate(
+                det.corners_px,
+                spec.black_mm,
+                spec.size,
+                BOX_EDGE_MM[spec.size],
+                camera,
+                face=spec.face,
             )
-            by_box.setdefault(spec.box_id, []).append((det.tag_id, pos, yaw90))
+            by_box.setdefault(spec.box_id, []).append((det.tag_id, pos, up_face, yaw))
         sightings = []
         for box_id, entries in by_box.items():
-            mean_pos = np.mean([pos for _, pos, _ in entries], axis=0)
-            # ヨー(mod 90°)の円環平均: 4倍角の単位ベクトル平均で不連続を回避
-            vec = np.mean([[np.cos(4 * y), np.sin(4 * y)] for _, _, y in entries], axis=0)
-            yaw90 = float(np.arctan2(vec[1], vec[0])) / 4 % (np.pi / 2)
+            mean_pos = np.mean([pos for _, pos, _, _ in entries], axis=0)
+            # 上面は多数決(同数なら面番号の小さい方)。複数タグは剛体なので本来一致する。
+            # 食い違いは持ち上げ・傾き中の近似か、貼付規約(TAG_IN_BOX)違反の兆候
+            counts: dict[int, int] = {}
+            for _, _, f, _ in entries:
+                counts[f] = counts.get(f, 0) + 1
+            up_face = min(counts, key=lambda f: (-counts[f], f))
+            yaw = _mean_yaw([y for _, _, f, y in entries if f == up_face])
             sightings.append(
                 BoxSighting(
                     box_id=box_id,  # type: ignore[arg-type]
                     pos_mm=(float(mean_pos[0]), float(mean_pos[1]), float(mean_pos[2])),
-                    yaw90_rad=yaw90,
-                    seen_tag_ids=tuple(sorted(tag_id for tag_id, _, _ in entries)),
+                    up_face=up_face,
+                    yaw_rad=yaw,
+                    seen_tag_ids=tuple(sorted(tag_id for tag_id, _, _, _ in entries)),
                 )
             )
         return sightings

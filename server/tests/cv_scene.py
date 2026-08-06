@@ -15,6 +15,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 import numpy.typing as npt
+from app.cv.geometry import TAG_IN_BOX, UP_FACE_BASE
 from app.cv.interface import BOX_EDGE_MM, BOX_IDS, BOX_SIZE_OF, BoxId
 from app.cv.layout import (
     MAT_SIZE_MM,
@@ -108,11 +109,12 @@ class PlacedTag:
 
 @dataclass
 class BoxPose:
-    """シーンに置く箱。底面中心 (x, y, z) と鉛直軸まわりの回転(度)。"""
+    """シーンに置く箱。底面中心 (x, y, z) と姿勢(上を向ける面+鉛直軸まわりの回転)。"""
 
     box_id: BoxId
     pos: tuple[float, float, float]
     yaw_deg: float = 0.0
+    up_face: int = 1  # 上を向けている面番号(1=正立)
 
 
 @dataclass
@@ -218,29 +220,24 @@ def _render_box(
     black_mm = 20.8 if size == "small" else 16.0
     box_index = BOX_IDS.index(box.box_id)
     yaw = np.deg2rad(box.yaw_deg)
-    rot = np.array(
+    rot_yaw = np.array(
         [
             [np.cos(yaw), -np.sin(yaw), 0.0],
             [np.sin(yaw), np.cos(yaw), 0.0],
             [0.0, 0.0, 1.0],
         ]
     )
+    rot = rot_yaw @ UP_FACE_BASE[box.up_face]
     center = np.array(box.pos, dtype=np.float64) + np.array([0.0, 0.0, edge / 2.0])
 
-    # 面 1..4=側面(+y,+x,-y,-x)、5=上面。面座標系: normal(外向き), u(右), v(上)
-    ez = np.array([0.0, 0.0, 1.0])
+    # 面規約・貼付規約は geometry.TAG_IN_BOX と共有(面座標系: u=タグ右, v=タグ上, n=外向き)
     faces: list[tuple[int, Arr, Arr, Arr]] = []
-    side_normals = [
-        np.array([0.0, 1.0, 0.0]),
-        np.array([1.0, 0.0, 0.0]),
-        np.array([0.0, -1.0, 0.0]),
-        np.array([-1.0, 0.0, 0.0]),
-    ]
-    for i, n_local in enumerate(side_normals):
-        n = rot @ n_local
-        u = np.cross(ez, n)  # 面を正面に見て右向き
-        faces.append((i + 1, n, u, ez))
-    faces.append((5, ez, rot @ np.array([1.0, 0.0, 0.0]), rot @ np.array([0.0, 1.0, 0.0])))
+    for face_idx in range(1, 7):
+        t_in_box = TAG_IN_BOX[face_idx]
+        u = rot @ t_in_box[:, 0]
+        v = rot @ t_in_box[:, 1]
+        n = rot @ t_in_box[:, 2]
+        faces.append((face_idx, n, u, v))
 
     cam_pos = camera.position
     for face_idx, n, u, v in faces:

@@ -91,7 +91,8 @@ class BoxSighting:
     box_id: BoxId
     pos_mm: tuple[float, float, float]  # 底面中心
     seen_tag_ids: tuple[int, ...]
-    yaw90_rad: float = 0.0  # 鉛直軸まわりの回転(mod 90°。geometry.box_estimate)
+    up_face: int = 1  # 上を向いている面番号(geometry.box_estimate)
+    yaw_rad: float = 0.0  # 鉛直軸まわりの回転(完全姿勢 = Rz(yaw) @ UP_FACE_BASE[up_face])
 
 
 @dataclass
@@ -99,7 +100,34 @@ class _Track:
     pos_mm: tuple[float, float, float]
     last_seen_ms: int
     ever_seen: bool
-    yaw_rad: float = 0.0  # 表示用ヨー(mod 90° の観測をフレーム間で展開した値)
+    up_face: int = 1  # 上を向いている面番号(表示用)
+    yaw_rad: float = 0.0  # 表示用ヨー(±π境界の飛びをフレーム間で展開した値)
+
+
+# 「面Nが上」の基準姿勢のクォータニオン (x, y, z, w)。geometry.UP_FACE_BASE と同値
+_HALF_SQRT2 = math.sqrt(0.5)
+_UP_FACE_QUAT: dict[int, tuple[float, float, float, float]] = {
+    1: (0.0, 0.0, 0.0, 1.0),
+    2: (-_HALF_SQRT2, 0.0, 0.0, _HALF_SQRT2),  # Rx(-90°)
+    3: (0.0, -_HALF_SQRT2, 0.0, _HALF_SQRT2),  # Ry(-90°)
+    4: (_HALF_SQRT2, 0.0, 0.0, _HALF_SQRT2),  # Rx(+90°)
+    5: (0.0, _HALF_SQRT2, 0.0, _HALF_SQRT2),  # Ry(+90°)
+    6: (1.0, 0.0, 0.0, 0.0),  # Rx(180°)
+}
+
+
+def _pose_quat(up_face: int, yaw_rad: float) -> tuple[float, float, float, float]:
+    """Rz(yaw) @ UP_FACE_BASE[up_face] のクォータニオン (x, y, z, w)。"""
+    half = yaw_rad / 2
+    z, w = math.sin(half), math.cos(half)  # q_yaw = (0, 0, z, w)
+    bx, by, bz, bw = _UP_FACE_QUAT[up_face]
+    # ハミルトン積 q_yaw ⊗ q_base
+    return (
+        w * bx - z * by,
+        w * by + z * bx,
+        w * bz + z * bw,
+        w * bw - z * bz,
+    )
 
 
 def _default_pos(box_id: BoxId) -> tuple[float, float, float]:
@@ -178,13 +206,15 @@ class BoardTracker:
                     prev.pos_mm[1] * (1 - a) + pos[1] * a,
                     prev.pos_mm[2] * (1 - a) + pos[2] * a,
                 )
-        # ヨーは mod 90° の観測なので、前回値に最も近い同値類の代表を選ぶ
-        # (正立付近のノイズで 1°⇔89° と表示が90°飛ぶのを防ぐ)
-        quarter = math.pi / 2
+        # ヨーは ±π 境界で値が飛ぶので、前回値に最も近い 2π 同値類の代表を選ぶ
+        # (真後ろ向き付近のノイズで 179°⇔-179° と表示が一回転するのを防ぐ)
+        full = 2 * math.pi
         base = prev.yaw_rad if prev.ever_seen else 0.0
-        k = round((base - sighting.yaw90_rad) / quarter)
-        yaw = sighting.yaw90_rad + k * quarter
-        return _Track(pos_mm=pos, last_seen_ms=t_ms, ever_seen=True, yaw_rad=yaw)
+        k = round((base - sighting.yaw_rad) / full)
+        yaw = sighting.yaw_rad + k * full
+        return _Track(
+            pos_mm=pos, last_seen_ms=t_ms, ever_seen=True, up_face=sighting.up_face, yaw_rad=yaw
+        )
 
     @staticmethod
     def _in_tower(pos: tuple[float, float, float], tower: str) -> bool:
@@ -348,13 +378,12 @@ class BoardTracker:
             track = self._tracks[box_id]
             area, level = area_level.get(box_id, (None, None))
             sighting = seen_now.get(box_id)
-            half = track.yaw_rad / 2
             boxes.append(
                 BoxObservation(
                     box_id=box_id,
                     size=BOX_SIZE_OF[box_id],
                     pos_mm=track.pos_mm,
-                    quat=(0.0, 0.0, math.sin(half), math.cos(half)),  # 鉛直軸まわりのヨーのみ
+                    quat=_pose_quat(track.up_face, track.yaw_rad),
                     area=area,
                     level=level,
                     visible=sighting is not None,

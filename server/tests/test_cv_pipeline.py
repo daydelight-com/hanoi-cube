@@ -14,7 +14,7 @@ import pytest
 from app.cv.detector import TagDetection, TagDetector
 from app.cv.interface import BOX_IDS, CvBoardUpdate, CvFrame, CvMessage
 from app.cv.layout import MAT_TAG_BLACK_MM, MAT_TAG_CENTERS_MM
-from app.cv.pipeline import CALIBRATION_REFRESH_MS, FramePipeline
+from app.cv.pipeline import CALIBRATION_REFRESH_MS, FramePipeline, _mean_yaw
 from app.cv.tracker import LOST_HOLD_MS, STABLE_MS
 
 from tests.cv_scene import (
@@ -196,8 +196,18 @@ def test_calibration_rejects_mixed_stale_observations(d: PipeDriver) -> None:
     assert np.linalg.norm(camera.cam_pos_mat - np.array([330.0, -500.0, 600.0])) < 15.0
 
 
+def test_mean_yaw_circular_and_degenerate() -> None:
+    """ヨー円環平均: ±π境界で正しく平均し、打ち消し合う縮退では先頭値へフォールバック。"""
+    deg = np.radians
+    assert _mean_yaw([deg(10.0)]) == pytest.approx(deg(10.0))
+    assert _mean_yaw([deg(170.0), deg(-170.0)]) == pytest.approx(deg(180.0), abs=1e-9)
+    # 縮退(和がほぼゼロ): 丸め誤差由来の任意角ではなく先頭の観測値を返す
+    assert _mean_yaw([deg(0.0), deg(180.0)]) == deg(0.0)
+    assert _mean_yaw([deg(0.0), deg(120.0), deg(240.0)]) == deg(0.0)
+
+
 def test_yaw_estimated_from_rotated_box(d: PipeDriver) -> None:
-    """回転して置かれた箱のヨー(mod 90°)が CvFrame の quat に反映される。"""
+    """回転して置かれた箱のヨーが CvFrame の quat に反映される。"""
     d.feed("empty", Scene(), repeat=2)
     scene = Scene(
         boxes=[
@@ -207,14 +217,26 @@ def test_yaw_estimated_from_rotated_box(d: PipeDriver) -> None:
     )
     frame = frames(d.feed("rotated", scene, repeat=2))[-1]
 
-    def yaw_mod90_deg(box_id: str) -> float:
+    def yaw_deg(box_id: str) -> float:
         box = next(b for b in frame.boxes if b.box_id == box_id)
         qz, qw = box.quat[2], box.quat[3]
-        return float(np.degrees(2 * np.arctan2(qz, qw))) % 90.0
+        return float(np.degrees(2 * np.arctan2(qz, qw)))
 
-    assert yaw_mod90_deg("small-2") == pytest.approx(25.0, abs=3.0)
-    upright = yaw_mod90_deg("large-1")
-    assert upright < 3.0 or upright > 87.0
+    assert yaw_deg("small-2") == pytest.approx(25.0, abs=3.0)
+    assert yaw_deg("large-1") == pytest.approx(0.0, abs=3.0)
+
+
+def test_flipped_box_quat_shows_bottom_face_up(d: PipeDriver) -> None:
+    """ひっくり返した箱(面6が上)の quat が実際の姿勢を表す(表示コンセプト: 実箱と同じ見え方)。"""
+    d.feed("empty", Scene(), repeat=2)
+    scene = Scene(boxes=[BoxPose(box_id="large-1", pos=(150.0, 280.0, 0.0), up_face=6)])
+    frame = frames(d.feed("flipped", scene, repeat=2))[-1]
+    box = next(b for b in frame.boxes if b.box_id == "large-1")
+    # quat で箱ローカル -z(面6の法線)がマット +z を向く
+    x, y, _z, _w = box.quat
+    # 回転行列の第3成分(箱+z軸のマットz座標)。面6が上なら -1 に近い
+    up_z = 1 - 2 * (x * x + y * y)
+    assert up_z == pytest.approx(-1.0, abs=0.05)
 
 
 def test_calibration_persistence_roundtrip(d: PipeDriver) -> None:
