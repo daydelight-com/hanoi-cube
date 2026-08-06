@@ -25,6 +25,7 @@ from app.state.machine import (
     TITLE_MS,
     StateMachine,
 )
+from app.state.sqlite_store import SqliteStore
 from app.state.store import MemoryStore
 
 # S1テスト済みの検証値: L/MS/L=60点(4箱*15手)、LMS//=21点(3箱*7手)、
@@ -70,7 +71,9 @@ def board_update(board: str, *, legal: bool = True, t_ms: int = 0) -> CvBoardUpd
 class Driver:
     """時刻を持ち回って状態機械を操作するテストヘルパー。"""
 
-    def __init__(self, table: PrecomputeTable, store: MemoryStore | None = None) -> None:
+    def __init__(
+        self, table: PrecomputeTable, store: MemoryStore | SqliteStore | None = None
+    ) -> None:
         self.store = store or MemoryStore()
         ids = count(1)
         self.machine = StateMachine(

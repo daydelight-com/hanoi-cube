@@ -286,7 +286,8 @@ class StateMachine:
             played_at=self._played_at_factory(),
             judgements=list(self._judgements),
         )
-        self._store.save_play(record)  # クラウドアップロードキュー投入はS9で追加
+        # SQLiteストアでは保存 = アップロードキュー投入(uploaded=0。app/cloud/uploader.py が送る)
+        self._store.save_play(record)
         self._highlight_play_id = self._play_id
         return self._enter_ranking(now_ms)
 

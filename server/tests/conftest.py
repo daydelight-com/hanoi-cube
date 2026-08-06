@@ -24,6 +24,10 @@ _ISOLATED_ENV_VARS = [
     "HANOI_CV_HEIGHT",
     "HANOI_TAG_MASTER",
     "HANOI_MOCK_API",
+    "HANOI_FIREBASE_CREDENTIALS",
+    "HANOI_FIREBASE_PROJECT",
+    "FIRESTORE_EMULATOR_HOST",
+    "GOOGLE_APPLICATION_CREDENTIALS",
 ]
 
 
@@ -31,6 +35,8 @@ _ISOLATED_ENV_VARS = [
 def _isolate_hanoi_env(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in _ISOLATED_ENV_VARS:
         monkeypatch.delenv(name, raising=False)
+    # create_app() を使うテストがディスク上のDBを作らないようメモリDBに固定
+    monkeypatch.setenv("HANOI_DB_PATH", ":memory:")
     # CVワーカー等の子プロセスは環境変数からレイアウトを再評価するため、
     # 削除ではなくテスト用寸法を明示的に継承させる
     monkeypatch.setenv("HANOI_MAT_SIZE", _TEST_MAT_SIZE)

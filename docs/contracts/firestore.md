@@ -24,14 +24,17 @@
       "points": 12,                   // 獲得点 = 箱数4 * 最短手数3。無得点は 0
       "min_moves": 3,                 // クリア可能時のみ。クリア不可は null
       "dup_of_seq": null,             // 重複時: 得点した元判定の seq。それ以外 null
-      "tower_box_ids": [              // 判定時に塔にあった箱の個体(下から上)。表示専用
-        ["large-1", "medium-1", "small-1"], [], ["large-2"]
-      ]
+      "tower_box_ids": {              // 判定時に塔にあった箱の個体(下から上)。表示専用
+        "a": ["large-1", "medium-1", "small-1"], "b": [], "c": ["large-2"]
+      }
     }
   ]
 }
 ```
 
+- `tower_box_ids` は本ドキュメント上では **a/b/c キーのマップ**で持つ(S12)。Firestore は配列の
+  直接入れ子(`judgements[].tower_box_ids[][]`)を保存できないため、他契約の3配列タプル表現
+  (cv-interface.md / ws-messages.md / SQLite の JSON)とはここだけ形が異なる。
 - `tower_box_ids` は記録画面の表示専用。サイズ列は `board` と一致する(cv-interface.md §3)。
   クリア条件2は箱の個体で判定する(ルールブック§5)ため、同サイズの箱を入れ替えただけの
   クリアは `board` だけでは初期状態と区別が付かない。個体を残して見分けられるようにする。

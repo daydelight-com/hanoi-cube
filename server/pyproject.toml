@@ -11,6 +11,7 @@ dependencies = [
     "numpy>=2.5.1",
     "opencv-python>=5.0.0.93",
     "pupil-apriltags>=1.0.4.post11",
+    "firebase-admin>=6.5",
 ]
 
 [dependency-groups]
@@ -40,8 +41,8 @@ strict = true
 files = ["app", "tests"]
 
 [[tool.mypy.overrides]]
-# 型スタブが提供されていない外部CVライブラリ
-module = ["pupil_apriltags.*", "cv2.*"]
+# 型スタブが提供されていない外部CVライブラリ・Firebase Admin SDK
+module = ["pupil_apriltags.*", "cv2.*", "firebase_admin.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

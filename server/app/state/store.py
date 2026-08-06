@@ -1,7 +1,7 @@
-"""プレイ記録・ランキングのストア。
+"""プレイ記録・ランキングのストア(インターフェースとメモリ実装)。
 
-S2ではメモリ実装のみ。SQLite永続化とクラウドアップロードキューはS9で
-PlayStore プロトコルに準拠する実装を追加して差し替える。
+本番は SQLite 永続化(app/state/sqlite_store.py、S12)を使う。MemoryStore は
+テスト・開発用に残す。クラウドアップロードキューは app/cloud/uploader.py。
 順位は score 降順 → fail_count 昇順(同点時の第2キー、ルールブック§6)→ played_at 昇順。
 """
 

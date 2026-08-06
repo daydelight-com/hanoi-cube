@@ -19,11 +19,15 @@ from pydantic import BaseModel
 
 from app.api import ws
 from app.api.ws import GameServer, Hub, run_loop
+from app.cloud.uploader import Uploader, make_sink
 from app.core.precompute import load_table
 from app.cv.interface import CvSource
 from app.cv.mock import MockCv
 from app.state.machine import DEFAULT_RECORD_URL_BASE, StateMachine
-from app.state.store import MemoryStore
+from app.state.sqlite_store import SqliteStore
+
+# ローカルDBの既定パス(仕様§7.1。output/ と *.sqlite3 はgitignore済み)
+DEFAULT_DB_PATH = "output/plays.sqlite3"
 
 
 def _make_cv() -> CvSource:
@@ -54,7 +58,7 @@ def create_app(*, start_loop: bool = True) -> FastAPI:
     @contextlib.asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         table = load_table()  # プロセス起動時に1回ロードして使い回す
-        store = MemoryStore()
+        store = SqliteStore(os.environ.get("HANOI_DB_PATH", DEFAULT_DB_PATH))
         machine = StateMachine(
             table,
             store,
@@ -64,16 +68,21 @@ def create_app(*, start_loop: bool = True) -> FastAPI:
         server = GameServer(machine=machine, hub=Hub(), cv=_make_cv(), store=store)
         app.state.game = server
         task = asyncio.create_task(run_loop(server)) if start_loop else None
+        # クラウドアップロード(未設定なら無効)。失敗してもゲームは止めない(仕様§3.2-1)
+        sink = make_sink() if start_loop else None
+        upload_task = asyncio.create_task(Uploader(store, sink).run()) if sink else None
         try:
             yield
         finally:
-            if task is not None:
-                task.cancel()
-                with contextlib.suppress(asyncio.CancelledError):
-                    await task
+            for t in (task, upload_task):
+                if t is not None:
+                    t.cancel()
+                    with contextlib.suppress(asyncio.CancelledError):
+                        await t
             close = getattr(server.cv, "close", None)
             if callable(close):
                 close()  # 実CVのワーカープロセスを止める
+            store.close()
 
     app = FastAPI(title="Hanoi Cube Server", lifespan=lifespan)
     app.include_router(ws.router)
