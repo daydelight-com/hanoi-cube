@@ -16,8 +16,9 @@ dist/
 # ローカルDB(S2以降)
 *.sqlite3
 
-# Firebaseエミュレータのログ
+# Firebaseエミュレータのログ・CLIのデプロイキャッシュ
 *-debug.log
+.firebase/
 
 # Firebaseサービスアカウント鍵(秘密情報。絶対にコミットしない)
 service-account.json
