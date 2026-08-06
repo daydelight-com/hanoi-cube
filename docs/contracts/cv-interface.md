@@ -55,11 +55,20 @@ class CvSource(Protocol):
   "board": "LMS//L",               // "/".join(towers)。legal=true のとき board.md の正準形
   "legal": true,                   // 配置ルール(ルールブック§3)を満たすか
   "violations": [],                // legal=false のときの違反リスト(下表)
-  "staging_box_ids": ["small-3"]   // 待機エリアにある箱(盤面には含まれない)
+  "staging_box_ids": ["small-3"],  // 待機エリアにある箱(盤面には含まれない)
+  "tower_box_ids": [               // 塔ごとの箱の個体(下から上)。towers と同じ並び
+    ["large-1", "medium-1", "small-1"], [], ["large-2"]
+  ]
 }
 ```
 
 - 掴まれ中・移動中の箱はどの塔にも属さない(towers にも staging にも含めない)。
+- `tower_box_ids` のサイズ列は `towers` と一致する(モデルのバリデータで保証)。
+- **「確定盤面が変化した」の判定には `tower_box_ids` まで含める。** 同サイズの箱を塔間で
+  入れ替えただけだと `towers` は変わらないが、クリア条件2は箱の個体で判定する
+  (ルールブック§5)ため、送らないとサーバーが入れ替え前の箱構成のまま判定してしまう。
+- サーバーは `tower_box_ids` を**判定にも重複判定にも使わない**(判定は `board` のみ)。
+  用途は判定履歴への記録と記録画面での表示(firestore.md §1)。
 - 判定エンジンに渡せるのは `legal: true` の board のみ。`legal: false` の間、サーバーは
   警告表示+判定ボタン無効化を行う(仕様§4.2)。
 

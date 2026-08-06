@@ -181,10 +181,16 @@ class MockCv:
             legal=not violations,
             violations=violations,
             staging_box_ids=sorted(self._state.staging, key=BOX_IDS.index),
+            tower_box_ids=(
+                list(self._state.stacks["A"]),
+                list(self._state.stacks["B"]),
+                list(self._state.stacks["C"]),
+            ),
         )
+        # 個体まで比較する(tracker.py と同じ理由。同サイズの入れ替えも別盤面として送る)
         last = self._last_board
-        if last is not None and (last.towers, last.staging_box_ids) == (
-            update.towers,
+        if last is not None and (last.tower_box_ids, last.staging_box_ids) == (
+            update.tower_box_ids,
             update.staging_box_ids,
         ):
             return

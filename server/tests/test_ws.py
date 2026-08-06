@@ -102,6 +102,12 @@ def test_cv_loop_streams_boxes_and_board() -> None:
         board = recv_until(display, "board")
         assert board["payload"]["board"] == "L/MS/L"
         assert board["payload"]["legal"] is True
+        # 箱の個体もWS境界を越えて配信される(ws-messages.md §1。TS写しでは必須フィールド)
+        assert board["payload"]["tower_box_ids"] == [
+            ["large-1"],
+            ["medium-1", "small-1"],
+            ["large-2"],
+        ]
 
 
 def test_mock_endpoint_rejects_bad_board() -> None:

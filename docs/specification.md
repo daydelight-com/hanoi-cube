@@ -3,7 +3,7 @@
 PyCon JP 出展ブース向け体験ゲーム「Hanoi Cube(仮称)」のシステム仕様書。
 
 - ゲームルールの正式定義: [docs/game/hanoi_arrange_rules.md](game/hanoi_arrange_rules.md)
-- 得点表(全119クラス): [docs/game/score_ranking.md](game/score_ranking.md)
+- 得点表(全166クラス): [docs/game/score_ranking.md](game/score_ranking.md)
 
 本書はシステム(ハードウェア構成・ソフトウェア・画面・通信・データ)の仕様を定める。実装には本書のレビュー後に着手する。
 
@@ -389,6 +389,7 @@ judgements          -- 判定履歴(記録画面の素材)
   points        INTEGER            -- 獲得点(無得点は0)
   min_moves     INTEGER            -- 最短手数(クリア可能時)
   dup_of_seq    INTEGER NULL       -- 重複時: 元の判定のseq
+  tower_box_ids TEXT               -- 判定時の箱の個体(JSON配列3つ、下から上)。記録画面の表示専用
 ```
 
 - ランキングは `plays` からの導出(スコア降順 → 失敗数昇順 → 先着順)。
@@ -401,7 +402,7 @@ plays (コレクション)
   {play_id} (ドキュメント。ローカルと同じUUID)
     player_name, score, fail_count, played_at
     judgements: [                 -- 判定履歴はドキュメント内の配列として埋め込む
-      { seq, board, elapsed_ms, result, points, min_moves, dup_of_seq }, ...
+      { seq, board, elapsed_ms, result, points, min_moves, dup_of_seq, tower_box_ids }, ...
     ]
 ```
 

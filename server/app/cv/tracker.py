@@ -312,13 +312,14 @@ class BoardTracker:
         towers_str = tuple(
             "".join(SIZE_CHAR[BOX_SIZE_OF[b]] for b in sig.towers[i]) for i in range(len(_TOWERS))
         )
-        # 公開内容(サイズ列と待機ID)が前回の確定盤面と同一なら再送しない
-        # (契約§3「確定盤面が変化したときのみ」。塔間で同サイズの個体だけが
-        # 入れ替わった場合などが該当する)
+        tower_box_ids = (list(sig.towers[0]), list(sig.towers[1]), list(sig.towers[2]))
+        # 公開内容が前回の確定盤面と同一なら再送しない(契約§3「確定盤面が変化したときのみ」)。
+        # 個体まで比較する: 同サイズの箱を塔間で入れ替えただけでもサイズ列は変わらないが、
+        # クリア条件2は箱の個体で判定する(ルールブック§5)ため別の盤面として送る必要がある
         last = self._last_board
         if (
             last is not None
-            and last.towers == towers_str
+            and last.tower_box_ids == tower_box_ids
             and last.staging_box_ids == list(sig.staging)
         ):
             return []
@@ -330,6 +331,7 @@ class BoardTracker:
             legal=not violations,
             violations=violations,
             staging_box_ids=list(sig.staging),
+            tower_box_ids=tower_box_ids,
         )
         self._last_board = update
         return [update]

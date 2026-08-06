@@ -30,13 +30,13 @@ def test_rulebook_example_is_min_3_moves(table: PrecomputeTable) -> None:
     assert result.canonical_key == canonical_key("LMS/LM/L")
 
 
-def test_top_scoring_board_is_24_points(table: PrecomputeTable) -> None:
-    # ランキング1位: [大]/[中,小]/[大] = 4箱 * 6手 = 24点
-    result = judge("L/MS/L", EMPTY, EMPTY, table)
+def test_top_scoring_board_is_30_points(table: PrecomputeTable) -> None:
+    # ランキング1位: [大]/[大,中,小]/[中] = 5箱 * 6手 = 30点
+    result = judge("L/LMS/M", EMPTY, EMPTY, table)
     assert result.result == "scored"
-    assert result.points == 24
+    assert result.points == 30
     assert result.min_moves == 6
-    assert score("L/MS/L", table) == 24
+    assert score("L/LMS/M", table) == 30
 
 
 def test_rulebook_unclearable_example(table: PrecomputeTable) -> None:
@@ -49,12 +49,21 @@ def test_rulebook_unclearable_example(table: PrecomputeTable) -> None:
     assert min_path("LMS/MS/L", table) is None
 
 
-def test_symmetric_placement_cannot_clear_in_zero_moves(table: PrecomputeTable) -> None:
-    # §5 条件2: 最初から左右対称な枚数配置でも0手クリアは不可。
-    # 同じ枚数構成の別盤面が無い LMS//LMS はクリア不可になる
+def test_symmetric_placement_needs_actual_box_movement(table: PrecomputeTable) -> None:
+    # §5 条件2: 左右対称な枚数配置でも0手クリアは不可。ただし同サイズの箱を塔間で
+    # 入れ替えれば「箱が別の塔にある」を満たすため、実際に動かせばクリアになる
     result = judge("LMS//LMS", EMPTY, EMPTY, table)
+    assert result.result == "scored"
+    assert result.min_moves == 3
+    assert result.points == 6 * 3
+
+
+def test_frozen_board_is_unclearable(table: PrecomputeTable) -> None:
+    # 3塔とも最上段が小・空塔なしで合法手が1手も無い → クリア不可(§4)
+    result = judge("LMS/MS/LMS", EMPTY, EMPTY, table)
     assert result.result == "unclearable"
     assert result.points == 0
+    assert result.min_moves is None
 
 
 def test_mirror_duplicate_and_same_duplicate(table: PrecomputeTable) -> None:

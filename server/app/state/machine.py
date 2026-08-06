@@ -325,6 +325,7 @@ class StateMachine:
                     points=judgement.points,
                     min_moves=judgement.min_moves,
                     dup_of_seq=dup_of_seq,
+                    tower_box_ids=board.tower_box_ids,
                 )
             )
         payload = JudgePayload(

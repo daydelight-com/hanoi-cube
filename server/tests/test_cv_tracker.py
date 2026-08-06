@@ -267,15 +267,31 @@ def test_structural_ghost_released_when_cover_lifted() -> None:
     assert [u.board for u in updates] == ["//"]
 
 
-def test_identity_swap_does_not_reemit_same_public_board() -> None:
-    """公開内容(サイズ列・待機ID)が同じなら、個体の入れ替わりでは再emitしない(契約§3)。"""
+def test_identity_swap_reemits_board_with_new_box_ids() -> None:
+    """同サイズの個体を入れ替えたら、盤面文字列が同じでも再emitする(契約§3)。
+
+    クリア条件2は箱の個体で見る(ルールブック§5)ため、サイズ列だけで再送を
+    抑止するとサーバーが入れ替え前の箱構成のまま判定してしまう。
+    """
     d = Driver()
     initial = [tower_sight("large-1", "A", 0.0), tower_sight("large-2", "C", 0.0)]
-    assert [u.board for u in d.feed_until_stable(initial)] == ["L//L"]
+    first = d.feed_until_stable(initial)
+    assert [u.board for u in first] == ["L//L"]
+    assert first[0].tower_box_ids == (["large-1"], [], ["large-2"])
 
-    # large-1 と large-2 を入れ替える(盤面文字列・待機は不変)
+    # large-1 と large-2 を入れ替える(盤面文字列・待機は不変だが個体は動いている)
     swapped = [tower_sight("large-2", "A", 0.0), tower_sight("large-1", "C", 0.0)]
-    assert not d.feed_until_stable(swapped)
+    second = d.feed_until_stable(swapped)
+    assert [u.board for u in second] == ["L//L"]
+    assert second[0].tower_box_ids == (["large-2"], [], ["large-1"])
+
+
+def test_unchanged_board_is_not_reemitted() -> None:
+    """個体も含めて同一なら再emitしない(契約§3「確定盤面が変化したときのみ」)。"""
+    d = Driver()
+    sightings = [tower_sight("large-1", "A", 0.0), tower_sight("large-2", "C", 0.0)]
+    assert [u.board for u in d.feed_until_stable(sightings)] == ["L//L"]
+    assert not d.feed_until_stable(sightings)
 
 
 def test_stability_boundary_exact_ms() -> None:

@@ -15,6 +15,7 @@ const snapshot: DisplayMessage = {
       legal: true,
       violations: [],
       staging_box_ids: ['medium-2', 'small-3'],
+      tower_box_ids: [['large-1', 'medium-1', 'small-1'], [], ['large-2']],
     },
   },
 }
@@ -65,6 +66,7 @@ describe('reduceDisplay', () => {
         legal: true,
         violations: [],
         staging_box_ids: [],
+        tower_box_ids: [[], ['small-1'], ['large-1']],
       },
     })
     expect(s.board?.board).toBe('/S/L')

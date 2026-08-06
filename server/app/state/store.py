@@ -12,6 +12,7 @@ from typing import Protocol
 from pydantic import BaseModel, Field
 
 from app.api.messages import JudgeResultKind, RankingEntry
+from app.cv.interface import BoxId
 
 
 class JudgementRecord(BaseModel):
@@ -24,6 +25,9 @@ class JudgementRecord(BaseModel):
     points: int
     min_moves: int | None
     dup_of_seq: int | None = None
+    # 判定時に塔にあった箱の個体(下から上)。記録画面の表示専用で、判定・重複判定には使わない
+    # (firestore.md §1)。同サイズの入れ替えを見分けるために必要
+    tower_box_ids: tuple[list[BoxId], list[BoxId], list[BoxId]]
 
 
 class PlayRecord(BaseModel):

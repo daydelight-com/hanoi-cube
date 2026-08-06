@@ -15,7 +15,7 @@
 | `screen` | 画面遷移のたび | `{ screen, ctx }` |
 | `lang` | 言語切替・リセット時 | `{ lang: "ja" \| "en" }` |
 | `boxes` | 約30fps(全画面で常時) | `{ t_ms, boxes: BoxObservation[] }`(cv-interface.md §2 と同型) |
-| `board` | 確定盤面の変化時 | `{ t_ms, towers, board, legal, violations, staging_box_ids }`(cv-interface.md §3 と同型) |
+| `board` | 確定盤面の変化時 | `{ t_ms, towers, board, legal, violations, staging_box_ids, tower_box_ids }`(cv-interface.md §3 と同型。`kind` のみ除く) |
 | `countdown` | 本番開始演出(1秒ごと) | `{ value: "3" \| "2" \| "1" \| "go" }` |
 | `timer` | 本番中1秒ごと+タイムアップ時 | `{ remaining_ms: number }`(残り10秒未満の強調はクライアント判断) |
 | `judge` | 判定実行のたび(練習・本番) | §2 の Judge |

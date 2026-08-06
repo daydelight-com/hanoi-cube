@@ -61,4 +61,9 @@ export interface CvBoardUpdate {
   legal: boolean
   violations: Violation[]
   staging_box_ids: BoxId[]
+  /**
+   * 塔ごとの箱の個体(下から上)。towers と同じ並びで、サイズ列は towers に一致する。
+   * 判定・重複判定には使わず記録表示専用(cv-interface.md §3)。
+   */
+  tower_box_ids: [BoxId[], BoxId[], BoxId[]]
 }

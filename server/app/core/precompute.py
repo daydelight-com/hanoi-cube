@@ -32,6 +32,8 @@ DATA_PATH = Path(__file__).parent / "data" / "precompute.json"
 _SIZE_RANK = {"S": 1, "M": 2, "L": 3}
 
 _Towers = tuple[str, str, str]
+# 個体を区別した塔(下から上に箱ラベル。ラベル先頭文字がサイズ)
+_Boxes = tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]
 
 
 class Move(BaseModel):
@@ -77,21 +79,39 @@ class PrecomputeTable(BaseModel):
         return self.boards[board_index(board)]
 
 
-def _legal_moves(towers: _Towers) -> list[tuple[Move, _Towers]]:
+def label_boxes(towers: _Towers) -> _Boxes:
+    """塔文字列の各箱に個体ラベルを振る(同サイズを区別するため)。
+
+    クリア条件2は箱の個体で判定する(ルールブック§5)。どの個体をどこに割り当てても
+    盤面は同型なので、出現順に `L0` `L1` ... と振った代表割り当てで可否・手数は決まる。
+    """
+    serial = {"L": 0, "M": 0, "S": 0}
+    labelled: list[tuple[str, ...]] = []
+    for tower in towers:
+        boxes = []
+        for size in tower:
+            boxes.append(f"{size}{serial[size]}")
+            serial[size] += 1
+        labelled.append(tuple(boxes))
+    return (labelled[0], labelled[1], labelled[2])
+
+
+def _legal_moves(towers: _Boxes) -> list[tuple[Move, _Boxes]]:
     """現盤面から1手で到達できる (手, 次盤面) の一覧(ルールブック§4)。"""
-    results: list[tuple[Move, _Towers]] = []
+    results: list[tuple[Move, _Boxes]] = []
     for i, src in enumerate(towers):
         if not src:
             continue
-        size = src[-1]
+        box = src[-1]
+        size = box[0]
         for j, dst in enumerate(towers):
             if i == j or len(dst) == 3:
                 continue
-            if dst and _SIZE_RANK[dst[-1]] <= _SIZE_RANK[size]:
+            if dst and _SIZE_RANK[dst[-1][0]] <= _SIZE_RANK[size]:
                 continue
             nxt = list(towers)
             nxt[i] = src[:-1]
-            nxt[j] = dst + size
+            nxt[j] = (*dst, box)
             move = Move.model_validate({"size": size, "from": TOWER_NAMES[i], "to": TOWER_NAMES[j]})
             results.append((move, (nxt[0], nxt[1], nxt[2])))
     return results
@@ -100,16 +120,22 @@ def _legal_moves(towers: _Towers) -> list[tuple[Move, _Towers]]:
 def solve(board: str) -> tuple[int, list[Move]] | None:
     """初期盤面からのBFSで最短クリア手順を求める。クリア不可なら None。
 
-    クリア条件(ルールブック§5): 枚数配置 (a,b,c) が (c,b,a) になり、かつ最終盤面 ≠ 初期盤面。
-    条件2により、左右対称な枚数配置でも0手クリアは成立しない。
+    クリア条件(ルールブック§5): 枚数配置 (a,b,c) が (c,b,a) になり、かつ
+    **少なくとも1個の箱が初期状態とは別の塔にある**こと。
+
+    条件2は箱の個体で見る。同サイズの箱を塔間で入れ替えただけの盤面は盤面文字列としては
+    初期と同一だが、箱は動いているのでクリアとして成立する(例: `LMS/LM/LMS` は3手)。
     """
-    start = parse_board(board)
+    start = label_boxes(parse_board(board))
     goal_counts = tuple(len(t) for t in reversed(start))
-    parent: dict[_Towers, tuple[_Towers, Move] | None] = {start: None}
-    queue: deque[_Towers] = deque([start])
+    home = {box: i for i, tower in enumerate(start) for box in tower}
+    parent: dict[_Boxes, tuple[_Boxes, Move] | None] = {start: None}
+    queue: deque[_Boxes] = deque([start])
     while queue:
         current = queue.popleft()
-        if current != start and tuple(len(t) for t in current) == goal_counts:
+        if tuple(len(t) for t in current) == goal_counts and any(
+            home[box] != i for i, tower in enumerate(current) for box in tower
+        ):
             path: list[Move] = []
             node = current
             while (step := parent[node]) is not None:

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Literal, Protocol, cast
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 BoxSize = Literal["large", "medium", "small"]
 Area = Literal["A", "B", "C", "staging"]
@@ -84,6 +84,23 @@ class CvBoardUpdate(BaseModel):
     legal: bool
     violations: list[Violation] = Field(default_factory=list)
     staging_box_ids: list[BoxId] = Field(default_factory=list)
+    # 塔ごとの箱の個体(下から上)。判定・重複判定には使わず記録表示専用(cv-interface.md §3)
+    tower_box_ids: tuple[list[BoxId], list[BoxId], list[BoxId]]
+
+    @model_validator(mode="after")
+    def _validate_box_ids_match_towers(self) -> CvBoardUpdate:
+        derived = tuple(
+            "".join(SIZE_CHAR[BOX_SIZE_OF[b]] for b in ids) for ids in self.tower_box_ids
+        )
+        if derived != self.towers:
+            raise ValueError(
+                f"tower_box_ids {self.tower_box_ids} does not match towers {self.towers}"
+            )
+        # 1個の箱が複数の場所に同時に存在することはない(塔間・塔と待機の重複を弾く)
+        placed = [b for ids in self.tower_box_ids for b in ids] + self.staging_box_ids
+        if len(set(placed)) != len(placed):
+            raise ValueError(f"box placed in more than one area: {placed}")
+        return self
 
 
 CvMessage = CvFrame | CvBoardUpdate

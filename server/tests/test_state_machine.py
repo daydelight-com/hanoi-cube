@@ -7,11 +7,12 @@
 from __future__ import annotations
 
 from itertools import count
+from typing import cast
 
 import pytest
 from app.api.messages import Outbound
 from app.core.precompute import PrecomputeTable, load_table
-from app.cv.interface import CvBoardUpdate
+from app.cv.interface import BoxId, CvBoardUpdate
 from app.state.machine import (
     GAME_MS,
     IDLE_RANKING_SCROLL_MIN_MS,
@@ -41,9 +42,29 @@ def table() -> PrecomputeTable:
     return load_table()
 
 
+_BOX_NAME = {"L": "large", "M": "medium", "S": "small"}
+
+
 def board_update(board: str, *, legal: bool = True, t_ms: int = 0) -> CvBoardUpdate:
-    a, b, c = board.split("/")
-    return CvBoardUpdate(t_ms=t_ms, towers=(a, b, c), board=board, legal=legal)
+    """盤面文字列から CvBoardUpdate を作る。箱の個体は出現順に 1..3 を割り当てる。"""
+    towers = board.split("/")
+    serial = {"L": 0, "M": 0, "S": 0}
+
+    def box_ids(tower: str) -> list[BoxId]:
+        ids = []
+        for size in tower:
+            serial[size] += 1
+            ids.append(cast(BoxId, f"{_BOX_NAME[size]}-{serial[size]}"))
+        return ids
+
+    a, b, c = towers
+    return CvBoardUpdate(
+        t_ms=t_ms,
+        towers=(a, b, c),
+        board=board,
+        legal=legal,
+        tower_box_ids=(box_ids(a), box_ids(b), box_ids(c)),
+    )
 
 
 class Driver:
@@ -536,6 +557,33 @@ def test_game_judgement_history_recorded(d: Driver) -> None:
     assert record.judgements[0].elapsed_ms == 0
     assert record.judgements[1].elapsed_ms == 1_000
     assert record.judgements[1].min_moves == 7
+    # 記録画面で同サイズの個体を見分けるため、判定時の箱の個体も残す(firestore.md §1)
+    assert record.judgements[0].tower_box_ids == (
+        ["large-1", "medium-1", "small-1"],
+        [],
+        [],
+    )
+    assert record.judgements[1].tower_box_ids == ([], [], ["large-1", "medium-1", "small-1"])
+
+
+def test_same_size_swap_is_duplicate(d: Driver) -> None:
+    """重複判定はサイズと並びのみで行う(ルールブック§6)。個体の入れ替えは得点にならない。"""
+    d.to_game_play()
+    swappable = "LMS/LM/LMS"  # クリア可能(3手・8箱=24点)。同サイズの入れ替え余地がある
+    d.machine.on_cv_message(board_update(swappable, t_ms=d.now), d.now)
+    out = d.press("enter")
+    assert sent(out, "judge")[0].payload["result"] == "scored"
+    assert sent(out, "judge")[0].payload["points"] == 24
+
+    d.advance(1_000)
+    # 盤面文字列は同じまま、A塔とC塔の小を入れ替える(CVは別の確定盤面として送る)
+    swapped = board_update(swappable, t_ms=d.now)
+    a, _b, c = swapped.tower_box_ids
+    a[2], c[2] = c[2], a[2]
+    d.machine.on_cv_message(swapped, d.now)
+    out = d.press("enter")
+    assert sent(out, "judge")[0].payload["result"] == "duplicate_same"
+    assert sent(out, "judge")[0].payload["points"] == 0
 
 
 def test_practice_not_recorded(d: Driver) -> None:
