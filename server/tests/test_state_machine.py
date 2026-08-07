@@ -14,6 +14,7 @@ from app.api.messages import Outbound
 from app.core.precompute import PrecomputeTable, load_table
 from app.cv.interface import BoxId, CvBoardUpdate
 from app.state.machine import (
+    DEFAULT_RECORD_URL_BASE,
     GAME_MS,
     IDLE_RANKING_SCROLL_MIN_MS,
     IDLE_RANKING_TAIL_MS,
@@ -473,7 +474,9 @@ def test_row25_ranking_enter_guard_3s(d: Driver) -> None:
     assert screen_of(out) == "qr"
     ctx = sent(out, "screen")[-1].payload["ctx"]
     assert ctx["play_id"] == "play-1"
-    assert ctx["url"].endswith("/play-1")
+    # QRのURLは本番 Hosting の記録画面(firestore.md §4 のルーティング)を指すこと
+    assert ctx["url"] == "https://hanoi-cube.web.app/records/play-1"
+    assert ctx["url"] == DEFAULT_RECORD_URL_BASE + "play-1"
 
 
 def test_row26_qr_enter_guard_5s_and_lang_reset(d: Driver) -> None:

@@ -42,8 +42,10 @@ QR_GUARD_MS = 5_000
 NAME_MAX_CHARS = 10
 RULE_PAGE_COUNT = 5
 
-# 記録画面URLの基底(S9で確定。プレイIDを連結してQRに載せる)
-DEFAULT_RECORD_URL_BASE = "https://hanoi-cube.example.com/records/"
+# 記録画面URLの基底(プレイIDを連結してQRに載せる)。本番 Firebase Hosting の
+# 既定サイト(cloud/.firebaserc のプロジェクト hanoi-cube)。別サイトに出す場合は
+# 環境変数 HANOI_RECORD_URL_BASE で上書きする(api/main.py)
+DEFAULT_RECORD_URL_BASE = "https://hanoi-cube.web.app/records/"
 
 ModeFocus = Literal["rules", "practice", "game", "lang"]
 _MODE_FOCUS_ORDER: tuple[ModeFocus, ...] = ("rules", "practice", "game", "lang")
