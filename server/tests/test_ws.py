@@ -158,8 +158,11 @@ def test_make_cv_selects_by_env(monkeypatch: pytest.MonkeyPatch) -> None:
     from app.api.main import _make_cv
     from app.cv.mock import MockCv
 
-    assert isinstance(_make_cv(), MockCv)  # 既定はモック(縮退経路)
     monkeypatch.setattr(app.cv.real, "RealCv", _StubCv)
+    monkeypatch.delenv("HANOI_CV", raising=False)  # conftest の mock 常設を外して既定を踏む
+    assert isinstance(_make_cv(), _StubCv)  # 既定は実CV
+    monkeypatch.setenv("HANOI_CV", "mock")
+    assert isinstance(_make_cv(), MockCv)  # モックは縮退経路として維持(CLAUDE.md 規則6)
     monkeypatch.setenv("HANOI_CV", "real")
     assert isinstance(_make_cv(), _StubCv)
 
