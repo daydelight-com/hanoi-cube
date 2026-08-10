@@ -7,8 +7,10 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
+from app.cloud import uploader
 
 # app.cv.layout はモジュール読み込み時に HANOI_MAT_SIZE を評価する。テストのレイアウト
 # 前提値(塔x=150/300/450 等)は 600x400 で書かれているため、テストモジュールの import より
@@ -35,8 +37,17 @@ _ISOLATED_ENV_VARS = [
 def _isolate_hanoi_env(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in _ISOLATED_ENV_VARS:
         monkeypatch.delenv(name, raising=False)
+    # 既定は実CV(カメラ必須)になったため、テストでは常にモックCVを明示する
+    monkeypatch.setenv("HANOI_CV", "mock")
     # create_app() を使うテストがディスク上のDBを作らないようメモリDBに固定
     monkeypatch.setenv("HANOI_DB_PATH", ":memory:")
     # CVワーカー等の子プロセスは環境変数からレイアウトを再評価するため、
     # 削除ではなくテスト用寸法を明示的に継承させる
     monkeypatch.setenv("HANOI_MAT_SIZE", _TEST_MAT_SIZE)
+    # 開発機のリポジトリ直下に実在する service-account.json(既定の自動検出先)が
+    # テストに影響しないよう、存在しないパスへ差し替える
+    monkeypatch.setattr(
+        uploader,
+        "default_credentials_path",
+        lambda: Path("/nonexistent/service-account.json"),
+    )

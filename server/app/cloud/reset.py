@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
-from app.cloud.uploader import make_firestore_client
+from app.cloud.uploader import make_firestore_client, resolve_credentials_path
 
 
 class CloudPlays(Protocol):
@@ -62,10 +62,7 @@ def cloud_target_description() -> str | None:
     project = os.environ.get("HANOI_FIREBASE_PROJECT")
     if emulator := os.environ.get("FIRESTORE_EMULATOR_HOST"):
         return f"Firestoreエミュレータ {emulator} (project={project or '未指定'})"
-    cred = os.environ.get("HANOI_FIREBASE_CREDENTIALS") or os.environ.get(
-        "GOOGLE_APPLICATION_CREDENTIALS"
-    )
-    if cred:
+    if cred := resolve_credentials_path():
         return f"Firestore本番 (credentials={cred})"
     return None
 
@@ -147,7 +144,8 @@ def run_cli(
     if target is None:
         print_fn(
             "エラー: Firestore の接続設定がありません。片側(SQLiteのみ)の削除は行いません。\n"
-            "  本番:       HANOI_FIREBASE_CREDENTIALS=<サービスアカウント鍵のパス>\n"
+            "  本番:       リポジトリ直下に service-account.json を置く"
+            "(または HANOI_FIREBASE_CREDENTIALS=<鍵のパス>)\n"
             "  エミュレータ: FIRESTORE_EMULATOR_HOST=127.0.0.1:8080"
             " HANOI_FIREBASE_PROJECT=demo-hanoi"
         )

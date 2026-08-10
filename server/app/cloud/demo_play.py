@@ -203,7 +203,8 @@ def run_cli(
     if target is None:
         print_fn(
             "エラー: Firestore の接続設定がありません。\n"
-            "  本番:       HANOI_FIREBASE_CREDENTIALS=<サービスアカウント鍵のパス>\n"
+            "  本番:       リポジトリ直下に service-account.json を置く"
+            "(または HANOI_FIREBASE_CREDENTIALS=<鍵のパス>)\n"
             "  エミュレータ: FIRESTORE_EMULATOR_HOST=127.0.0.1:8080"
             " HANOI_FIREBASE_PROJECT=demo-hanoi"
         )

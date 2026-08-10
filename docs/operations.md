@@ -16,10 +16,11 @@
 
 1. **サーバー停止**(`make dev` / uvicorn を Ctrl-C で終了)。
    起動中に DB ファイルを消しても、開いているプロセスが古いデータを持ち続けるため不可。
-2. **リセット実行**(リポジトリルートに本番の `service-account.json` がある前提):
+2. **リセット実行**(リポジトリルートに本番の `service-account.json` があれば自動検出される。
+   別の鍵を使う場合のみ `HANOI_FIREBASE_CREDENTIALS=<パス>` を付ける):
 
    ```bash
-   cd server && HANOI_FIREBASE_CREDENTIALS=../service-account.json uv run python ../scripts/reset_plays.py
+   cd server && uv run python ../scripts/reset_plays.py
    ```
 
    削除対象(SQLite のプレイ数・Firestore のドキュメント数と削除先)が表示されるので、

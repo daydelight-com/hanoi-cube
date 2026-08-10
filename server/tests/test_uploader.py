@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
-from app.cloud.uploader import Uploader, make_sink, play_document
+from app.cloud import uploader as uploader_module
+from app.cloud.uploader import Uploader, make_sink, play_document, resolve_credentials_path
 from app.core.precompute import PrecomputeTable, load_table
 from app.state.sqlite_store import SqliteStore
 from app.state.store import PlayRecord
@@ -164,4 +166,37 @@ def test_run_loop_uploads_pending(store: SqliteStore) -> None:
 
 def test_make_sink_disabled_without_config() -> None:
     # conftest が関連環境変数を除去済み → クラウド連携なし(ゲームはローカルのみで動く)
+    assert make_sink() is None
+
+
+def test_resolve_credentials_prefers_explicit_env(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    default = tmp_path / "service-account.json"
+    default.write_text("{}")
+    monkeypatch.setattr(uploader_module, "default_credentials_path", lambda: default)
+    monkeypatch.setenv("HANOI_FIREBASE_CREDENTIALS", "/explicit/key.json")
+    assert resolve_credentials_path() == "/explicit/key.json"
+
+
+def test_resolve_credentials_auto_detects_repo_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # リポジトリ直下に service-account.json があれば環境変数なしでアップロード先になる
+    default = tmp_path / "service-account.json"
+    default.write_text("{}")
+    monkeypatch.setattr(uploader_module, "default_credentials_path", lambda: default)
+    assert resolve_credentials_path() == str(default)
+
+
+def test_resolve_credentials_none_when_default_missing() -> None:
+    # conftest が default_credentials_path を存在しないパスに差し替え済み
+    assert resolve_credentials_path() is None
+
+
+def test_generic_adc_is_ignored(monkeypatch: pytest.MonkeyPatch) -> None:
+    # 他案件の GOOGLE_APPLICATION_CREDENTIALS がシェルに残っていても拾わない
+    # (無関係プロジェクトの Firestore へ書き込んだ事故の回帰テスト。handoff S17)
+    monkeypatch.setenv("GOOGLE_APPLICATION_CREDENTIALS", "/other/project-credentials.json")
+    assert resolve_credentials_path() is None
     assert make_sink() is None
