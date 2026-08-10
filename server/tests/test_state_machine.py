@@ -16,6 +16,8 @@ from app.cv.interface import BoxId, CvBoardUpdate
 from app.state.machine import (
     DEFAULT_RECORD_URL_BASE,
     GAME_MS,
+    IDLE_RANKING_ROW_MS,
+    IDLE_RANKING_SCROLL_MAX_MS,
     IDLE_RANKING_SCROLL_MIN_MS,
     IDLE_RANKING_TAIL_MS,
     JUDGE_COOLDOWN_MS,
@@ -27,7 +29,7 @@ from app.state.machine import (
     StateMachine,
 )
 from app.state.sqlite_store import SqliteStore
-from app.state.store import MemoryStore
+from app.state.store import MemoryStore, PlayRecord
 
 # S1テスト済みの検証値: L/MS/L=60点(4箱*15手)、LMS//=21点(3箱*7手)、
 # //LMS はその鏡像、LMS/MS/L はクリア不可
@@ -173,6 +175,40 @@ def test_row3_idle_ranking_timeout_to_idle_title(d: Driver) -> None:
     duration = IDLE_RANKING_SCROLL_MIN_MS + IDLE_RANKING_TAIL_MS  # 0件時
     assert d.advance(duration - 1) == []
     assert screen_of(d.advance(1)) == "idle_title"
+
+
+def test_idle_ranking_duration_scales_with_rows_and_clamps(table: PrecomputeTable) -> None:
+    """件数が増えても1行1秒を保ち、上限(120秒)でクランプする。
+
+    フロントの演出時間(idleRankingTiming.ts)と同式・同値でなければならない。
+    """
+
+    def duration_for(rows: int) -> int:
+        store = MemoryStore()
+        for i in range(rows):
+            store.save_play(
+                PlayRecord(
+                    play_id=f"p{i}",
+                    name=f"n{i}",
+                    score=rows - i,
+                    fail_count=0,
+                    played_at=f"2026-08-21T10:00:{i:02d}+09:00",
+                )
+            )
+        driver = Driver(table, store)
+        driver.advance(TITLE_MS)
+        assert driver.screen == "idle_ranking"
+        elapsed = 0
+        step = 1_000
+        limit = IDLE_RANKING_SCROLL_MAX_MS + IDLE_RANKING_TAIL_MS + step
+        while driver.screen == "idle_ranking":
+            driver.advance(step)
+            elapsed += step
+            assert elapsed <= limit, "idle_ranking から遷移しない(タイマー未設定?)"
+        return elapsed
+
+    assert duration_for(10) == 10 * IDLE_RANKING_ROW_MS + IDLE_RANKING_TAIL_MS
+    assert duration_for(200) == IDLE_RANKING_SCROLL_MAX_MS + IDLE_RANKING_TAIL_MS
 
 
 def test_row4_idle_ranking_enter_to_idle_title(d: Driver) -> None:

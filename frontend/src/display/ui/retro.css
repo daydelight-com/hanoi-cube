@@ -178,20 +178,15 @@
   text-shadow: 0 0 12px rgba(185, 255, 142, 0.9);
 }
 
-/* 待機ランキングのせり上がり(下位から1位へ。時間は行数に応じて JS 側で指定) */
-.retro-ranking-rise {
-  animation-name: retro-rise;
-  animation-timing-function: linear;
-  animation-fill-mode: forwards;
-}
-
-@keyframes retro-rise {
-  from {
-    transform: translateY(100vh);
-  }
-  to {
-    transform: translateY(0);
-  }
+/* 待機ランキングのせり上がり領域(見出しの下の全域。transform は JS 側で指定) */
+.retro-ranking-rise-area {
+  flex: 1;
+  min-height: 0;
+  align-self: stretch;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* HUD(practice / game_play の上部表示。背景透過で3D盤面を隠さない) */

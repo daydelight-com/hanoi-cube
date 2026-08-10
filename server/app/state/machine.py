@@ -32,7 +32,9 @@ from app.state.store import JudgementRecord, PlayRecord, PlayStore
 TITLE_MS = 5_000
 IDLE_RANKING_ROW_MS = 1_000
 IDLE_RANKING_SCROLL_MIN_MS = 2_000
-IDLE_RANKING_SCROLL_MAX_MS = 27_000
+# 100人規模でも1行あたり1秒を保てるよう上限を長めに取る(仕様§5.2の「20〜30秒」から変更。
+# frontend/src/display/screens/idleRankingTiming.ts と同値に保つこと)
+IDLE_RANKING_SCROLL_MAX_MS = 120_000
 IDLE_RANKING_TAIL_MS = 3_000  # 1位表示+3秒
 COUNTDOWN_STEP_MS = 1_000
 GAME_MS = 60_000

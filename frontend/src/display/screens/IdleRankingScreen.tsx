@@ -1,4 +1,8 @@
-// 待機画面(ランキング)。仕様§5.2: 全件を下位から順にせり上がり、1位まで表示。
+// 待機画面(ランキング)。仕様§5.2: 全件をせり上がり演出で表示する。
+// 表は常に「上位が上」の並び(1位が先頭)で描画し、表全体を画面下から
+// せり上げる。1画面に収まるならそのまま見出しの下で停止し、収まらないなら
+// 最後の行まで流し切ってから先頭(1位)へ戻して静止する。サーバーはこの静止の
+// あと TAIL_MS でタイトルへ戻るため、最後に見えるのは必ず1位になる。
 // せり上がり時間はサーバーのタイマー(state/machine.py の行数比例+クランプ)と
 // 同じ式で算出し、演出とタイムアウトのタイミングを合わせる。
 
@@ -6,7 +10,8 @@ import { useEffect, useRef } from 'react'
 import type { Lang, RankingEntry } from '../../contracts/ws'
 import { t } from '../../i18n/strings'
 import { Blink } from '../ui/Retro'
-import { idleRankingScrollMs } from './idleRankingTiming'
+import { idleRankingRows } from './idleRankingRows'
+import { idleRankingEndY, idleRankingScrollMs } from './idleRankingTiming'
 
 export function RankingTable({
   lang,
@@ -49,24 +54,34 @@ export function RankingTable({
 }
 
 export function IdleRankingScreen({ lang, entries }: { lang: Lang; entries: RankingEntry[] }) {
+  const areaRef = useRef<HTMLDivElement | null>(null)
   const riseRef = useRef<HTMLDivElement | null>(null)
 
-  // 下位から順にせり上がるため、コンテナは上から「最下位 → … → 1位」の順に並べる
-  // (最初に画面へ入るのはコンテナ先頭=最下位。最後に1位が現れて止まる)
-  const ascending = [...entries].sort((a, b) => b.rank - a.rank)
+  // 表示順は常に「1位 → … → 最下位」(上位が上)
+  const ordered = idleRankingRows(entries)
 
   useEffect(() => {
+    const area = areaRef.current
     const el = riseRef.current
-    if (!el) return
+    if (!area || !el) return
     const duration = idleRankingScrollMs(entries.length)
+    // 始点は表示領域の下端(画面下から現れる)
+    const from = area.clientHeight
+    const end = idleRankingEndY(el.offsetHeight, area.clientHeight)
     el.style.transition = 'none'
-    el.style.transform = 'translateY(100vh)'
+    el.style.transform = `translateY(${from}px)`
     // 初期位置を反映してから transition を有効化する(reflow を挟む)
     void el.getBoundingClientRect()
     el.style.transition = `transform ${duration}ms linear`
-    // 終点はコンテナ末尾(1位)が画面中央やや上に来る位置。CSS keyframes では
-    // 終点が要素高に依存して書けないため transition + calc で指定する
-    el.style.transform = 'translateY(calc(45vh - 100%))'
+    el.style.transform = `translateY(${end}px)`
+    // 1画面に収まるなら終点が見出し直下(=1位が最上段)なので、そのまま静止する
+    if (end === 0) return
+    // 収まらない場合は流し切ったあと先頭へ戻し、最後に1位を見せて静止する
+    const timer = setTimeout(() => {
+      el.style.transition = 'none'
+      el.style.transform = 'translateY(0)'
+    }, duration)
+    return () => clearTimeout(timer)
   }, [entries])
 
   if (entries.length === 0) {
@@ -85,8 +100,12 @@ export function IdleRankingScreen({ lang, entries }: { lang: Lang; entries: Rank
       <h2 className="retro-heading" style={{ marginTop: '5vh', zIndex: 1 }}>
         ★ {t(lang, 'rankingHeading')} ★
       </h2>
-      <div ref={riseRef} style={{ transform: 'translateY(100vh)' }}>
-        <RankingTable lang={lang} entries={ascending} />
+      <div ref={areaRef} className="retro-ranking-rise-area">
+        {/* 初期値は effect(計測)が走る前の1フレーム用。表示領域より必ず下になるよう
+            表の高さに依存しない 100vh を使う(100% だと短い表が最初の1frameで見える) */}
+        <div ref={riseRef} style={{ transform: 'translateY(100vh)' }}>
+          <RankingTable lang={lang} entries={ordered} />
+        </div>
       </div>
     </div>
   )
