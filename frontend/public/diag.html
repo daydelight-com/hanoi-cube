@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hanoi Cube 診断</title>
+    <style>
+      body {
+        font-family: -apple-system, sans-serif;
+        margin: 16px;
+      }
+      li {
+        margin: 4px 0;
+        word-break: break-all;
+      }
+      .ok {
+        color: green;
+      }
+      .ng {
+        color: red;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>診断ページ</h1>
+    <p>この画面が見えていれば、サーバーへの接続自体は成功しています。</p>
+    <ul id="out"></ul>
+    <script>
+      // 古いWebKitでも動くよう、このページはES5構文のみで書く
+      var out = document.getElementById('out')
+      function report(label, ok, detail) {
+        var li = document.createElement('li')
+        li.className = ok ? 'ok' : 'ng'
+        li.textContent = (ok ? 'OK: ' : 'NG: ') + label + (detail ? ' — ' + detail : '')
+        out.appendChild(li)
+      }
+      window.onerror = function (msg, src, line) {
+        report('ページ内エラー', false, msg + ' (' + src + ':' + line + ')')
+      }
+
+      report('UserAgent', true, navigator.userAgent)
+
+      // 本体アプリが使うモダン構文が動くか段階的に確認
+      var tests = [
+        ['ES2020 optional chaining (?.)', 'var a = {}; return a?.b === undefined'],
+        ['ES2020 nullish (??)', 'return (null ?? 1) === 1'],
+        ['ES2022 class fields', 'class C { x = 1 }; return new C().x === 1'],
+        ['ES2022 static class blocks', 'class C { static { } }; return true'],
+        ['top-level await 相当 (async fn)', 'async function f() {}; return true'],
+      ]
+      for (var i = 0; i < tests.length; i++) {
+        try {
+          var fn = new Function(tests[i][1])
+          report(tests[i][0], fn() === true)
+        } catch (e) {
+          report(tests[i][0], false, String(e))
+        }
+      }
+
+      // WebSocket が張れるか(コントローラと同じ経路)
+      try {
+        var proto = location.protocol === 'https:' ? 'wss' : 'ws'
+        var ws = new WebSocket(proto + '://' + location.host + '/ws/controller')
+        var done = false
+        ws.onopen = function () {
+          done = true
+          report('WebSocket /ws/controller', true)
+          ws.close()
+        }
+        ws.onerror = function () {
+          done = true
+          report('WebSocket /ws/controller', false, '接続エラー')
+        }
+        setTimeout(function () {
+          if (!done) report('WebSocket /ws/controller', false, '5秒タイムアウト')
+        }, 5000)
+      } catch (e) {
+        report('WebSocket', false, String(e))
+      }
+
+      // 本体と同じ module スクリプトが読めるか
+      var s = document.createElement('script')
+      s.type = 'module'
+      s.textContent = 'window.__moduleOk = true'
+      document.body.appendChild(s)
+      setTimeout(function () {
+        report('<script type="module"> 対応', window.__moduleOk === true)
+      }, 500)
+    </script>
+  </body>
+</html>

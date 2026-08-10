@@ -7,7 +7,39 @@
     <title>Hanoi Cube</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><span id="boot-marker">読み込み中…</span></div>
+    <script>
+      // コンソールを見られない端末(来場者のiPad等)向けに、起動失敗の理由を画面に出す。
+      // 古いWebKitでも必ず動くよう、このブロックはES5構文のみで書く(ブース運用の要)
+      function __showErr(prefix, err) {
+        var box = document.createElement('pre')
+        box.style.cssText =
+          'position:fixed;top:0;left:0;right:0;z-index:99999;background:#fee;color:#900;' +
+          'padding:8px;margin:0;font-size:12px;white-space:pre-wrap;word-break:break-all'
+        box.textContent = prefix + (err && err.stack ? err.stack : String(err))
+        document.body.appendChild(box)
+      }
+      window.addEventListener('error', function (e) {
+        var msg = e.message || 'unknown error'
+        if (e.filename) msg += '\n' + e.filename + ':' + e.lineno + ':' + e.colno
+        __showErr('error: ', e.error || msg)
+      })
+      window.addEventListener('unhandledrejection', function (e) {
+        __showErr('unhandled rejection: ', e.reason)
+      })
+      // モジュールのパース失敗(旧WebKitの構文非対応等)はSafariだとwindow.onerrorに乗らない。
+      // Reactがマウントすると#boot-markerは消えるので、残っていたら動的importで読み直して失敗理由を取り出す
+      setTimeout(function () {
+        if (!document.getElementById('boot-marker')) return
+        try {
+          new Function("return import('/src/main.tsx')")().catch(function (err) {
+            if (document.getElementById('boot-marker')) __showErr('起動失敗: ', err)
+          })
+        } catch (err) {
+          __showErr('起動失敗(dynamic import非対応): ', err)
+        }
+      }, 5000)
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
