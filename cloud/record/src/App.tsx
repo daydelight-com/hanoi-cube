@@ -58,6 +58,8 @@ export default function App() {
 
   return (
     <div className="app">
+      {/* ゲーム画面と同じCRTスキャンライン(最前面・操作は透過) */}
+      <div className="retro-scanlines" aria-hidden="true" />
       <header className="app-header">
         <h1>ハノイキューブ</h1>
         <p className="app-subtitle">プレイきろく</p>

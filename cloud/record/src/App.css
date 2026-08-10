@@ -1,68 +1,104 @@
-/* 記録画面(仕様§5.10)。モバイルファースト(スマホ縦持ち) */
+/* 記録画面(仕様§5.10)。モバイルファースト(スマホ縦持ち)。
+   見た目はゲーム画面の retro.css に合わせる(枠・グロー・点滅・配色) */
 
 .app {
   max-width: 480px;
   margin: 0 auto;
-  padding: 16px 12px 32px;
+  padding: 20px 12px 32px;
+}
+
+/* CRTスキャンライン+周辺減光(ゲーム画面と同じ最前面オーバーレイ) */
+.retro-scanlines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.22) 3px,
+      rgba(0, 0, 0, 0) 4px
+    ),
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.45) 100%);
 }
 
 .app-header {
   text-align: center;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
 }
 
 .app-header h1 {
-  font-size: 1.5rem;
-  letter-spacing: 0.12em;
+  font-size: 1.9rem;
+  letter-spacing: 0.18em;
   margin: 0;
+  color: var(--neon-strong);
+  text-shadow:
+    0 0 12px rgba(185, 255, 142, 0.9),
+    0 0 40px rgba(67, 133, 50, 0.8),
+    3px 3px 0 var(--neon-dark);
 }
 
 .app-subtitle {
-  color: var(--text-sub);
-  margin: 0;
-  font-size: 0.85rem;
+  color: var(--neon-base);
+  margin: 2px 0 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.24em;
 }
 
 .app-status {
   text-align: center;
-  color: var(--text-sub);
+  color: var(--neon);
   margin-top: 32px;
 }
 
 .app-preparing {
   font-size: 1.3rem;
-  color: var(--text);
+  color: var(--neon-strong);
+  text-shadow: 0 0 12px rgba(185, 255, 142, 0.8);
+  animation: retro-blink 1.1s steps(1) infinite;
+}
+
+@keyframes retro-blink {
+  50% {
+    opacity: 0;
+  }
 }
 
 .app-footer {
   text-align: center;
-  color: var(--text-sub);
+  color: var(--neon-base);
   font-size: 0.75rem;
   margin-top: 32px;
 }
 
-/* サマリー */
+/* サマリー(ゲーム画面の retro-frame と同じ枠表現) */
 
 .summary {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  background: rgba(5, 14, 5, 0.92);
+  border: 4px solid var(--neon-base);
+  outline: 2px solid var(--neon-dark);
+  outline-offset: 3px;
+  box-shadow:
+    0 0 18px rgba(67, 133, 50, 0.55),
+    inset 0 0 24px rgba(67, 133, 50, 0.2);
   text-align: center;
   padding: 16px;
-  margin: 12px 0 20px;
+  margin: 12px 4px 28px;
 }
 
 .summary-name {
   font-size: 1.1rem;
-  font-weight: 700;
   margin: 0;
+  color: var(--neon-strong);
 }
 
 .summary-score {
-  font-size: 2.6rem;
-  font-weight: 800;
+  font-size: 2.8rem;
   margin: 4px 0;
-  color: var(--accent);
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(255, 242, 168, 0.9);
 }
 
 .summary-unit {
@@ -70,7 +106,7 @@
 }
 
 .summary-meta {
-  color: var(--text-sub);
+  color: var(--neon-base);
   font-size: 0.85rem;
   margin: 0;
 }
@@ -78,30 +114,33 @@
 /* 判定カード */
 
 .cards-heading {
-  font-size: 1rem;
-  margin: 0 0 8px;
+  font-size: 1.05rem;
+  margin: 0 4px 12px;
+  color: var(--neon-strong);
+  letter-spacing: 0.2em;
 }
 
 .card {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  background: rgba(5, 14, 5, 0.85);
+  border: 3px solid var(--neon-dark);
   padding: 12px;
-  margin-bottom: 12px;
+  margin: 0 4px 16px;
   scroll-margin-top: 12px;
 }
 
 .card--scored {
-  border-left: 5px solid var(--scored);
+  border-color: var(--neon-base);
+  box-shadow: 0 0 14px rgba(67, 133, 50, 0.45);
 }
 
 .card--unclearable {
-  border-left: 5px solid var(--failed);
+  border-color: #7a2626;
+  box-shadow: 0 0 14px rgba(255, 143, 106, 0.25);
 }
 
 .card--duplicate_same,
 .card--duplicate_mirror {
-  border-left: 5px solid var(--dup);
+  border-color: var(--neon-dark);
 }
 
 .card-header {
@@ -112,55 +151,62 @@
 }
 
 .card-seq {
-  font-weight: 700;
+  color: var(--neon-strong);
 }
 
 .card-elapsed {
-  color: var(--text-sub);
+  color: var(--neon-base);
   font-size: 0.85rem;
   flex: 1;
 }
 
 .card-badge {
-  font-weight: 800;
   font-size: 1.1rem;
 }
 
+/* 判定演出(retro-judge)と同じ配色: 得点=金 / 失敗=橙赤 / 重複=ネオン緑 */
 .card-badge--scored {
-  color: var(--scored);
+  color: var(--gold);
+  text-shadow: 0 0 14px rgba(255, 242, 168, 0.9);
 }
 
 .card-badge--failed {
-  color: var(--failed);
+  color: var(--alert);
+  text-shadow: 0 0 14px rgba(255, 143, 106, 0.9);
   font-size: 1.4rem;
 }
 
 .card-badge--dup {
-  color: var(--dup);
+  color: var(--neon);
+  text-shadow: 0 0 12px rgba(126, 224, 106, 0.8);
   font-size: 1.4rem;
 }
 
 .card-note {
-  color: var(--text-sub);
+  color: var(--neon-base);
   font-size: 0.85rem;
   margin: 6px 0 0;
 }
 
+/* ボタン(ゲーム画面の retro-menu-item と同じ表現) */
 .card-action {
   display: block;
   width: 100%;
-  margin-top: 8px;
+  margin-top: 10px;
   padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--text);
+  border: 3px solid var(--neon-dark);
+  background: rgba(5, 14, 5, 0.85);
+  color: var(--neon);
   text-align: center;
   cursor: pointer;
+  text-shadow: 0 0 6px rgba(126, 224, 106, 0.55);
 }
 
 .card-action:active {
-  background: var(--border);
+  border-color: var(--neon-strong);
+  color: var(--neon-strong);
+  background: rgba(30, 69, 23, 0.9);
+  box-shadow: 0 0 20px rgba(126, 224, 106, 0.8);
 }
 
 /* 盤面・シミュレーション */
@@ -171,12 +217,8 @@
   display: block;
 }
 
-.board-view-base {
-  fill: #c9c2b2;
-}
-
 .simulation {
-  border-top: 1px dashed var(--border);
+  border-top: 2px dashed var(--neon-dark);
   margin-top: 10px;
   padding-top: 10px;
 }
@@ -186,6 +228,11 @@
   font-size: 0.9rem;
   margin: 4px 0 8px;
   min-height: 2.8em;
+}
+
+.simulation-caption strong {
+  color: var(--gold);
+  text-shadow: 0 0 14px rgba(255, 242, 168, 0.9);
 }
 
 .simulation-controls {
@@ -198,18 +245,25 @@
 .simulation-controls button {
   flex: 1;
   padding: 12px 8px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--card-bg);
+  border: 3px solid var(--neon-dark);
+  background: rgba(5, 14, 5, 0.85);
+  color: var(--neon);
   cursor: pointer;
+  text-shadow: 0 0 6px rgba(126, 224, 106, 0.55);
+}
+
+.simulation-controls button:active:not(:disabled) {
+  border-color: var(--neon-strong);
+  color: var(--neon-strong);
+  background: rgba(30, 69, 23, 0.9);
 }
 
 .simulation-controls button:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
 }
 
 .simulation-step {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-  color: var(--text-sub);
+  color: var(--neon-base);
 }

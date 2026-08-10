@@ -1,18 +1,22 @@
 // 盤面を正面から見た2Dレンダリング(仕様§5.10)。
-// 同サイズの箱は色では同じだが、個体番号のバッジで見分けられる(firestore.md §1 の
-// tower_box_ids が表示専用に個体を持つ理由)。
+// 見た目はゲーム画面の3D盤面(frontend/src/three/textures.ts)に合わせる:
+// 箱はサイズ別カラー(L=赤/M=緑/S=青)+黒縁+「大1」形式の白ラベル、
+// 台はマットの暗緑地+ネオン枠。同サイズの箱はラベルの個体番号で見分けられる
+// (firestore.md §1 の tower_box_ids が表示専用に個体を持つ理由)。
 
 import type { SizeChar } from '../contracts/board'
 import type { TowerBoxIds } from '../contracts/play'
 import { boxSerial, boxSize } from '../simulation'
 
 const VIEW_W = 312
-const VIEW_H = 108
+const VIEW_H = 116
 const TOWER_X = [52, 156, 260] // 各塔の中心
-const BASE_Y = 92
-const BOX_H = 24
+const BASE_Y = 98
+const BOX_H = 26
 const BOX_W: Record<SizeChar, number> = { L: 88, M: 60, S: 40 }
-const BOX_FILL: Record<SizeChar, string> = { L: '#e2574c', M: '#58b368', S: '#4a90d9' }
+// ゲーム画面の SIZE_COLOR(textures.ts)と同一
+const BOX_FILL: Record<SizeChar, string> = { L: '#c0392b', M: '#438532', S: '#2e6da4' }
+const SIZE_KANJI: Record<SizeChar, string> = { L: '大', M: '中', S: '小' }
 
 export function BoardView({
   stacks,
@@ -28,6 +32,8 @@ export function BoardView({
       role="img"
       aria-label={stacks.map((t) => t.map(boxSize).join('') || 'なし').join(' / ')}
     >
+      {/* マット(暗緑地+ネオン塔枠。buildMatTexture と同系色) */}
+      <rect x={0} y={BASE_Y} width={VIEW_W} height={VIEW_H - BASE_Y} fill="#10240f" />
       {TOWER_X.map((x, i) => (
         <rect
           key={i}
@@ -35,8 +41,9 @@ export function BoardView({
           y={BASE_Y}
           width={100}
           height={6}
-          rx={3}
-          className="board-view-base"
+          fill="none"
+          stroke="#7ee06a"
+          strokeWidth={2}
         />
       ))}
       {stacks.flatMap((tower, towerIndex) =>
@@ -53,21 +60,20 @@ export function BoardView({
                 y={y}
                 width={w}
                 height={BOX_H - 2}
-                rx={4}
                 fill={BOX_FILL[size]}
-                stroke={highlighted ? '#111' : 'rgba(0,0,0,0.25)'}
-                strokeWidth={highlighted ? 3 : 1}
+                stroke={highlighted ? '#b9ff8e' : 'rgba(0,0,0,0.45)'}
+                strokeWidth={highlighted ? 3 : 2}
               />
-              <circle cx={x + w / 2} cy={y + (BOX_H - 2) / 2} r={8} fill="rgba(255,255,255,0.85)" />
               <text
                 x={x + w / 2}
                 y={y + (BOX_H - 2) / 2}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fontSize={11}
+                fontSize={13}
                 fontWeight={700}
-                fill="#333"
+                fill="rgba(255,255,255,0.92)"
               >
+                {SIZE_KANJI[size]}
                 {boxSerial(boxId)}
               </text>
             </g>

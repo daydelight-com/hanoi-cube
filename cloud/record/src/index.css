@@ -1,19 +1,23 @@
-:root {
-  --bg: #f4f1ea;
-  --card-bg: #fff;
-  --text: #2b2833;
-  --text-sub: #6b6375;
-  --border: #e0dcd2;
-  --accent: #aa3bff;
-  --scored: #1a7f37;
-  --failed: #c62828;
-  --dup: #b26a00;
+/* ゲーム画面(frontend/src/display/ui/retro.css)と同じレトロアーケード風テーマ。
+   色・フォント・グロー表現を揃える(仕様§5.1: #438532 基調のネオン/CRT調) */
 
-  font-family: system-ui, 'Hiragino Sans', 'Segoe UI', Roboto, sans-serif;
+:root {
+  --crt-bg: #060d06;
+  --neon: #7ee06a;
+  --neon-strong: #b9ff8e;
+  --neon-base: #438532;
+  --neon-dark: #1e4517;
+  --gold: #fff2a8;
+  --alert: #ff8f6a;
+  --retro-font: 'DotGothic16', 'Hiragino Kaku Gothic StdN', 'Osaka-Mono', 'MS Gothic', monospace;
+
+  font-family: var(--retro-font);
   font-size: 16px;
-  line-height: 1.6;
-  color: var(--text);
-  background: var(--bg);
+  line-height: 1.7;
+  letter-spacing: 0.08em;
+  color: var(--neon);
+  background: var(--crt-bg);
+  text-shadow: 0 0 6px rgba(126, 224, 106, 0.55);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -28,4 +32,5 @@ body {
 
 button {
   font: inherit;
+  letter-spacing: inherit;
 }
