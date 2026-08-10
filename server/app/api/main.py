@@ -1,9 +1,8 @@
 """FastAPIアプリのエントリポイント(WSエンドポイント・状態機械の起動)。
 
-CVソースは既定でモック(app/cv/mock.py)。HANOI_CV=real で実CV(app/cv/real.py、
-カメラ+別プロセスワーカー)に切り替える。モックは本番の縮退経路として残す
-(CLAUDE.md 規則6)。開発中はモック操作用のHTTPエンドポイント(/api/mock/*)で
-盤面を動かせる。
+CVソースは既定で実CV(app/cv/real.py、カメラ+別プロセスワーカー)。
+HANOI_CV=mock でモック(app/cv/mock.py)に切り替える。モックは本番の縮退経路として残す
+(CLAUDE.md 規則6)。モック運用中はHTTPエンドポイント(/api/mock/*)で盤面を動かせる。
 """
 
 from __future__ import annotations
@@ -45,13 +44,16 @@ def _camera_side() -> CameraSide:
 
 
 def _make_cv() -> CvSource:
-    """環境変数 HANOI_CV でCVソースを選ぶ(mock=既定 / real=実CV)。"""
-    if os.environ.get("HANOI_CV", "mock") == "real":
-        # 実CV系の依存(opencv等)はモック運用時に読み込まない
-        from app.cv.real import RealCv
+    """環境変数 HANOI_CV でCVソースを選ぶ(real=既定 / mock=モック)。"""
+    raw = os.environ.get("HANOI_CV", "real")
+    if raw == "mock":
+        return MockCv()
+    if raw != "real":
+        logger.warning("HANOI_CV が不正: %r。real として扱う", raw)
+    # 実CV系の依存(opencv等)はモック運用時に読み込まない
+    from app.cv.real import RealCv
 
-        return RealCv()
-    return MockCv()
+    return RealCv()
 
 
 class MockBoardRequest(BaseModel):

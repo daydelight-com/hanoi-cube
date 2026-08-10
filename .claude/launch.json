@@ -14,9 +14,9 @@
       "port": 5173
     },
     {
-      "name": "hanoi-cube-dev-real",
+      "name": "hanoi-cube-dev-mock",
       "runtimeExecutable": "env",
-      "runtimeArgs": ["HANOI_CV=real", "make", "dev"],
+      "runtimeArgs": ["HANOI_CV=mock", "make", "dev"],
       "port": 5173
     },
     {
