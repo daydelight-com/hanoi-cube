@@ -1,0 +1,6 @@
+# 単体で使う場合の依存(hanoi-cube の server venv には既に入っている)。
+# OpenCV 4.7 以降は cv2.aruco が本体に含まれる。4.6以前を使う場合は
+# opencv-contrib-python に読み替えること。
+opencv-python>=4.7
+numpy
+pytest
