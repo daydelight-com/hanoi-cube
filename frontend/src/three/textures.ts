@@ -1,4 +1,5 @@
-// 仮テクスチャ生成(仕様§5.1: ロゴ確定まではサイズ別の色分け+タグで進める)。
+// テクスチャ生成(仕様§5.1)。確定アートワーク(frontend/public/textures/)を面に貼り、
+// 画像が読めない環境ではサイズ別の色分け描画に縮退する。
 // タグの寸法・位置は tag_master.json 準拠(タグ実寸/箱実寸の比で面上に配置する)。
 
 import * as THREE from 'three'
@@ -6,12 +7,27 @@ import type { BoxSize } from '../contracts/cv'
 import type { BoxTagEntry } from './tagMaster'
 import { tagImageUrl } from './tagMaster'
 
-/** サイズ別の面ベースカラー(レトロアーケード風。ロゴ確定までの仮) */
+/** サイズ別の面ベースカラー(画像が読めないときの縮退用。アートワークの地色に合わせる) */
 export const SIZE_COLOR: Record<BoxSize, string> = {
   large: '#c0392b',
   medium: '#438532',
   small: '#2e6da4',
 }
+
+const SIZE_KEY: Record<BoxSize, 'l' | 'm' | 's'> = {
+  large: 'l',
+  medium: 'm',
+  small: 's',
+}
+
+/** ロゴ入りアートは面1・面6に貼る。小箱はロゴなし素材のみのため全面共通 */
+export function faceImageUrl(size: BoxSize, face: number): string {
+  const logo = size !== 'small' && (face === 1 || face === 6)
+  return `/textures/cube_${SIZE_KEY[size]}${logo ? '_logo' : ''}.png`
+}
+
+/** プレイマットのアートワーク(四隅タグ・塔枠・待機エリアを含む一枚絵) */
+export const MAT_IMAGE_URL = '/textures/play_mat.png'
 
 /** 物理の貼付余白(mm)。タグシールを面の隅から離す距離(仮値) */
 const TAG_MARGIN_MM = 3
@@ -47,10 +63,11 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 
 const FACE_PX = 256
 
-/** 1面ぶんの仮テクスチャを描く(色分け+タグ+ラベル) */
+/** 1面ぶんのテクスチャを描く(アートワーク+タグ。画像なしは色分け+ラベルに縮退) */
 export function drawFaceCanvas(
   entry: BoxTagEntry,
   tagImg: CanvasImageSource | null,
+  baseImg: CanvasImageSource | null = null,
 ): HTMLCanvasElement {
   const canvas = document.createElement('canvas')
   canvas.width = FACE_PX
@@ -58,21 +75,25 @@ export function drawFaceCanvas(
   const g = canvas.getContext('2d')
   if (!g) return canvas
 
-  g.fillStyle = SIZE_COLOR[entry.size]
-  g.fillRect(0, 0, FACE_PX, FACE_PX)
-  // 縁取り(箱の稜線を見せる)
-  g.strokeStyle = 'rgba(0, 0, 0, 0.45)'
-  g.lineWidth = Math.max(4, FACE_PX * 0.03)
-  g.strokeRect(0, 0, FACE_PX, FACE_PX)
+  if (baseImg) {
+    g.drawImage(baseImg, 0, 0, FACE_PX, FACE_PX)
+  } else {
+    g.fillStyle = SIZE_COLOR[entry.size]
+    g.fillRect(0, 0, FACE_PX, FACE_PX)
+    // 縁取り(箱の稜線を見せる)
+    g.strokeStyle = 'rgba(0, 0, 0, 0.45)'
+    g.lineWidth = Math.max(4, FACE_PX * 0.03)
+    g.strokeRect(0, 0, FACE_PX, FACE_PX)
 
-  // ラベル(仮ロゴ相当): 箱ラベル+面番号
-  g.fillStyle = 'rgba(255, 255, 255, 0.92)'
-  g.textAlign = 'center'
-  g.textBaseline = 'middle'
-  g.font = `bold ${Math.round(FACE_PX * 0.3)}px sans-serif`
-  g.fillText(entry.box_label, FACE_PX / 2, FACE_PX * 0.52)
-  g.font = `${Math.round(FACE_PX * 0.11)}px sans-serif`
-  g.fillText(`面${entry.face}`, FACE_PX / 2, FACE_PX * 0.78)
+    // ラベル(仮ロゴ相当): 箱ラベル+面番号
+    g.fillStyle = 'rgba(255, 255, 255, 0.92)'
+    g.textAlign = 'center'
+    g.textBaseline = 'middle'
+    g.font = `bold ${Math.round(FACE_PX * 0.3)}px sans-serif`
+    g.fillText(entry.box_label, FACE_PX / 2, FACE_PX * 0.52)
+    g.font = `${Math.round(FACE_PX * 0.11)}px sans-serif`
+    g.fillText(`面${entry.face}`, FACE_PX / 2, FACE_PX * 0.78)
+  }
 
   if (tagImg) {
     const rect = tagRect(entry)
@@ -95,8 +116,11 @@ export async function buildBoxFaceTextures(
   const textures = new Map<number, THREE.CanvasTexture>()
   await Promise.all(
     entries.map(async (entry) => {
-      const img = await loadImage(tagImageUrl(entry.id)).catch(() => null)
-      const texture = new THREE.CanvasTexture(drawFaceCanvas(entry, img))
+      const [tagImg, baseImg] = await Promise.all([
+        loadImage(tagImageUrl(entry.id)).catch(() => null),
+        loadImage(faceImageUrl(entry.size, entry.face)).catch(() => null),
+      ])
+      const texture = new THREE.CanvasTexture(drawFaceCanvas(entry, tagImg, baseImg))
       texture.colorSpace = THREE.SRGBColorSpace
       texture.anisotropy = 4
       textures.set(entry.face, texture)
@@ -109,7 +133,8 @@ export async function buildBoxFaceTextures(
 
 const MAT_PX_PER_MM = 2
 
-/** プレイマットの仮テクスチャ(A/B/C 塔+待機エリア+四隅タグ)。
+/** プレイマットのテクスチャ。アートワーク(四隅タグ込みの一枚絵)を貼り、
+ *  読めない環境では仮描画(A/B/C 塔+待機エリア+四隅タグ)に縮退する。
  *  レイアウト定数は layout.ts(=モックCVの合成レイアウト)と同じものを使う */
 export async function buildMatTexture(layout: {
   matSize: { x: number; y: number }
@@ -124,7 +149,10 @@ export async function buildMatTexture(layout: {
   canvas.width = w
   canvas.height = h
   const g = canvas.getContext('2d')
-  if (g) {
+  const matImg = await loadImage(MAT_IMAGE_URL).catch(() => null)
+  if (g && matImg) {
+    g.drawImage(matImg, 0, 0, w, h)
+  } else if (g) {
     // canvas座標: 左上 = マット左奥 (0, y_max)。canvasY = (y_max - mat.y) * scale
     const px = (mm: number) => mm * MAT_PX_PER_MM
     const cy = (yMm: number) => h - px(yMm)

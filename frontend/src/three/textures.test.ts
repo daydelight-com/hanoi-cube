@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { tagRect } from './textures'
+import { faceImageUrl, tagRect } from './textures'
 
 describe('tagRect', () => {
   it('大箱(75mm)の右上隅: タグ20mm+余白3mm', () => {
@@ -19,5 +19,26 @@ describe('tagRect', () => {
     expect(r.size).toBe(1)
     expect(r.x).toBe(0)
     expect(r.y).toBe(0)
+  })
+})
+
+describe('faceImageUrl', () => {
+  it('大・中の面1と面6はロゴ入りアート', () => {
+    expect(faceImageUrl('large', 1)).toBe('/textures/cube_l_logo.png')
+    expect(faceImageUrl('large', 6)).toBe('/textures/cube_l_logo.png')
+    expect(faceImageUrl('medium', 1)).toBe('/textures/cube_m_logo.png')
+  })
+
+  it('面2〜5はロゴなしアート', () => {
+    for (const face of [2, 3, 4, 5]) {
+      expect(faceImageUrl('large', face)).toBe('/textures/cube_l.png')
+      expect(faceImageUrl('medium', face)).toBe('/textures/cube_m.png')
+    }
+  })
+
+  it('小箱はロゴなし素材のみのため全面共通', () => {
+    for (const face of [1, 2, 3, 4, 5, 6]) {
+      expect(faceImageUrl('small', face)).toBe('/textures/cube_s.png')
+    }
   })
 })
