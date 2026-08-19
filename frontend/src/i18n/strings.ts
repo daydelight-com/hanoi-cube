@@ -145,7 +145,8 @@ export function t(lang: Lang, key: keyof Messages): string {
 }
 
 // ルールダイアログの5ページ(screens.md: page_count=5)。文言の正は
-// docs/game/hanoi_arrange_rules.md。図版差し替え(§5.13)は後日。
+// docs/game/hanoi_arrange_rules.md。小さい子向けに短文・ひらがな。図版は
+// display/screens/ruleFigures.ts(ページ順を揃えること)。
 export interface RulePage {
   title: string
   lines: string[]
@@ -154,87 +155,77 @@ export interface RulePage {
 export const RULE_PAGES: Record<Lang, RulePage[]> = {
   ja: [
     {
-      title: 'ゲームのあらまし',
+      title: 'どんな ゲーム?',
       lines: [
-        'はこを とうに ならべて「はんてい」!',
-        'クリアかのうな ならべかたなら とくてん。',
-        'せいげんじかん 1ぷんで ハイスコアを めざそう。',
+        'はこを つんで「はんてい」ボタン!',
+        'うまく つめたら ポイント!',
+        '1ぷんで たくさん あつめよう',
       ],
     },
     {
-      title: 'ならべかたのルール',
+      title: 'つみかた',
+      lines: ['うえに いくほど ちいさく!', 'おなじ おおきさは かさねない', '1つの とうに 3こまで'],
+    },
+    {
+      title: 'うごかしかた',
       lines: [
-        'うえに いくほど ちいさく つむこと。',
-        'おなじ おおきさは おなじ とうに 1こまで。',
-        '1つの とうには さいだい 3こまで。',
+        'うごかせるのは いちばんうえ の 1こ',
+        'おけるのは からっぽ か',
+        'じぶんより おおきい はこ の うえ',
       ],
     },
     {
-      title: 'はこの うごかしかた',
+      title: 'クリア とは?',
       lines: [
-        '1かいに うごかせるのは いちばんうえの 1こだけ。',
-        'いどうさきは からの とうか、',
-        'じぶんより おおきい はこの うえだけ。',
-      ],
-    },
-    {
-      title: '「クリアかのう」とは',
-      lines: [
-        'ならべた かたちを',
-        'ひだりみぎ ひっくりかえした かたちに',
-        'うごかせたら クリア!',
+        'うごかして ひだりと みぎを',
+        'いれかえた かたちに できたら クリア!',
         '(さいしょから おなじ かたちでも 1こは うごかそう)',
       ],
     },
     {
-      title: 'とくてんと コツ',
+      title: 'ポイント',
       lines: [
-        'とくてん = はこのかず × さいたんてすう。',
-        'おなじ(かがみうつしも おなじ)ならべかたは 1かいだけ。',
-        'むずかしい ならべかたほど こうとくてん!',
+        'ポイント = はこの かず × さいたん てすう',
+        'むずかしい かたち ほど たかい!',
+        'おなじ かたち(かがみうつしも)は 1かいだけ',
       ],
     },
   ],
   en: [
     {
-      title: 'OVERVIEW',
+      title: 'WHAT IS THIS GAME?',
       lines: [
-        'Stack boxes on the towers and press JUDGE!',
-        'A clearable layout earns points.',
-        'Aim for a high score in 1 minute.',
+        'Stack boxes and press JUDGE!',
+        'A good layout earns points!',
+        'Collect as many as you can in 1 minute.',
       ],
     },
     {
-      title: 'STACKING RULES',
-      lines: [
-        'Smaller boxes must go on top.',
-        'Only one of each size per tower.',
-        'Max 3 boxes per tower.',
-      ],
+      title: 'HOW TO STACK',
+      lines: ['Smaller on top!', 'Never two of the same size.', 'Max 3 boxes per tower.'],
     },
     {
-      title: 'MOVING RULES',
+      title: 'HOW TO MOVE',
       lines: [
         'Move only the top box, one at a time.',
-        'Place it on an empty tower,',
-        'or on a bigger box only.',
+        'Put it on an empty tower,',
+        'or on a bigger box.',
       ],
     },
     {
-      title: 'WHAT IS "CLEARABLE"?',
+      title: 'WHAT IS "CLEAR"?',
       lines: [
-        'Move the boxes to reach',
-        'the left-right mirrored layout',
-        'and you clear it!',
-        '(Already mirrored? Still move at least one box.)',
+        'Move the boxes until left and right',
+        'are swapped — that is a CLEAR!',
+        '(Already mirrored? Still move one box.)',
       ],
     },
     {
-      title: 'SCORING & TIPS',
+      title: 'POINTS',
       lines: [
-        'Points = number of boxes × minimum moves.',
-        'Each layout (mirrors too) scores only once.',
-        'Trickier layouts score higher!',
+        'Points = boxes × shortest moves.',
+        'Harder layouts score higher!',
+        'Each layout (mirrors too) counts only once.',
       ],
     },
   ],
