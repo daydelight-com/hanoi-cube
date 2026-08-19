@@ -61,7 +61,7 @@ export default function App() {
       {/* ゲーム画面と同じCRTスキャンライン(最前面・操作は透過) */}
       <div className="retro-scanlines" aria-hidden="true" />
       <header className="app-header">
-        <h1>ハノイキューブ</h1>
+        <h1>Cubeでハノイ</h1>
         <p className="app-subtitle">プレイきろく</p>
       </header>
       {state.kind === 'loading' && <p className="app-status">よみこみちゅう…</p>}
@@ -110,7 +110,7 @@ function PlayView({ play }: { play: FetchResultPlay }) {
         ))}
         {play.judgements.length === 0 && <p className="app-status">はんてい は ありませんでした</p>}
       </section>
-      <footer className="app-footer">PyCon JP 2026 ブースゲーム「ハノイキューブ」</footer>
+      <footer className="app-footer">PyCon JP 2026 ブースゲーム「Cubeでハノイ」</footer>
     </main>
   )
 }

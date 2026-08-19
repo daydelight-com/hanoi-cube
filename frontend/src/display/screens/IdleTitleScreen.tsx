@@ -8,7 +8,7 @@ import { Blink } from '../ui/Retro'
 export function IdleTitleScreen({ lang }: { lang: Lang }) {
   return (
     <div className="retro-screen">
-      <h1 className="retro-title">HANOI CUBE</h1>
+      <h1 className="retro-title">Cubeでハノイ</h1>
       <div className="retro-text" style={{ fontSize: '2.2vw' }}>
         {t(lang, 'titleSubtitle')}
       </div>
