@@ -9,7 +9,7 @@ DoD「中箱を速く動かして追従が破綻しない」の判定に使う�
 使い方(実機PoCの手順):
     1. 印刷済みタグ(output/apriltag_sheet.pdf を実寸印刷)を箱に貼る
     2. iPhoneを三脚固定し連係カメラとしてMacに接続(USB推奨)
-    3. .venv/bin/python scripts/cv_poc.py --camera 0 --show
+    3. make camera-check(= cd server && uv run python ../scripts/cv_poc.py --camera 0 --show)
        - 画角幅が約75cmになるようカメラ距離を調整(オーバーレイの px/mm 表示が
          約2.56になる位置。マット四隅タグの検出辺長から自動算出される)
        - 静止検証: 全箱を置いて mat=4/4・全タグの margin を確認
