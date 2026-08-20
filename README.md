@@ -1,0 +1,177 @@
+# Cubeでハノイ(Hanoi Cube)
+
+PyCon JP ブース向けのフィジカル×デジタルゲーム。
+AprilTag を貼った箱(大・中・小 × 各3個 = 9個)をプレイマット上に「ハノイの塔」として手で並べ、
+カメラ認識した盤面を 3D 画面に映しながら、制限時間 1 分でスコアアタックします。
+
+- 得点 = 盤面の箱の総数 × その盤面を最短でクリアするのに必要な手数
+- 同じ配置(鏡像を含む)を再び作っても得点は入らない
+- ルールの正は [docs/game/hanoi_arrange_rules.md](docs/game/hanoi_arrange_rules.md)、得点表は [docs/game/score_ranking.md](docs/game/score_ranking.md)
+
+## システム構成
+
+| 機材 | 役割 |
+|---|---|
+| MacBook | サーバー(FastAPI)+ CV(AprilTag 検出)+ 3D 描画(ブラウザ) |
+| iPhone | 連係カメラ(Continuity Camera)。斜め上からプレイマットを俯瞰撮影 |
+| iPad | コントローラ(←/→/決定、名前入力)。同一 LAN からブラウザで接続 |
+| ディスプレイ | ブラウザ全画面(16:9 前提)でゲーム画面を表示 |
+| 記録画面 | Firebase Hosting 上の SPA。プレイ後に QR から開く |
+
+```
+server/app/      Python 3.12+: core(判定・純ロジック) state(状態機械) cv(検出・モック) api(WS/HTTP) cloud(Firebase)
+server/tests/    pytest
+frontend/src/    React+TS+Vite: display/ controller/ three/ sfx/ i18n/ contracts/(TS写し)
+cloud/           firestore.rules + record/(記録画面SPA、Firebase Hosting)
+scripts/         タグシート生成・運用スクリプト
+docs/            仕様書・モジュール間契約(docs/contracts/)・引き継ぎメモ(docs/handoff/)
+```
+
+## 前提ツール
+
+- Python 3.12 以上 と [uv](https://docs.astral.sh/uv/)(`server/uv.lock` で依存を固定)
+- Node.js(LTS)と npm
+- (任意)[firebase-tools](https://firebase.google.com/docs/cli) — 記録画面のデプロイ・Firestore エミュレータに使用
+
+## 環境構築
+
+```bash
+git clone <このリポジトリ>
+cd hanoi-cube
+
+# Python(サーバー)
+cd server && uv sync && cd ..
+
+# フロントエンド(ゲーム画面・コントローラ)
+cd frontend && npm install && cd ..
+
+# 記録画面 SPA
+cd cloud/record && npm install && cd ../..
+```
+
+### 実カメラで動かす場合の追加準備
+
+- タグマスタと印刷用シートを生成する(出力先 `output/` は gitignore 済み)。
+
+  ```bash
+  cd server && uv run python ../scripts/generate_tag_sheet.py
+  ```
+
+  `output/apriltag_sheet.pdf` を A4 実寸(100%)で印刷して箱とマットに貼り、
+  `output/tag_master.json` がタグ ID → 箱・面の対応表になります。貼付規約は [docs/operations.md](docs/operations.md) を参照。
+- Firebase にプレイ記録を上げる場合は、サービスアカウント鍵をリポジトリ直下に `service-account.json` として置きます
+  (gitignore 済み。**絶対にコミットしない**)。鍵が無ければクラウド連携は無効のままローカルで動作します。
+
+## 起動
+
+### 開発機(カメラなし)
+
+```bash
+HANOI_CV=mock make dev
+```
+
+サーバー(:8000)とフロント(:5173)が同時に起動します。
+
+| URL | 画面 |
+|---|---|
+| http://localhost:5173/ | ディスプレイ(ゲーム画面) |
+| http://localhost:5173/controller | コントローラ。iPad からは `http://<MacのIP>:5173/controller` |
+| http://localhost:8000/healthz | サーバー死活確認 |
+
+別ターミナルでモック CV の CLI を開き、キーボードで盤面を操作できます。
+
+```bash
+make mock
+```
+
+```
+grab <box>       箱を掴む(box: large-1 / L1 / m2 / small-3 など)
+place <A|B|C|W>  掴んでいる箱を塔A/B/C・待機エリア(W)に置く
+board <盤面>     論理盤面を一括セット(例: board LMS//L)。残りは待機エリアへ
+help / quit
+```
+
+### 本番(実カメラ)
+
+```bash
+make dev
+```
+
+環境変数なしの `make dev` は「実 CV + 本番アップロード(`service-account.json` がある場合のみ。無ければクラウド連携は無効)」で動きます。
+カメラが接続されていないマシンでは実 CV の初期化に失敗するため、開発時は必ず `HANOI_CV=mock` を付けてください。
+カメラをプレイヤー側(待機エリア側)に置く場合のみ `HANOI_CAMERA_SIDE=front make dev` とします。
+
+### 記録画面 SPA
+
+```bash
+cd cloud/record && npm run dev   # http://localhost:5173/records/demo で Firebase なしのデモ表示
+```
+
+詳細(エミュレータ接続・ビルド・デプロイ)は [cloud/record/README.md](cloud/record/README.md)。
+
+## 検証
+
+```bash
+make check
+```
+
+- server: `ruff check` / `ruff format --check` / `mypy --strict` / `pytest`
+- frontend, cloud/record: `eslint` / `prettier --check` / `tsc -b` / `vitest`
+
+全セッションの完了条件はこの `make check` が通ることです。個別には `make check-server` / `make check-frontend` / `make check-cloud`。
+
+注意: `make dev` 稼働中に `make check` を走らせると `uvicorn --reload` がサーバーを再起動し、ゲーム状態が idle に戻ります。
+
+E2E(`make dev` 起動済みの状態で実行。実時間のタイマーを含むため約 90 秒):
+
+```bash
+cd frontend && node e2e/full-play.mjs
+```
+
+## 主な環境変数(サーバー)
+
+| 変数 | 既定 | 意味 |
+|---|---|---|
+| `HANOI_CV` | `real` | `mock` でモック CV |
+| `HANOI_CAMERA_SIDE` | `back` | `front` でカメラがプレイヤー側(3D 視点を 180° 反転) |
+| `HANOI_MOCK_API` | `1` | `/api/mock/*` の有効化。本番は `0` |
+| `HANOI_DB_PATH` | `output/plays.sqlite3` | プレイ記録のローカル SQLite |
+| `HANOI_RECORD_URL_BASE` | `https://hanoi-cube.web.app/records/` | QR に載せる記録画面 URL の基底 |
+| `HANOI_CV_CAMERA` / `HANOI_CV_VIDEO` | `0` / なし | カメラ番号 / 代わりに読む動画ファイル |
+| `HANOI_CV_WIDTH` / `HANOI_CV_HEIGHT` | `1920` / `1080` | 撮影解像度 |
+| `HANOI_TAG_MASTER` | `output/tag_master.json` | タグマスタのパス |
+| `HANOI_CV_CALIBRATION` | `output/cv_calibration.json` | キャリブレーション永続化先(空文字で無効) |
+| `HANOI_FIREBASE_CREDENTIALS` | リポジトリ直下 `service-account.json` を自動検出 | Firebase サービスアカウント鍵 |
+| `HANOI_FIREBASE_PROJECT` | — | Firebase プロジェクト ID の明示 |
+| `FIRESTORE_EMULATOR_HOST` | — | Firestore エミュレータ(例 `127.0.0.1:8080`) |
+
+汎用の `GOOGLE_APPLICATION_CREDENTIALS` は意図的に参照しません(他案件の Firestore への誤接続を防ぐため)。
+
+## スクリプト(`scripts/`)
+
+いずれも `cd server && uv run python ../scripts/<名前>.py` で実行します。
+
+| スクリプト | 用途 |
+|---|---|
+| `generate_tag_sheet.py` | AprilTag(tag36h11)印刷シート `output/apriltag_sheet.pdf` と `output/tag_master.json` を生成 |
+| `reset_plays.py` | 本番開始前のプレイデータ初期化(ローカル SQLite 削除 + Firestore `plays` 全削除)。手順は [docs/operations.md](docs/operations.md) |
+| `generate_score_ranking.py` | `docs/game/score_ranking.md` を事前計算テーブルから再生成 |
+| `generate_all_patterns_play.py` | 全 512 盤面を含むデモ用プレイ記録を生成し Firestore へ投入(`--out` で JSON 出力のみ) |
+| `cv_poc.py` / `cv_poc_synth.py` / `cv_poc_perf.py` | 実カメラ・合成画像・スループットの AprilTag 検出 PoC 計測(記録は [docs/cv_poc.md](docs/cv_poc.md)) |
+
+## デプロイ(記録画面)
+
+```bash
+cd cloud/record
+VITE_FIREBASE_PROJECT_ID=<本番プロジェクトID> VITE_FIREBASE_API_KEY=<WebAPIキー> npm run build
+cd .. && firebase deploy --only firestore,hosting
+```
+
+## ドキュメント
+
+- [docs/specification.md](docs/specification.md) — システム仕様書
+- [docs/contracts/](docs/contracts/) — モジュール間契約(board / ws-messages / cv-interface / game-core-api / firestore / screens)。Python/TS の写しと乖離した場合はこちらが正
+- [docs/operations.md](docs/operations.md) — 設営(カメラ位置・タグ貼付規約)と本番リセット手順
+- [docs/game/](docs/game/) — ゲームルールと得点表
+- [docs/handoff/](docs/handoff/) — 開発セッションごとの引き継ぎメモ
+- [CLAUDE.md](CLAUDE.md) — 開発時の規則(AI エージェント向け)
