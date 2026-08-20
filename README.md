@@ -101,6 +101,24 @@ make dev
 カメラが接続されていないマシンでは実 CV の初期化に失敗するため、開発時は必ず `HANOI_CV=mock` を付けてください。
 カメラをプレイヤー側(待機エリア側)に置く場合のみ `HANOI_CAMERA_SIDE=front make dev` とします。
 
+### カメラ設営チェック
+
+iPhone(連係カメラ)を三脚に固定して接続したら、本番起動の前に検出オーバーレイで画角・検出品質を確認します。
+
+```bash
+make camera-check          # カメラ番号を変える場合は make camera-check CAMERA=1
+```
+
+(`cd server && uv run python ../scripts/cv_poc.py --camera 0 --show` と同じ)
+
+- 画角幅が約 75cm になるようカメラ距離を調整する(オーバーレイの px/mm 表示が約 2.56 になる位置)
+- 静止検証: 全箱を置いて `mat=4/4`(マット四隅タグ)と各タグの margin を確認
+- 追従検証: 中箱を掴んで塔間を速く動かし、箱単位の最大ギャップが 500ms 以下を目安に確認
+- `q` キーで終了するとサマリと判定が表示される
+
+最終確認は実サーバーで行います: `make dev` で起動し、サーバーログにキャリブレーション成立が出ること、
+「カメラ側の設定と実測が食い違う」警告(`HANOI_CAMERA_SIDE` の設定ミス検知)が出ないことを確認します。
+
 ### 記録画面 SPA
 
 ```bash
@@ -158,6 +176,24 @@ cd frontend && node e2e/full-play.mjs
 | `generate_score_ranking.py` | `docs/game/score_ranking.md` を事前計算テーブルから再生成 |
 | `generate_all_patterns_play.py` | 全 512 盤面を含むデモ用プレイ記録を生成し Firestore へ投入(`--out` で JSON 出力のみ) |
 | `cv_poc.py` / `cv_poc_synth.py` / `cv_poc_perf.py` | 実カメラ・合成画像・スループットの AprilTag 検出 PoC 計測(記録は [docs/cv_poc.md](docs/cv_poc.md)) |
+
+## 本番前のデータクリア
+
+開発・検証も本番と同じストア(ローカル SQLite と Firestore の `plays`)に書くため、
+**本番開始直前に一度だけ**両方をセットで初期化します(2日目の朝はリセットしない。ランキングは2日間累積)。
+
+```bash
+# 1. サーバーを停止する(make dev を Ctrl-C)
+# 2. リセット実行(リポジトリ直下の service-account.json を自動検出)
+cd server && uv run python ../scripts/reset_plays.py
+# 削除対象の件数が表示されるので、確認して yes を入力
+# 3. サーバーを起動し直す(SQLite スキーマは起動時に自動作成)
+```
+
+- **片側だけの削除は禁止**(SQLite だけ残すと開発プレイがランキングに出続ける)。
+  スクリプトは Firestore 未構成なら SQLite にも手を付けずにエラー終了する
+- 途中失敗時は原因(ネットワーク・認証)を解消して再実行すれば残りが消える(再実行は安全)
+- 詳細・エミュレータでのリハーサル手順は [docs/operations.md](docs/operations.md)
 
 ## デプロイ(記録画面)
 
