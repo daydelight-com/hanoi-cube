@@ -14,6 +14,7 @@ import {
   matPosToThree,
   matQuatToThree,
 } from './layout'
+import { nextGroundOffsetMm } from './groundOffset'
 import { POS_LAMBDA, ROT_LAMBDA, dampFactor } from './smoothing'
 import { fetchTagMaster } from './tagMaster'
 import { SIZE_COLOR, buildBoxFaceTextures, buildMatTexture } from './textures'
@@ -41,6 +42,8 @@ export class BoardScene {
   private sun: THREE.DirectionalLight
   private lastTickMs: number | null = null
   private boxes = new Map<BoxId, BoxEntry>()
+  // 接地補正量(mm)。groundOffset.ts 参照。可視箱の描画高さにだけ足す
+  private groundOffsetMm = 0
   private faceTextures = new Map<BoxId, Map<number, THREE.Texture>>()
   private disposed = false
 
@@ -82,6 +85,7 @@ export class BoardScene {
 
   /** 最新フレームの箱位置を目標値として設定する(WSの boxes メッセージから呼ぶ) */
   setBoxes(boxes: BoxObservation[]): void {
+    this.groundOffsetMm = nextGroundOffsetMm(this.groundOffsetMm, boxes)
     for (const obs of boxes) {
       const entry = this.ensureBox(obs.box_id, obs.size)
       const edge = BOX_EDGE_MM[obs.size]
@@ -91,6 +95,8 @@ export class BoardScene {
       // pos_mm はワールド座標の底面中心(ひっくり返しでも接地面側)。
       // ワールド上方向に半辺ぶん進めて箱中心にする(箱ローカル上方向ではない)
       t.center.add(_up.set(0, edge / 2, 0))
+      // 接地補正は実測位置(可視)のみ。非可視の保持・プレースホルダ位置には掛けない
+      if (obs.visible) t.center.y += this.groundOffsetMm
       t.visible = obs.visible
     }
   }
