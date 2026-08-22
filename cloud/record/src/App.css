@@ -29,6 +29,37 @@
   margin-bottom: 16px;
 }
 
+/* 提供元(会社サイトへのリンク)。タイトルの上にネオン下線で目立たせる */
+.app-company {
+  display: inline-block;
+  color: var(--neon);
+  font-size: 1rem;
+  letter-spacing: 0.14em;
+  text-decoration: none;
+  border-bottom: 2px solid var(--neon-base);
+  padding: 4px 10px;
+  margin-bottom: 12px;
+  position: relative;
+  /* グローは下線部だけ(下方向にのみ広がる影) */
+  box-shadow: 0 6px 12px -6px rgba(126, 224, 106, 0.8);
+}
+
+.app-company:active {
+  color: var(--neon-strong);
+  border-color: var(--neon-strong);
+  box-shadow: 0 8px 16px -6px rgba(185, 255, 142, 0.9);
+}
+
+/* リンクだと分かる選択カーソル(点滅)。下線の左横に浮かべる(絶対配置なので中心揃えに影響しない) */
+.app-company-cursor {
+  position: absolute;
+  left: -1.4em;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--neon-strong);
+  animation: retro-blink 1.1s steps(1) infinite;
+}
+
 .app-header h1 {
   font-size: 1.9rem;
   letter-spacing: 0.18em;
@@ -109,6 +140,27 @@
   color: var(--neon-base);
   font-size: 0.85rem;
   margin: 0;
+}
+
+/* シェアボタン(サマリー直下。金色アクセントで目立たせる) */
+.share-button {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px;
+  border: 3px solid var(--gold);
+  background: rgba(5, 14, 5, 0.85);
+  color: var(--gold);
+  text-align: center;
+  cursor: pointer;
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 10px rgba(255, 242, 168, 0.7);
+  box-shadow: 0 0 12px rgba(255, 242, 168, 0.25);
+}
+
+.share-button:active {
+  background: rgba(69, 60, 23, 0.9);
+  box-shadow: 0 0 22px rgba(255, 242, 168, 0.7);
 }
 
 /* 判定カード */

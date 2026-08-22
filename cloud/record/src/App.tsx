@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import { JudgementCard } from './components/JudgementCard'
 import { fetchPlay, type FetchResult } from './fetchPlay'
+import { sharePlay } from './share'
 
 type ViewState = { kind: 'loading' } | { kind: 'error' } | { kind: 'invalid_url' } | FetchState
 type FetchState =
@@ -61,6 +62,18 @@ export default function App() {
       {/* ゲーム画面と同じCRTスキャンライン(最前面・操作は透過) */}
       <div className="retro-scanlines" aria-hidden="true" />
       <header className="app-header">
+        <a
+          className="app-company"
+          href="https://www.daydelight.com/"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {/* カーソルは絶対配置(レイアウト外)。会社名の中心がタイトルの中心軸に揃う */}
+          <span className="app-company-cursor" aria-hidden="true">
+            ▶
+          </span>
+          株式会社デイ・ディライト
+        </a>
         <h1>Cubeでハノイ</h1>
         <p className="app-subtitle">プレイきろく</p>
       </header>
@@ -102,6 +115,13 @@ function PlayView({ play }: { play: FetchResultPlay }) {
         <p className="summary-meta">
           しっぱい {play.fail_count} かい ・ {formatPlayedAt(play.played_at)}
         </p>
+        <button
+          type="button"
+          className="share-button"
+          onClick={() => void sharePlay(play, window.location.href)}
+        >
+          🔗 きろくを シェアする
+        </button>
       </section>
       <section className="cards">
         <h2 className="cards-heading">はんてい の きろく({play.judgements.length}かい)</h2>
