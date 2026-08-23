@@ -442,6 +442,19 @@ def test_row19_timeup_to_result(d: Driver) -> None:
     assert d.press("enter") == []  # timeup 後の enter は無効(name確定条件も未満)
 
 
+def test_timeup_judges_the_final_legal_board(d: Driver) -> None:
+    d.to_game_play()
+    d.set_board(SCORED_BOARD)
+    out = d.advance(GAME_MS)
+    judge = sent(out, "judge")[-1]
+    assert judge.payload["result"] == "scored"
+    assert judge.payload["points"] == SCORED_POINTS
+    assert judge.payload["total_score"] == SCORED_POINTS
+    result = sent(out, "screen")[-1]
+    assert result.payload["screen"] == "result"
+    assert result.payload["ctx"]["score"] == SCORED_POINTS
+
+
 def test_row20_name_text_mirrors_and_truncates(d: Driver) -> None:
     d.to_result()
     out = d.machine.on_name_text("あいうえおかきくけこさし", d.now)
@@ -590,11 +603,12 @@ def test_game_judgement_history_recorded(d: Driver) -> None:
     record = d.store.play("play-1")
     assert record is not None
     assert record.score == MIRROR_A_POINTS
-    assert record.fail_count == 1
+    assert record.fail_count == 2  # 手動判定+タイムアップ時の最終判定
     assert [(j.seq, j.result, j.dup_of_seq) for j in record.judgements] == [
         (1, "scored", None),
         (2, "duplicate_mirror", 1),
         (3, "unclearable", None),
+        (4, "unclearable", None),
     ]
     assert record.judgements[0].elapsed_ms == 0
     assert record.judgements[1].elapsed_ms == 1_000

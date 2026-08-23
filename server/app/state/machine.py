@@ -307,11 +307,15 @@ class StateMachine:
 
     # ---- 判定アクション(screens.md §4、行16・18共通) ----
 
-    def _judge_action(self, now_ms: int) -> list[Outbound]:
+    def _judge_action(self, now_ms: int, *, ignore_cooldown: bool = False) -> list[Outbound]:
         board = self._last_board
         if board is None or not board.legal:
             return []
-        if self._last_judge_ms is not None and now_ms - self._last_judge_ms < JUDGE_COOLDOWN_MS:
+        if (
+            not ignore_cooldown
+            and self._last_judge_ms is not None
+            and now_ms - self._last_judge_ms < JUDGE_COOLDOWN_MS
+        ):
             return []
         judgement = judge(board.board, self._judged_keys, self._judged_boards, self._table)
         self._last_judge_ms = now_ms
@@ -393,6 +397,12 @@ class StateMachine:
             self._timer_k += 1
             out.append(Outbound("display", "timer", {"remaining_ms": remaining}))
             if remaining <= 0:  # 行19: 結果確定
+                # タイムアップ時は最新の確定かつ合法な盤面を最後に1回判定する。
+                # 直前の手動判定との0.5秒クールダウンだけは、終了処理を落とさないため無視する。
+                out += self._judge_action(
+                    self._play_start_ms + GAME_MS,
+                    ignore_cooldown=True,
+                )
                 out += self._enter_result(now_ms)
         return out
 
