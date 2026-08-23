@@ -35,6 +35,46 @@ TOWER_Y_MM: Final = _H * 0.7
 STAGING_Y_MM: Final = _H * 0.2
 STAGING_X0_MM: Final = _W * 0.1
 STAGING_PITCH_MM: Final = _W * 0.1
+# ↑ の待機エリア 3 定数は layout.ts / mock CV の参照値(数値一致テストの対象)。
+# Pyxel 版の待機スロット配置には使わない: 42mm ピッチ一列では L 箱(75mm)が隣と重なるため、
+# 2 段に分ける(P3 要判断 #1)。
+#   手前段(y = 0.15H ≈ 45mm): L 列 3 スロット、ピッチ 85mm(箱 75 + 隙間 10)、マット中央に寄せる
+#   奥段(y = 0.40H ≈ 119mm): M 列 3 スロット(ピッチ 58)+ S 列 3 スロット(ピッチ 38)、
+#   列間 10mm、全体を中央寄せ
+# 背の高い L を手前(カメラ側)に置くと、奥の塔やスロットを隠さない(L を奥段にすると塔 B の足元が
+# L の上面に隠れる)。手前段 L の背面 = 45 + 37.5 = 82mm、奥段 M の前面 = 119 - 25 = 94mm、
+# 奥段 M の背面 = 144mm、塔上 L の前面 = 208 - 37.5 = 170mm で、いずれも重ならない。
+STAGING_FRONT_Y_MM: Final = _H * 0.15
+STAGING_BACK_Y_MM: Final = _H * 0.40
+_GAP_MM: Final = 8.0  # 同サイズ列内の箱の隙間
+_GROUP_GAP_MM: Final = 10.0  # M 列と S 列の間
+
+
+def _row_centers(edges: list[float], start_x: float) -> list[float]:
+    xs: list[float] = []
+    x = start_x
+    for e in edges:
+        xs.append(x + e / 2)
+        x += e + _GAP_MM
+    return xs
+
+
+_L_EDGE, _M_EDGE, _S_EDGE = (BOX_EDGE_MM[s] for s in ("L", "M", "S"))
+_L_PITCH_MM = _L_EDGE + _GAP_MM + 2.0  # 85mm(L は隙間を 2mm 広げる)
+_FRONT_SPAN = (3 * _M_EDGE + 2 * _GAP_MM) + _GROUP_GAP_MM + (3 * _S_EDGE + 2 * _GAP_MM)
+STAGING_L_X_MM: Final[tuple[float, ...]] = tuple(_W / 2 + (i - 1) * _L_PITCH_MM for i in range(3))
+_FRONT_X0 = (_W - _FRONT_SPAN) / 2
+STAGING_M_X_MM: Final[tuple[float, ...]] = tuple(_row_centers([_M_EDGE] * 3, _FRONT_X0))
+STAGING_S_X_MM: Final[tuple[float, ...]] = tuple(
+    _row_centers([_S_EDGE] * 3, _FRONT_X0 + 3 * _M_EDGE + 2 * _GAP_MM + _GROUP_GAP_MM)
+)
+# slot 0..8 → (x_mm, y_mm)。列の割り当ては board_state.staging_slots_for と同じ
+# (L=0..2, M=3..5, S=6..8)
+STAGING_SLOT_MM: Final[tuple[tuple[float, float], ...]] = (
+    *((x, STAGING_FRONT_Y_MM) for x in STAGING_L_X_MM),
+    *((x, STAGING_BACK_Y_MM) for x in STAGING_M_X_MM),
+    *((x, STAGING_BACK_Y_MM) for x in STAGING_S_X_MM),
+)
 
 # ---- スケール(仕様書 §4.1「1/100 スケール」) ----
 MM_TO_WORLD: Final = 0.01
@@ -64,10 +104,11 @@ def tower_position(tower: Tower) -> Vec:
 
 
 def staging_slot_position(slot: int) -> Vec:
-    """待機スロットの床面中心(ワールド)。slot 0〜8 を手前の帯に等間隔で並べる(mock CV と同じ式)。"""
+    """待機スロットの床面中心(ワールド)。手前段に L 列、奥段に M 列 + S 列(`STAGING_SLOT_MM`)。"""
     if not 0 <= slot < STAGING_SLOT_COUNT:
         raise ValueError(f"staging slot out of range: {slot}")
-    return mat_to_world(STAGING_X0_MM + slot * STAGING_PITCH_MM, STAGING_Y_MM)
+    x_mm, y_mm = STAGING_SLOT_MM[slot]
+    return mat_to_world(x_mm, y_mm)
 
 
 def box_edge(size: Size) -> float:

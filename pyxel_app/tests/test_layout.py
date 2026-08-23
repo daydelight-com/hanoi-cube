@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from board_state import BoardState, InStaging, OnTower
+from board_state import BoardState, InStaging, OnTower, size_of
 from scene import layout
 from scene.layout import (
     MM_TO_WORLD,
@@ -76,10 +76,17 @@ def test_world_to_mat_roundtrip() -> None:
 def test_tower_and_slot_positions() -> None:
     assert tower_position("B") == pytest.approx((0.0, 0.0, -0.594))
     assert tower_position("A")[0] == pytest.approx(-1.05)
-    assert staging_slot_position(0) == pytest.approx((-1.68, 0.0, 0.891))
-    assert staging_slot_position(8)[0] == pytest.approx(-1.68 + 8 * 0.42)
-    # 待機エリアは塔より手前(+z)
+    # 待機エリアは 2 段(P3 要判断 #1):
+    #   手前段 L 列(0..2、y=0.15H)、奥段 M 列(3..5)+ S 列(6..8、y=0.40H)
+    assert staging_slot_position(0) == pytest.approx((-0.85, 0.0, 1.0395))
+    assert staging_slot_position(1) == pytest.approx((0.0, 0.0, 1.0395))
+    assert staging_slot_position(2)[0] == pytest.approx(0.85)
+    assert staging_slot_position(3) == pytest.approx((-1.16, 0.0, 0.297))
+    assert staging_slot_position(5)[0] == pytest.approx(0.0)
+    assert staging_slot_position(8) == pytest.approx((1.26, 0.0, 0.297))
+    # 待機エリアは塔より手前(+z)で、手前段の L は奥段よりさらに手前
     assert staging_slot_position(4)[2] > tower_position("B")[2]
+    assert staging_slot_position(0)[2] > staging_slot_position(4)[2]
     with pytest.raises(ValueError):
         staging_slot_position(9)
 
@@ -119,10 +126,14 @@ def test_nearest_target() -> None:
     # しきい値を広げれば届く
     wide = nearest_target((ax + 0.525, 0.0, az), threshold_mm=60)
     assert wide in (TowerTarget("A"), TowerTarget("B"))
-    # スロット間は 42mm なので隣との中点 21mm は近い方
+    # L 列のピッチは 85mm なので隣との中点 42.5mm は近い方(しきい値 47.5mm 以内)
     s0 = staging_slot_position(0)
-    assert nearest_target((s0[0] + 0.20, 0.0, s0[2])) == StagingTarget(0)
-    assert nearest_target((s0[0] + 0.22, 0.0, s0[2])) == StagingTarget(1)
+    assert nearest_target((s0[0] + 0.41, 0.0, s0[2])) == StagingTarget(0)
+    assert nearest_target((s0[0] + 0.44, 0.0, s0[2])) == StagingTarget(1)
+    # S 列のピッチは 38mm
+    s6 = staging_slot_position(6)
+    assert nearest_target((s6[0] + 0.18, 0.0, s6[2])) == StagingTarget(6)
+    assert nearest_target((s6[0] + 0.20, 0.0, s6[2])) == StagingTarget(7)
 
 
 def test_target_of() -> None:
@@ -133,3 +144,25 @@ def test_target_of() -> None:
 def test_scale() -> None:
     assert MM_TO_WORLD == 0.01
     assert layout.box_edge("L") == pytest.approx(0.75)
+
+
+def test_staging_boxes_do_not_overlap_each_other_or_towers() -> None:
+    """2 段の待機スロットに全箱を置いても、箱同士・塔上の L 箱と重ならない(フットプリント)。"""
+    state = BoardState.initial()
+    footprints: list[tuple[str, float, float, float]] = []  # (id, x, z, half)
+    for box_id in state:
+        x, _, z = box_center(state, box_id)
+        footprints.append((box_id, x, z, layout.box_edge(size_of(box_id)) / 2))
+    for tower in ("A", "B", "C"):
+        x, _, z = tower_position(tower)
+        footprints.append((f"tower{tower}", x, z, layout.box_edge("L") / 2))
+    for i, (a, ax, az, ah) in enumerate(footprints):
+        for b, bx, bz, bh in footprints[i + 1 :]:
+            separated = abs(ax - bx) >= ah + bh - 1e-9 or abs(az - bz) >= ah + bh - 1e-9
+            assert separated, (a, b)
+    # マットからはみ出さない
+    w, h = layout.MAT_SIZE_MM
+    for _, x, z, half in footprints:
+        mx, my, _ = world_to_mat(x, 0.0, z)
+        assert half / layout.MM_TO_WORLD <= mx <= w - half / layout.MM_TO_WORLD
+        assert half / layout.MM_TO_WORLD <= my <= h - half / layout.MM_TO_WORLD
