@@ -62,7 +62,14 @@ export function DisplayApp() {
   // ほかの画面への誤操作や長押し連打は防ぐ。
   useEffect(() => {
     const screen = state.screen?.screen
-    if (screen !== 'practice' && screen !== 'rule_dialog') return
+    if (
+      screen !== 'practice' &&
+      screen !== 'rule_dialog' &&
+      screen !== 'ranking' &&
+      screen !== 'qr'
+    ) {
+      return
+    }
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Enter' || event.repeat) return
       event.preventDefault()

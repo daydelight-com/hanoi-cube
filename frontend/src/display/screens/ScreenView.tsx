@@ -79,8 +79,8 @@ export function ScreenView({
         />
       )
     case 'ranking':
-      return <RankingScreen lang={lang} ctx={screen.ctx} />
+      return <RankingScreen lang={lang} ctx={screen.ctx} onNext={() => onButton('enter')} />
     case 'qr':
-      return <QrScreen lang={lang} ctx={screen.ctx} />
+      return <QrScreen lang={lang} ctx={screen.ctx} onNext={() => onButton('enter')} />
   }
 }

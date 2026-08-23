@@ -7,7 +7,15 @@ import { t } from '../../i18n/strings'
 import { Blink } from '../ui/Retro'
 import { RankingTable } from './IdleRankingScreen'
 
-export function RankingScreen({ lang, ctx }: { lang: Lang; ctx: ScreenCtxMap['ranking'] }) {
+export function RankingScreen({
+  lang,
+  ctx,
+  onNext,
+}: {
+  lang: Lang
+  ctx: ScreenCtxMap['ranking']
+  onNext: () => void
+}) {
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -32,9 +40,14 @@ export function RankingScreen({ lang, ctx }: { lang: Lang; ctx: ScreenCtxMap['ra
           <RankingTable lang={lang} entries={ctx.entries} highlightPlayId={ctx.highlight_play_id} />
         )}
       </div>
-      <div className="retro-text" style={{ marginBottom: '3vh' }}>
+      <button
+        type="button"
+        className="retro-text retro-text-button"
+        style={{ marginBottom: '3vh' }}
+        onClick={onNext}
+      >
         <Blink>{t(lang, 'rankingNext')}</Blink>
-      </div>
+      </button>
     </div>
   )
 }
