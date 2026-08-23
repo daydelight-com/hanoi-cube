@@ -57,6 +57,7 @@ export function ScreenView({
           ctx={screen.ctx}
           lastJudge={lastJudge}
           onSelect={onPracticeSelect}
+          onJudge={() => onButton('enter')}
         />
       )
     case 'game_countdown':
