@@ -80,6 +80,16 @@
   line-height: 1.9;
 }
 
+.retro-text-button {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-shadow: inherit;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
 .retro-blink {
   animation: retro-blink 1.1s steps(1) infinite;
 }
@@ -104,12 +114,18 @@
 
 /* メニュー項目(フォーカスはサーバー状態 ctx.focus に追従) */
 .retro-menu-item {
+  font: inherit;
+  letter-spacing: inherit;
   font-size: 2.4vw;
   padding: 2vh 2.4vw;
   border: 3px solid var(--neon-dark);
   color: var(--neon);
   background: rgba(5, 14, 5, 0.85);
   white-space: nowrap;
+}
+
+button.retro-menu-item {
+  cursor: pointer;
 }
 
 .retro-menu-item--focused {

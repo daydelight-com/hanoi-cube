@@ -27,10 +27,24 @@ export function RetroFrame({
 }
 
 /** メニュー項目。focused はサーバーの ctx.focus に追従する */
-export function MenuItem({ focused, children }: { focused: boolean; children: ReactNode }) {
-  return (
-    <div className={`retro-menu-item${focused ? ' retro-menu-item--focused' : ''}`}>{children}</div>
-  )
+export function MenuItem({
+  focused,
+  children,
+  onClick,
+}: {
+  focused: boolean
+  children: ReactNode
+  onClick?: () => void
+}) {
+  const className = `retro-menu-item${focused ? ' retro-menu-item--focused' : ''}`
+  if (onClick) {
+    return (
+      <button type="button" className={className} onClick={onClick}>
+        {children}
+      </button>
+    )
+  }
+  return <div className={className}>{children}</div>
 }
 
 /** ページインジケーター(●○○) */

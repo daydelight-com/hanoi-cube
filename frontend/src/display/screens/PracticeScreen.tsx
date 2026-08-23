@@ -10,18 +10,24 @@ export function PracticeScreen({
   lang,
   ctx,
   lastJudge,
+  onSelect,
 }: {
   lang: Lang
   ctx: ScreenCtxMap['practice']
   lastJudge: Judge | null
+  onSelect: (target: 'back' | 'help') => void
 }) {
   return (
     <div className="retro-screen retro-screen--clear">
       <div className="retro-hud retro-hud--left">
-        <MenuItem focused={ctx.selection === 'back'}>{t(lang, 'practiceBack')}</MenuItem>
+        <MenuItem focused={ctx.selection === 'back'} onClick={() => onSelect('back')}>
+          {t(lang, 'practiceBack')}
+        </MenuItem>
       </div>
       <div className="retro-hud retro-hud--right">
-        <MenuItem focused={ctx.selection === 'help'}>?</MenuItem>
+        <MenuItem focused={ctx.selection === 'help'} onClick={() => onSelect('help')}>
+          ?
+        </MenuItem>
       </div>
       <div className="retro-hud retro-hud--center">
         <div className="retro-hud-label">{t(lang, 'practiceHeading')}</div>

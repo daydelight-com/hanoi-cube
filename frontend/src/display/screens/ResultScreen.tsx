@@ -6,7 +6,15 @@ import type { Lang, ScreenCtxMap } from '../../contracts/ws'
 import { t } from '../../i18n/strings'
 import { Blink, MenuItem, RetroFrame } from '../ui/Retro'
 
-export function ResultScreen({ lang, ctx }: { lang: Lang; ctx: ScreenCtxMap['result'] }) {
+export function ResultScreen({
+  lang,
+  ctx,
+  onSelect,
+}: {
+  lang: Lang
+  ctx: ScreenCtxMap['result']
+  onSelect: (target: 'input' | 'decide') => void
+}) {
   const typing = ctx.input_mode === 'name'
   return (
     <div className="retro-screen">
@@ -41,9 +49,13 @@ export function ResultScreen({ lang, ctx }: { lang: Lang; ctx: ScreenCtxMap['res
       ) : (
         <>
           <div style={{ display: 'flex', gap: '3vw' }}>
-            <MenuItem focused={ctx.focus === 'input'}>{t(lang, 'resultInputButton')}</MenuItem>
+            <MenuItem focused={ctx.focus === 'input'} onClick={() => onSelect('input')}>
+              {t(lang, 'resultInputButton')}
+            </MenuItem>
             <div className={ctx.name_text.length === 0 ? 'retro-disabled' : undefined}>
-              <MenuItem focused={ctx.focus === 'decide'}>{t(lang, 'resultDecideButton')}</MenuItem>
+              <MenuItem focused={ctx.focus === 'decide'} onClick={() => onSelect('decide')}>
+                {t(lang, 'resultDecideButton')}
+              </MenuItem>
             </div>
           </div>
           <div className="retro-text">{t(lang, 'resultHint')}</div>
