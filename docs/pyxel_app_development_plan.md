@@ -79,7 +79,7 @@ Makefile                             pyxel-site / check-pyxel を追加(check �
 本体の §5 に加えて:
 
 - 開始時に読むもの: `CLAUDE.md` → 直前の `docs/handoff/P{n-1}.md` → 仕様書 `pyxel_app_specification.md` の該当節 → 必要な契約(`board.md` `game-core-api.md`)。
-- **終了前にブラウザ確認**: `make pyxel-site && python -m http.server 8080 --directory site` で動作を見る。コンソールに `Launch Pyxel 3.0.0` と出ていること。
+- **終了前にブラウザ確認**: `make pyxel-serve`(`site/` 組み立て + `:8081` 配信)で動作を見る。コンソールに `Launch Pyxel 3.0.0` と出ていること。
 - `/finish` の `make check` には `check-pyxel` が含まれる(P1 で組み込む)。
 - Pyodide でだけ起きる問題(import 失敗・ファイル読み込み・`time` の挙動)は handoff の「既知の問題」に必ず残す。
 

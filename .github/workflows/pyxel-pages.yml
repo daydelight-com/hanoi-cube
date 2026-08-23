@@ -1,0 +1,50 @@
+# Pyxel 版(pyxel_app/)を静的サイトに組み立てて GitHub Pages に配信する(仕様書 §7.2)。
+# Rust / Emscripten は使わない(WASM wheel は pyxel_app/runtime/ にコミット済み)。
+# `pyxel package` は zip を作るだけなので PyPI 版 Pyxel で十分。
+name: pyxel-pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "pyxel_app/**"
+      - "server/app/core/**"
+      - "scripts/build_pyxel_site.py"
+      - ".github/workflows/pyxel-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Pyxel (PyPI 版。package コマンドのみ使用)
+        run: pip install pyxel
+      - name: Build site
+        run: python scripts/build_pyxel_site.py --out site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

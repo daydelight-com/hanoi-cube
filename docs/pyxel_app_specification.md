@@ -165,9 +165,10 @@ stateDiagram-v2
 
 - 文言は `i18n.py` に JA/EN の辞書として持ち、描画側はキーで引く。既存 `frontend/src/i18n/` の文言を流用し、
   ボタン名など Pyxel 版固有のキーだけ追加する。両言語でキー集合が一致することをテストで検証する
-- 日本語は BDF ビットマップフォント(候補: 美咲フォント 8×8 / k8x12。**ライセンスを P1 で確認し `assets/` に LICENSE ごと同梱**)を
-  `pyxel.Font` で描画する。英語は同じフォントで統一する(内蔵 4×6 フォントは HUD の数字など小さい表示にのみ使う)
-- 320×240 では和文 8px が 1 行 40 文字。ルール説明は 1 ページ 8 行以内に収める
+- 日本語は BDF ビットマップフォント **M+ BITMAP FONTS 10px(`assets/umplus_j10r.bdf`、P1 で決定。ライセンスは
+  `assets/LICENSE_umplus_j10r.txt`。再配布・改変・商用とも自由)**を `pyxel.Font` で描画する。英語は同じフォントで統一する
+  (内蔵 4×6 フォントは HUD の数字など小さい表示にのみ使う)。8px 系(美咲 / k8x12)は可読性とライセンス確認の手間から見送った
+- 320×240 では和文 10px が 1 行 32 文字(行送り 12px)。ルール説明は 1 ページ 8 行以内に収める
 - Pyxel Web では `.pyxapp` に同梱されるため追加の読み込み手順は不要
 
 ---
@@ -354,22 +355,23 @@ hanoi-cube の GitHub Release `pyxel-cube-runtime-<日付>` に添付して配�
 | Windows (x64) | `pyxel-3.0.0-cp311-abi3-win_amd64.whl` |
 | ブラウザ(共通) | `pyxel-3.0.0-cp311-abi3-emscripten_5_0_3_wasm32.whl`(リポジトリにコミット済み。入手不要) |
 
-macOS:
+macOS(Apple Silicon)。`pyxel_app/pyproject.toml` の `[tool.uv.sources]` が Release の wheel URL を指しているので `uv sync` だけでよい:
 
 ```bash
-cd pyxel_app && uv venv && source .venv/bin/activate && uv pip install "<Release の macOS wheel URL>" -r requirements-dev.txt
+cd pyxel_app && uv sync
 ```
 
-Windows (PowerShell):
+Windows (PowerShell)。Windows 用 wheel は未作成のため、`pyproject.toml` の `pyxel` 依存はプラットフォームマーカーで macOS arm64 に限定している。
+Windows 用 wheel が Release に追加されたら `[tool.uv.sources]` に同様の行を足す。それまでは手動で入れる:
 
 ```powershell
-cd pyxel_app; uv venv; .\.venv\Scripts\Activate.ps1; uv pip install "<Release の Windows wheel URL>" -r requirements-dev.txt
+cd pyxel_app; uv sync; uv pip install "<Release の Windows wheel URL>"
 ```
 
 確認(両 OS 共通):
 
 ```bash
-python -c "import pyxel, pyxel.cube; print(pyxel.VERSION)"
+uv run python -c "import pyxel, pyxel.cube; print(pyxel.VERSION)"
 ```
 
 `3.0.0` と出れば OK。`pip install pyxel` で入る PyPI 版(2.9.x)には `pyxel.cube` が**無い**ので、うっかり入れ替えないこと。
@@ -377,24 +379,27 @@ python -c "import pyxel, pyxel.cube; print(pyxel.VERSION)"
 #### 8.1.2 ネイティブで実行
 
 ```bash
-python pyxel_app/main.py
+cd pyxel_app && uv run python main.py
 ```
 
-(`main.py` が `sys.path` に `server/` を追加するので、`app.core` はそのまま import できる)
+(`main.py` が `sys.path` に `../server` を追加するので、`app.core` はそのまま import できる。Q で終了)
 
 #### 8.1.3 ブラウザで実行(公開と同じ経路)
 
 ```bash
-make pyxel-site && python -m http.server 8080 --directory site
+make pyxel-serve
 ```
+
+(`make pyxel-site` で `site/` を組み立ててから `:8081` で配信する。Firestore エミュレータの 8080 と衝突しないよう 8081 を既定にした。
+`make pyxel-serve PYXEL_PORT=9000` で変更可)
 
 Windows (PowerShell) で `make` が無い場合:
 
 ```powershell
-python scripts\build_pyxel_site.py; python -m http.server 8080 --directory site
+cd pyxel_app; uv run python ..\scripts\build_pyxel_site.py; cd ..; python -m http.server 8081 --directory site
 ```
 
-`http://localhost:8080` を開く。ブラウザのコンソールに `Launch Pyxel 3.0.0 with Pyodide 314.0.2` と出ていれば固定ランタイムを読めている
+`http://localhost:8081` を開く。ブラウザのコンソールに `Launch Pyxel 3.0.0 with Pyodide 314.0.2` と出ていれば固定ランタイムを読めている
 (`2.9.x` と出たら CDN を読んでいるので `index.html` を疑う)。`file://` では動かない(fetch が失敗する)。
 
 #### 8.1.4 チェック
@@ -556,7 +561,7 @@ cd ~/workspace/pyxel-cube/wasm && cp -R pyxel.js pyxel.css import_hook.py images
 |---|---|---|---|
 | 1 | 練習モード(制限時間なし)を含めるか | **含めない** | 60 秒ゲームを「RETRY」で何度でも遊べるため代替できる。必要なら画面 1 つの追加で済む |
 | 2 | 日本語 UI | **決定: 最初から日本語 UI + 英語切替(§3.6)** | ブース版が日本語であり、追加コストはフォント同梱のみ(S27 でユーザー決定) |
-| 3 | pydantic を Pyodide で読み込む(ロード +数秒)か、core を pydantic 非依存にするか | **pydantic を読み込む** | core を変えない(§0-1)。ロード時間が問題になったら再検討 |
+| 3 | pydantic を Pyodide で読み込む(ロード +数秒)か、core を pydantic 非依存にするか | **pydantic を読み込む(P1 で確定)** | core を変えない(§0-1)。P1 の実測で pydantic 5 パッケージ(約 1.9MB)の取得+展開は約 2.1 秒(ローカル配信・M1 Mac / Chrome)。許容範囲 |
 | 4 | 画面解像度 | **320×240** | 3D ビューの可読性と描画負荷のバランス。HUD の文字(4×6 px)が読める最小限 |
 | 5 | ゲーム中の「TITLE」で確認ダイアログを出すか | **出さない** | 誤タップの損失は 60 秒分のみ。ダイアログは操作を増やす |
 | 6 | 自己ベストを localStorage に保存 | **保存する** | 実装コストが小さく、ランキング無しでも再挑戦の動機になる |

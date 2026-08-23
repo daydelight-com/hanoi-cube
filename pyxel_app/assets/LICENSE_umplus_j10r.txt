@@ -1,0 +1,15 @@
+umplus_j10r.bdf は M+ BITMAP FONTS(M+ FONTS PROJECT)の 10px 版を Unicode(iso10646-1)に
+再構成したものです(Pyxel 同梱の examples/assets から複製)。ライセンスは以下(原文 LICENSE_E)。
+
+M+ BITMAP FONTS                         Copyright 2002-2005  COZ <coz@users.sourceforge.jp>
+
+-
+
+LICENSE_E
+
+These fonts are free software.
+Unlimited permission is granted to use, copy, and distribute them, with
+or without modification, either commercially or noncommercially.
+THESE FONTS ARE PROVIDED "AS IS" WITHOUT WARRANTY.
+
+http://mplus-fonts.sourceforge.jp/

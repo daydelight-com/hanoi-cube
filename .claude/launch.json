@@ -41,6 +41,12 @@
         "5175"
       ],
       "port": 5175
+    },
+    {
+      "name": "pyxel-site",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["pyxel-serve"],
+      "port": 8081
     }
   ]
 }

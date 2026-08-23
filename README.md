@@ -203,9 +203,31 @@ VITE_FIREBASE_PROJECT_ID=<本番プロジェクトID> VITE_FIREBASE_API_KEY=<Web
 cd .. && firebase deploy --only firestore,hosting
 ```
 
+## Pyxel Cube 版(ブラウザ単体でプレイ)
+
+カメラ・箱・iPad を使わず、ブラウザだけで遊べる派生版。`pyxel_app/` に閉じており、判定ロジックは `server/app/core/` を import するだけ。
+公開 URL: https://daydelight-com.github.io/hanoi-cube/ (`main` への push で GitHub Actions が自動デプロイ)。
+仕様は [docs/pyxel_app_specification.md](docs/pyxel_app_specification.md)、進め方は [docs/pyxel_app_development_plan.md](docs/pyxel_app_development_plan.md)。
+
+Pyxel は未リリースの `cube` ブランチを使うため **`pip install pyxel` では動かない**。ビルド済み wheel を GitHub Release
+[`pyxel-cube-runtime-2026-08-23`](https://github.com/daydelight-com/hanoi-cube/releases/tag/pyxel-cube-runtime-2026-08-23) で配布している
+(macOS Apple Silicon 用。`pyxel_app/pyproject.toml` の `[tool.uv.sources]` がこの URL を指すので `uv sync` だけで入る。
+Windows 用は未作成 → 仕様書 §8.1.1)。
+
+```bash
+cd pyxel_app && uv sync && cd ..      # pyxel(cube)・pydantic・開発ツールを導入
+cd pyxel_app && uv run python main.py  # ネイティブで実行(Q で終了)
+make pyxel-serve                       # ブラウザ版: site/ を組み立てて http://localhost:8081 で配信
+make check-pyxel                       # ruff / mypy strict / pytest(make check にも含まれる)
+```
+
+ブラウザのコンソールに `Launch Pyxel 3.0.0 with Pyodide 314.0.2` と出ていれば固定ランタイム(`pyxel_app/runtime/`)を読めている。
+ランタイムの更新(cube ブランチの再ビルド)は仕様書 §8.2 の担当者のみが行う。
+
 ## ドキュメント
 
 - [docs/specification.md](docs/specification.md) — システム仕様書
+- [docs/pyxel_app_specification.md](docs/pyxel_app_specification.md) — Pyxel Cube 版の仕様書・設計書(セットアップ手順 §8 を含む)
 - [docs/contracts/](docs/contracts/) — モジュール間契約(board / ws-messages / cv-interface / game-core-api / firestore / screens)。Python/TS の写しと乖離した場合はこちらが正
 - [docs/operations.md](docs/operations.md) — 設営(カメラ位置・タグ貼付規約)と本番リセット手順
 - [docs/game/](docs/game/) — ゲームルールと得点表

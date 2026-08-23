@@ -1,0 +1,4 @@
+# ビルド時に server/app/core をコピーする先(scripts/build_pyxel_site.py)
+_core/
+*.pyxapp
+.startup

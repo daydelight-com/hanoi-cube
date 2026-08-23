@@ -1,8 +1,8 @@
 # Hanoi Cube 開発タスク。全セッションの完了条件は `make check` が通ること。
 
-.PHONY: check check-server check-frontend check-cloud dev dev-server dev-frontend mock camera-check
+.PHONY: check check-server check-frontend check-cloud check-pyxel pyxel-site pyxel-serve dev dev-server dev-frontend mock camera-check
 
-check: check-server check-frontend check-cloud
+check: check-server check-frontend check-cloud check-pyxel
 
 check-server:
 	cd server && uv run ruff check . && uv run ruff format --check . && uv run mypy && uv run pytest -q
@@ -12,6 +12,18 @@ check-frontend:
 
 check-cloud:
 	cd cloud/record && npm run --silent check
+
+# Pyxel 版(pyxel_app/)。ruff は scripts/build_pyxel_site.py も対象
+check-pyxel:
+	cd pyxel_app && uv run ruff check . ../scripts/build_pyxel_site.py && uv run ruff format --check . ../scripts/build_pyxel_site.py && uv run mypy && uv run pytest -q
+
+# Pyxel 版の静的サイトを site/ に組み立てる(仕様書 §7.1)。pyxel-serve でローカル確認(:8081。Firestore エミュレータの 8080 と分ける)
+pyxel-site:
+	cd pyxel_app && uv run python ../scripts/build_pyxel_site.py
+
+PYXEL_PORT ?= 8081
+pyxel-serve: pyxel-site
+	python3 -m http.server $(PYXEL_PORT) --directory site
 
 # サーバー(:8000)+フロント(:5173)を同時起動
 dev:

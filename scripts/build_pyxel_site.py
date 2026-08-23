@@ -1,0 +1,117 @@
+#!/usr/bin/env python3
+"""Pyxel 版の静的サイト(site/)を組み立てる(仕様書 §7.1)。
+
+Windows でも動くよう Python で書く。手順:
+
+1. ``build/hanoi_cube/`` にアプリ本体(``pyxel_app/`` のうち配信に必要なもの)と
+   ``server/app/core/`` のコピー(``_core/app/core``)を集める
+2. ``pyxel package`` で ``hanoi_cube.pyxapp`` を作る(zip を作るだけなので PyPI 版 Pyxel でもよい)
+3. ``site/`` に ``index.html`` / ``runtime/`` / ``hanoi_cube.pyxapp`` を置く
+4. 必須ファイルが揃っているか検証する(欠けるとブラウザで真っ白のまま止まる)
+
+使い方: ``python scripts/build_pyxel_site.py [--out site]``
+"""
+
+from __future__ import annotations
+
+import argparse
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+APP_DIR = REPO_ROOT / "pyxel_app"
+CORE_SRC = REPO_ROOT / "server" / "app" / "core"
+BUILD_DIR = REPO_ROOT / "build"
+STAGE_NAME = "hanoi_cube"  # .pyxapp のファイル名になる(pyxel package はディレクトリ名を使う)
+PYXAPP_NAME = f"{STAGE_NAME}.pyxapp"
+
+# .pyxapp に含めるもの(pyxel_app/ 直下からの相対)。runtime/ や tests/ は入れない
+APP_INCLUDE_FILES = ("main.py",)
+APP_INCLUDE_DIRS = ("assets", "screens", "scene", "input")
+
+RUNTIME_REQUIRED = (
+    "pyxel.js",
+    "pyxel.css",
+    "import_hook.py",
+    "images/click_to_start_114x14.png",
+    "images/gamepad_button_98x98.png",
+    "images/gamepad_cross_98x98.png",
+    "images/gamepad_menu_92x26.png",
+    "images/pyxel_icon_64x64.ico",
+    "images/pyxel_logo_76x32.png",
+    "images/touch_to_start_114x14.png",
+)
+PYCACHE = shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store")
+
+
+def _copytree(src: Path, dst: Path) -> None:
+    shutil.copytree(src, dst, ignore=PYCACHE, dirs_exist_ok=True)
+
+
+def stage_app(stage: Path) -> None:
+    """配信に必要なファイルだけを stage/ に集める。"""
+    if stage.exists():
+        shutil.rmtree(stage)
+    stage.mkdir(parents=True)
+    for name in APP_INCLUDE_FILES:
+        shutil.copy2(APP_DIR / name, stage / name)
+    for name in APP_INCLUDE_DIRS:
+        src = APP_DIR / name
+        if src.is_dir():
+            _copytree(src, stage / name)
+    # server/app/core → _core/app/core(precompute.json を含む)。app を名前空間パッケージとして扱う
+    _copytree(CORE_SRC, stage / "_core" / "app" / "core")
+
+
+def package_app(stage: Path) -> Path:
+    """``pyxel package`` で .pyxapp を作り、そのパスを返す。"""
+    cmd = [sys.executable, "-m", "pyxel", "package", stage.name, f"{stage.name}/main.py"]
+    subprocess.run(cmd, cwd=stage.parent, check=True)
+    pyxapp = stage.parent / PYXAPP_NAME
+    if not pyxapp.is_file():
+        raise FileNotFoundError(pyxapp)
+    return pyxapp
+
+
+def assemble_site(out: Path, pyxapp: Path) -> None:
+    if out.exists():
+        shutil.rmtree(out)
+    out.mkdir(parents=True)
+    shutil.copy2(APP_DIR / "web" / "index.html", out / "index.html")
+    _copytree(APP_DIR / "runtime", out / "runtime")
+    shutil.copy2(pyxapp, out / PYXAPP_NAME)
+    # GitHub Pages で Jekyll を通さない
+    (out / ".nojekyll").write_text("")
+
+
+def missing_files(out: Path) -> list[str]:
+    """site/ に欠けている必須ファイルを列挙する(空なら OK)。"""
+    required = ["index.html", PYXAPP_NAME, *(f"runtime/{p}" for p in RUNTIME_REQUIRED)]
+    missing = [p for p in required if not (out / p).is_file()]
+    if not list((out / "runtime").glob("pyxel-*-emscripten_*_wasm32.whl")):
+        missing.append("runtime/pyxel-*-emscripten_*_wasm32.whl")
+    return missing
+
+
+def build(out: Path) -> None:
+    stage = BUILD_DIR / STAGE_NAME
+    stage_app(stage)
+    pyxapp = package_app(stage)
+    assemble_site(out, pyxapp)
+    missing = missing_files(out)
+    if missing:
+        raise SystemExit("site/ に必須ファイルが欠けています: " + ", ".join(missing))
+    print(f"OK: {out} ({PYXAPP_NAME} {pyxapp.stat().st_size // 1024} KB)")
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--out", type=Path, default=REPO_ROOT / "site")
+    args = parser.parse_args(argv)
+    build(args.out.resolve())
+
+
+if __name__ == "__main__":
+    main()

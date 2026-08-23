@@ -22,3 +22,7 @@ dist/
 
 # Firebaseサービスアカウント鍵(秘密情報。絶対にコミットしない)
 service-account.json
+
+# Pyxel 版の生成物(scripts/build_pyxel_site.py)
+build/
+site/
