@@ -75,6 +75,10 @@ def test_japanese_font_bundled_with_license() -> None:
 # --- main.py(Pyxel 非依存の部分) -----------------------------------------------------
 
 
+HAS_PYXEL = importlib.util.find_spec("pyxel") is not None
+
+
+@pytest.mark.skipif(not HAS_PYXEL, reason="pyxel が未導入(macOS arm64 以外)")
 def test_main_resolves_core_from_server_dir() -> None:
     """リポジトリから直接実行したとき ../server を sys.path に足して app.core が読める。"""
     code = (
@@ -100,10 +104,10 @@ def test_main_fails_clearly_without_core(tmp_path: Path) -> None:
 # --- サイト組み立て(仕様書 §7.1) ------------------------------------------------------
 
 
-@pytest.mark.skipif(shutil.which("pyxel") is None, reason="pyxel CLI が無い")
-def test_build_site_produces_required_files(tmp_path: Path) -> None:
+@pytest.mark.skipif(not HAS_PYXEL, reason="pyxel が未導入(macOS arm64 以外)")
+def test_build_site_produces_required_files() -> None:
     mod = _load_build_module()
-    out = tmp_path / "site"
+    out = REPO_ROOT / "build" / "site-test"  # --out はリポジトリ内に限定される
     mod.build(out)  # type: ignore[attr-defined]
     assert mod.missing_files(out) == []  # type: ignore[attr-defined]
     assert (out / ".nojekyll").exists()
@@ -116,6 +120,27 @@ def test_build_site_produces_required_files(tmp_path: Path) -> None:
     assert "hanoi_cube/assets/umplus_j10r.bdf" in names
     # ランタイム・テストは .pyxapp に入れない
     assert not any(n.startswith(("hanoi_cube/runtime/", "hanoi_cube/tests/")) for n in names)
+
+
+def test_build_refuses_unsafe_out_dir(tmp_path: Path) -> None:
+    mod = _load_build_module()
+    for bad in (REPO_ROOT, APP_DIR, REPO_ROOT / "server" / "x", tmp_path):
+        with pytest.raises(SystemExit):
+            mod._check_out_dir(bad)  # type: ignore[attr-defined]
+    # リポジトリ内の未作成ディレクトリは OK
+    mod._check_out_dir(REPO_ROOT / "site-test-does-not-exist")  # type: ignore[attr-defined]
+
+
+def test_build_refuses_existing_foreign_dir(tmp_path: Path) -> None:
+    """生成物の印が無い既存ディレクトリは消さない。"""
+    mod = _load_build_module()
+    foreign = REPO_ROOT / "build" / "foreign-dir-for-test"
+    foreign.mkdir(parents=True, exist_ok=True)
+    try:
+        with pytest.raises(SystemExit):
+            mod._check_out_dir(foreign)  # type: ignore[attr-defined]
+    finally:
+        foreign.rmdir()
 
 
 def test_missing_files_detects_absent_runtime(tmp_path: Path) -> None:
