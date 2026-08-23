@@ -28,7 +28,7 @@ STAGE_NAME = "hanoi_cube"  # .pyxapp のファイル名になる(pyxel package �
 PYXAPP_NAME = f"{STAGE_NAME}.pyxapp"
 
 # .pyxapp に含めるもの(pyxel_app/ 直下からの相対)。runtime/ や tests/ は入れない
-APP_INCLUDE_FILES = ("main.py",)
+APP_INCLUDE_FILES = ("main.py", "board_state.py")
 APP_INCLUDE_DIRS = ("assets", "screens", "scene", "input")
 
 RUNTIME_REQUIRED = (

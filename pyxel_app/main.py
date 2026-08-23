@@ -26,6 +26,9 @@ import pyxel  # noqa: E402
 from pyxel.cube import Camera, Mat4, Node, Shading, Vec3  # noqa: E402
 
 from app.core import engine, precompute  # noqa: E402  (起動時に core を読めることの確認)
+from board_state import BoardState  # noqa: E402
+from input.drag import DragController, TowerTarget  # noqa: E402
+from scene import picking  # noqa: E402
 
 WIDTH = 320
 HEIGHT = 240
@@ -42,6 +45,21 @@ def core_status() -> str:
     # judge() まで一度通して pydantic モデルが Pyodide 上でも動くことを確かめる
     judgement = engine.judge("LMS//", set(), set(), table)
     return f"core OK ({len(table.boards)} boards, LMS// -> {judgement.points}pt)"
+
+
+def p2_status(camera: Camera, width: int, height: int) -> str:
+    """P2 の Pyxel 非依存層(盤面モデル・ドラッグ・ピッキング)が .pyxapp 内でも動くことの確認。"""
+    state = BoardState.from_board("LMS//")
+    drag = DragController(state)
+    drag.press("S1")
+    outcome = drag.release(TowerTarget("C"))
+    assert outcome is not None and outcome.placed
+    ray = picking.screen_to_ray(
+        width / 2, height / 2, (0, 0, width, height), picking.CameraSpec.of(camera)
+    )
+    hit = picking.intersect_plane_y(ray)
+    hit_text = "none" if hit is None else f"({hit[0]:.2f}, {hit[2]:.2f})"
+    return f"P2 OK ({state.board_string()} idx {state.board_index()}, center hit {hit_text})"
 
 
 class Cube(Node):
@@ -83,6 +101,8 @@ class App:
         self.font = pyxel.Font(FONT_PATH)
         self.status = core_status()
         self.scene = Scene()
+        assert self.scene.camera is not None
+        self.p2 = p2_status(self.scene.camera, WIDTH, HEIGHT)
         pyxel.run(self.update, self.draw)
 
     def update(self) -> None:
@@ -94,6 +114,7 @@ class App:
         self.scene.draw(0, 0, pyxel.width, pyxel.height)
         pyxel.text(4, 4, self.status, 7)
         pyxel.text(4, 12, f"{pyxel.VERSION} / {FPS}fps", 13)
+        pyxel.text(4, 20, self.p2, 7)
         pyxel.text(4, HEIGHT - 14, TITLE_JA, 7, self.font)
         pyxel.text(4, HEIGHT - 26, "Hanoi Cube (Pyxel Cube)", 7, self.font)
 

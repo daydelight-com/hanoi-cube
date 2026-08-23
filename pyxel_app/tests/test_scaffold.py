@@ -118,6 +118,16 @@ def test_build_site_produces_required_files() -> None:
     assert "hanoi_cube/main.py" in names
     assert "hanoi_cube/_core/app/core/data/precompute.json" in names
     assert "hanoi_cube/assets/umplus_j10r.bdf" in names
+    # P2 の Pyxel 非依存層(main.py が import する。欠けると .pyxapp で ImportError)
+    for module in (
+        "board_state.py",
+        "scene/__init__.py",
+        "scene/layout.py",
+        "scene/picking.py",
+        "input/__init__.py",
+        "input/drag.py",
+    ):
+        assert f"hanoi_cube/{module}" in names, module
     # ランタイム・テストは .pyxapp に入れない
     assert not any(n.startswith(("hanoi_cube/runtime/", "hanoi_cube/tests/")) for n in names)
 
