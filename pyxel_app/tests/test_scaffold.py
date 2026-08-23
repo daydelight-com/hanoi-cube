@@ -126,6 +126,11 @@ def test_build_site_produces_required_files() -> None:
         "scene/picking.py",
         "input/__init__.py",
         "input/drag.py",
+        # P3
+        "sfx.py",
+        "scene/smoothing.py",
+        "scene/board_scene.py",
+        "input/pointer.py",
     ):
         assert f"hanoi_cube/{module}" in names, module
     # ランタイム・テストは .pyxapp に入れない

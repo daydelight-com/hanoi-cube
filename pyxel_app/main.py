@@ -1,12 +1,13 @@
 """Hanoi Cube Pyxel 版のエントリ。
 
-P1 時点ではサンプル c01 相当の回転キューブに、
-`app.core` の import 確認(`core OK`)と日本語フォントの表示確認を加えたもの。
+P3 時点: 3D 盤面(`scene/board_scene.py`)にマウス / タッチ入力を流し、9 箱を塔・待機エリア間で
+ドラッグ&ドロップできる。判定・得点・画面遷移は P4 以降。
 """
 
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
 # --- `app.core` への経路を補う(仕様書 §2.2) ---------------------------------------
@@ -23,19 +24,20 @@ else:
     raise SystemExit("app.core が見つかりません(_core/ または ../server が必要)")
 
 import pyxel  # noqa: E402
-from pyxel.cube import Camera, Mat4, Node, Shading, Vec3  # noqa: E402
 
+import sfx  # noqa: E402
 from app.core import engine, precompute  # noqa: E402  (起動時に core を読めることの確認)
 from board_state import BoardState  # noqa: E402
-from input.drag import DragController, TowerTarget  # noqa: E402
-from scene import picking  # noqa: E402
+from input.drag import DragController, DropOutcome  # noqa: E402
+from input.pointer import PointerDriver  # noqa: E402
+from scene import layout  # noqa: E402
+from scene.board_scene import BoardScene  # noqa: E402
 
 WIDTH = 320
 HEIGHT = 240
 FPS = 60
+MAX_DT = 0.1  # 処理落ち・タブ非表示からの復帰で平滑化が飛ばないよう dt を上限で切る
 FONT_PATH = str(_HERE / "assets" / "umplus_j10r.bdf")
-CUBE_COLORS = [8, 9, 10, 11, 12, 14]
-CUBE_COUNT = len(CUBE_COLORS)
 TITLE_JA = "ハノイキューブ"
 
 
@@ -47,76 +49,81 @@ def core_status() -> str:
     return f"core OK ({len(table.boards)} boards, LMS// -> {judgement.points}pt)"
 
 
-def p2_status(camera: Camera, width: int, height: int) -> str:
-    """P2 の Pyxel 非依存層(盤面モデル・ドラッグ・ピッキング)が .pyxapp 内でも動くことの確認。"""
-    state = BoardState.from_board("LMS//")
-    drag = DragController(state)
-    drag.press("S1")
-    outcome = drag.release(TowerTarget("C"))
-    assert outcome is not None and outcome.placed
-    ray = picking.screen_to_ray(
-        width / 2, height / 2, (0, 0, width, height), picking.CameraSpec.of(camera)
-    )
-    hit = picking.intersect_plane_y(ray)
-    hit_text = "none" if hit is None else f"({hit[0]:.2f}, {hit[2]:.2f})"
-    return f"P2 OK ({state.board_string()} idx {state.board_index()}, center hit {hit_text})"
+class FpsMeter:
+    """直近 1 秒の描画回数(§10 の 60fps 確認用。画面に表示する)。"""
 
-
-class Cube(Node):
-    def __init__(self, index: int) -> None:
-        super().__init__()
-        self.color = CUBE_COLORS[index]
-        self.phase = index * 360.0 / CUBE_COUNT
-
-    def on_update(self) -> None:
-        frame = pyxel.frame_count
-        orbit = self.phase + frame * 1.0
-        position = Vec3(
-            pyxel.cos(orbit) * 2.0,
-            pyxel.sin(self.phase + frame * 2.0) * 0.5 + 0.4,
-            pyxel.sin(orbit) * 2.0,
-        )
-        spin = Mat4.from_euler(Vec3(frame * 1.5, frame * 2.5, 0.0))
-        self.transform = Mat4.from_translation(position) * spin
-
-    def on_draw(self) -> None:
-        self.box(Mat4.IDENTITY, Vec3(0.6, 0.6, 0.6), self.color)
-
-
-class Scene(Node):
     def __init__(self) -> None:
-        super().__init__()
-        self.shading = Shading(pyxel.colors)
-        self.shading.direction = Vec3(0.5, -1.5, -1.0).normalize()
-        self.camera = Camera()
-        self.camera.clear_color = 0
-        self.camera.transform = Mat4.look_at(Vec3(0.0, 3.0, 4.0), Vec3.ZERO)
-        for i in range(CUBE_COUNT):
-            self.add_child(Cube(i))
+        self.value = 0
+        self._count = 0
+        self._since = time.monotonic()
+
+    def tick(self, now: float) -> None:
+        self._count += 1
+        if now - self._since >= 1.0:
+            self.value = self._count
+            self._count = 0
+            self._since = now
 
 
 class App:
     def __init__(self) -> None:
         pyxel.init(WIDTH, HEIGHT, title="Hanoi Cube", fps=FPS)
+        pyxel.mouse(True)
+        sfx.setup()
         self.font = pyxel.Font(FONT_PATH)
         self.status = core_status()
-        self.scene = Scene()
-        assert self.scene.camera is not None
-        self.p2 = p2_status(self.scene.camera, WIDTH, HEIGHT)
+        self.board = BoardState.initial()
+        self.scene = BoardScene(pyxel.colors, WIDTH, HEIGHT)
+        self.driver = PointerDriver(DragController(self.board), self.scene)
+        self.scene.bind(self.driver)
+        self.last_outcome: DropOutcome | None = None
+        self.fps = FpsMeter()
+        self.debug = False  # D キー: ピッキング計算の投影点を十字で重ねる(描画とのずれ確認用)
+        self._last = time.monotonic()
         pyxel.run(self.update, self.draw)
 
     def update(self) -> None:
         if pyxel.btnp(pyxel.KEY_Q):
             pyxel.quit()
-        self.scene.update()
+        if pyxel.btnp(pyxel.KEY_D):
+            self.debug = not self.debug
+        now = time.monotonic()
+        dt = min(now - self._last, MAX_DT)
+        self._last = now
+        x, y = pyxel.mouse_x, pyxel.mouse_y
+        inside = 0 <= x < WIDTH and 0 <= y < HEIGHT
+        outcome = self.driver.feed(x, y, pyxel.btn(pyxel.MOUSE_BUTTON_LEFT), inside)
+        if outcome is not None:
+            self.last_outcome = outcome
+            sfx.play(sfx.Sfx.PLACE if outcome.placed else sfx.Sfx.FAIL)
+        self.scene.sync(dt)
 
     def draw(self) -> None:
-        self.scene.draw(0, 0, pyxel.width, pyxel.height)
+        self.fps.tick(time.monotonic())
+        self.scene.draw_to(0, 0, pyxel.width, pyxel.height)
         pyxel.text(4, 4, self.status, 7)
-        pyxel.text(4, 12, f"{pyxel.VERSION} / {FPS}fps", 13)
-        pyxel.text(4, 20, self.p2, 7)
+        pyxel.text(4, 12, f"{pyxel.VERSION} / {self.fps.value}fps", 13)
+        pyxel.text(4, 20, self.board.board_string() or "//", 7)
+        if self.last_outcome is not None:
+            o = self.last_outcome
+            reason = f" {o.reason.value}" if o.reason is not None else ""
+            pyxel.text(4, 28, f"{o.box_id}: {o.result.value}{reason}", 7)
+        if self.debug:
+            self.draw_debug()
         pyxel.text(4, HEIGHT - 14, TITLE_JA, 7, self.font)
-        pyxel.text(4, HEIGHT - 26, "Hanoi Cube (Pyxel Cube)", 7, self.font)
+
+    def draw_debug(self) -> None:
+        w, h = layout.MAT_SIZE_MM
+        points = [layout.mat_to_world(x, y) for x in (0.0, w) for y in (0.0, h)]
+        points += [layout.tower_position(t) for t in ("A", "B", "C")]
+        points += [layout.box_center(self.board, b) for b in self.board]
+        for p in points:
+            s = self.scene.project(p)
+            if s is not None:
+                x, y = int(s[0]), int(s[1])
+                pyxel.line(x - 3, y, x + 3, y, 8)
+                pyxel.line(x, y - 3, x, y + 3, 8)
+        pyxel.text(4, 36, f"mouse {pyxel.mouse_x},{pyxel.mouse_y}", 7)
 
 
 if __name__ == "__main__":
