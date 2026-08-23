@@ -84,12 +84,14 @@ def test_main_resolves_core_from_server_dir() -> None:
     code = (
         "import sys; sys.modules.pop('pyxel', None)\n"
         "import runpy; ns = runpy.run_path('main.py', run_name='not_main')\n"
-        "print(ns['core_status']())"
+        "table = ns['precompute'].load_table()\n"
+        "from app.core import engine\n"
+        "print(len(table.boards), engine.judge('LMS//', set(), set(), table).points, ns['App'])"
     )
     result = subprocess.run(
         [sys.executable, "-c", code], cwd=APP_DIR, capture_output=True, text=True, check=True
     )
-    assert result.stdout.startswith("core OK (512 boards, LMS// -> 21pt)")
+    assert result.stdout.startswith("512 21 <class")
 
 
 def test_main_fails_clearly_without_core(tmp_path: Path) -> None:
@@ -131,6 +133,16 @@ def test_build_site_produces_required_files() -> None:
         "scene/smoothing.py",
         "scene/board_scene.py",
         "input/pointer.py",
+        # P4
+        "session.py",
+        "screens/__init__.py",
+        "screens/base.py",
+        "screens/ui.py",
+        "screens/draw.py",
+        "screens/game_logic.py",
+        "screens/game.py",
+        "screens/result.py",
+        "screens/title.py",
     ):
         assert f"hanoi_cube/{module}" in names, module
     # ランタイム・テストは .pyxapp に入れない

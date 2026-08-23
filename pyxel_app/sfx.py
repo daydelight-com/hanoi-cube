@@ -1,7 +1,6 @@
 """効果音(仕様書 §6.5)。Pyxel 内蔵のサウンド定義を使う薄いラッパー。
 
-P3 時点では「配置」「失敗」の 2 種のみ暫定で定義する。
-残り 5 種の ID は予約だけしておき P5 で定義する。
+P3 で「配置」「失敗」、P4 で残り 5 種を暫定で定義した(音色の調整は P5)。
 `pyxel.init()` 後に `setup()` を一度呼ぶこと。
 """
 
@@ -36,7 +35,17 @@ def setup() -> None:
     pyxel.sounds[Sfx.PLACE].set("c3e3g3c4", "t", "7765", "nnnf", 5)
     # 失敗: 低い下降ブザー
     pyxel.sounds[Sfx.FAIL].set("e2c2", "s", "66", "nf", 12)
-    _DEFINED.update({Sfx.PLACE, Sfx.FAIL})
+    # ボタン: 短いクリック音
+    pyxel.sounds[Sfx.BUTTON].set("c4", "p", "5", "f", 4)
+    # 判定成功: ファンファーレ風の上昇アルペジオ
+    pyxel.sounds[Sfx.JUDGE_OK].set("c3e3g3c4e4g4", "s", "777766", "nnnnnf", 6)
+    # 判定済み: 同じ音を 2 回(残念でも失敗でもない)
+    pyxel.sounds[Sfx.JUDGED].set("a3ra3", "t", "666", "nnf", 8)
+    # カウントダウン: 短いビープ(3, 2, 1 / GO は同じ音)
+    pyxel.sounds[Sfx.COUNTDOWN].set("g3", "p", "6", "f", 8)
+    # タイムアップ: 長めの下降
+    pyxel.sounds[Sfx.TIMEUP].set("g3e3c3c3", "s", "7766", "nnnf", 14)
+    _DEFINED.update(set(Sfx))
 
 
 def play(sfx: Sfx) -> None:
