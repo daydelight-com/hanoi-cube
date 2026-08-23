@@ -58,6 +58,20 @@ export function DisplayApp() {
     }
   }
 
+  // 表示上で「Enter」と案内している操作だけ、物理キーボードでも実行できるようにする。
+  // ほかの画面への誤操作や長押し連打は防ぐ。
+  useEffect(() => {
+    const screen = state.screen?.screen
+    if (screen !== 'practice' && screen !== 'rule_dialog') return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Enter' || event.repeat) return
+      event.preventDefault()
+      controllerSocketRef.current?.send({ type: 'button', payload: { button: 'enter' } })
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [state.screen?.screen])
+
   const bgmTrack = bgmTrackForScreen(state.screen?.screen ?? null)
   useEffect(() => bgm.setTrack(bgmTrack), [bgmTrack])
 
