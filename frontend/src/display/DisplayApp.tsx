@@ -71,9 +71,18 @@ export function DisplayApp() {
       return
     }
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Enter' || event.repeat) return
+      if (event.repeat) return
+      const button =
+        event.key === 'Enter'
+          ? 'enter'
+          : screen === 'rule_dialog' && event.key === 'ArrowLeft'
+            ? 'left'
+            : screen === 'rule_dialog' && event.key === 'ArrowRight'
+              ? 'right'
+              : null
+      if (button === null) return
       event.preventDefault()
-      controllerSocketRef.current?.send({ type: 'button', payload: { button: 'enter' } })
+      controllerSocketRef.current?.send({ type: 'button', payload: { button } })
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
