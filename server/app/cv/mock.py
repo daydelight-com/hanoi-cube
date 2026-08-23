@@ -122,7 +122,10 @@ class MockCv:
         destination = self._state.stacks[target]
         if len(destination) >= 3:
             raise ValueError("target tower is full")
-        if destination and BOX_EDGE_MM[BOX_SIZE_OF[box]] >= BOX_EDGE_MM[BOX_SIZE_OF[destination[-1]]]:
+        destination_top = destination[-1] if destination else None
+        if destination_top and (
+            BOX_EDGE_MM[BOX_SIZE_OF[box]] >= BOX_EDGE_MM[BOX_SIZE_OF[destination_top]]
+        ):
             raise ValueError("a box may only be placed on a larger box")
 
         if source is None:
@@ -156,6 +159,10 @@ class MockCv:
             held=None,
         )
         self._emit_board_if_changed()
+
+    def reset(self) -> None:
+        """全箱を待機エリアへ戻す(練習終了時の仮想盤面リセット用)。"""
+        self.set_board("//")
 
     # ---- CvSource ----
 

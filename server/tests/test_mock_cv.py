@@ -71,6 +71,15 @@ def test_move_can_place_a_staged_box_on_a_tower() -> None:
     assert "large-1" not in update.staging_box_ids
 
 
+def test_reset_returns_every_box_to_staging() -> None:
+    mock = MockCv()
+    mock.move("large-1", "A")
+    mock.reset()
+    update = board_updates(mock)[-1]
+    assert update.board == "//"
+    assert list(update.staging_box_ids) == list(BOX_IDS)
+
+
 def test_place_illegal_stack_reports_violation() -> None:
     mock = MockCv()
     mock.grab("small-1")
