@@ -68,6 +68,11 @@ class MockPlaceRequest(BaseModel):
     target: str
 
 
+class MockMoveRequest(BaseModel):
+    box_id: str
+    target: str
+
+
 def create_app(*, start_loop: bool = True) -> FastAPI:
     """アプリを構築する。start_loop=False はテスト用(ループを起動しない)。"""
 
@@ -145,6 +150,11 @@ def create_app(*, start_loop: bool = True) -> FastAPI:
     @app.post("/api/mock/place")
     async def mock_place(req: MockPlaceRequest) -> dict[str, str]:
         return await _mock_op(lambda cv: cv.place(req.target))
+
+    @app.post("/api/mock/move")
+    async def mock_move(req: MockMoveRequest) -> dict[str, str]:
+        """3Dマウス操作用。grab/place の中間状態を作らず、1手を原子的に適用する。"""
+        return await _mock_op(lambda cv: cv.move(req.box_id, req.target))
 
     return app
 

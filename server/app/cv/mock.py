@@ -92,6 +92,46 @@ class MockCv:
         self._state.held = None
         self._emit_board_if_changed()
 
+    def move(self, box_id: str, target: str) -> None:
+        """ゲームの移動規則に従って、箱を塔へ直接移動する。
+
+        待機エリアの箱は最初の配置のために選べる。塔上の箱は必ず最上段だけを
+        動かせ、移動先は空塔または自分より大きい箱の上に限る。
+        """
+        if box_id not in BOX_IDS:
+            raise ValueError(f"unknown box: {box_id}")
+        if target not in _TOWERS:
+            raise ValueError(f"invalid target: {target!r} (expected A/B/C)")
+        if self._state.held is not None:
+            raise ValueError(f"already holding {self._state.held}")
+
+        box = box_id
+        source: str | None = None
+        for tower, stack in self._state.stacks.items():
+            if box not in stack:
+                continue
+            if stack[-1] != box:
+                raise ValueError("only the top box of a tower can be moved")
+            source = tower
+            break
+        if source is None and box not in self._state.staging:
+            raise ValueError(f"box is not available: {box}")
+        if source == target:
+            raise ValueError("box is already on that tower")
+
+        destination = self._state.stacks[target]
+        if len(destination) >= 3:
+            raise ValueError("target tower is full")
+        if destination and BOX_EDGE_MM[BOX_SIZE_OF[box]] >= BOX_EDGE_MM[BOX_SIZE_OF[destination[-1]]]:
+            raise ValueError("a box may only be placed on a larger box")
+
+        if source is None:
+            self._state.staging.remove(box)
+        else:
+            self._state.stacks[source].pop()
+        destination.append(box)
+        self._emit_board_if_changed()
+
     def set_board(self, board: str) -> None:
         """論理盤面を一括セットする。盤面に使わない箱は待機エリアへ。
 

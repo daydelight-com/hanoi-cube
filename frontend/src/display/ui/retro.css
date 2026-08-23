@@ -50,6 +50,12 @@
   justify-content: center;
   gap: 2.2vh;
   background: var(--crt-dim);
+  /* 3D盤面へのクリックを通し、実際のHTMLボタンだけは受け取る。 */
+  pointer-events: none;
+}
+
+.retro-screen button {
+  pointer-events: auto;
 }
 
 .retro-screen--clear {

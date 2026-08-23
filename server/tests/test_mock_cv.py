@@ -46,6 +46,31 @@ def test_grab_and_place_builds_board() -> None:
     assert updates[-1].violations == []
 
 
+def test_move_enforces_top_box_and_size_rules() -> None:
+    mock = MockCv()
+    mock.set_board("LM/S/")
+    mock.poll()
+
+    with pytest.raises(ValueError, match="top box"):
+        mock.move("large-1", "C")
+    with pytest.raises(ValueError, match="larger"):
+        mock.move("medium-1", "B")
+
+    mock.move("small-1", "C")
+    update = board_updates(mock)[-1]
+    assert update.board == "LM//S"
+    assert update.legal
+
+
+def test_move_can_place_a_staged_box_on_a_tower() -> None:
+    mock = MockCv()
+    mock.poll()
+    mock.move("large-1", "A")
+    update = board_updates(mock)[-1]
+    assert update.board == "L//"
+    assert "large-1" not in update.staging_box_ids
+
+
 def test_place_illegal_stack_reports_violation() -> None:
     mock = MockCv()
     mock.grab("small-1")

@@ -139,6 +139,15 @@ def test_mock_endpoint_rejects_bad_board() -> None:
         assert res.status_code == 400
 
 
+def test_mock_move_endpoint_applies_a_legal_move() -> None:
+    with TestClient(create_app(start_loop=False)) as client:
+        res = client.post("/api/mock/move", json={"box_id": "large-1", "target": "A"})
+        assert res.status_code == 200
+        server = client.app.state.game
+        assert server.cv.last_board is not None
+        assert server.cv.last_board.board == "L//"
+
+
 def test_mock_endpoints_disabled_by_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("HANOI_MOCK_API", "0")
     with TestClient(create_app(start_loop=False)) as client:

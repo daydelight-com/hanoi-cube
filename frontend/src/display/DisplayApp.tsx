@@ -5,6 +5,7 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
 import { bgm } from '../bgm/engine'
 import { bgmTrackForScreen } from '../bgm/screenBgm'
+import type { BoxId } from '../contracts/cv'
 import type { ButtonName, DisplayMessage } from '../contracts/ws'
 import type { BoardScene } from '../three/BoardScene'
 import { BoardCanvas } from '../three/BoardCanvas'
@@ -13,6 +14,7 @@ import { deriveDisplaySfx } from '../sfx/displaySfx'
 import { sfx } from '../sfx/engine'
 import { ScreenView } from './screens/ScreenView'
 import { ControllerSocket, DisplaySocket } from './socket'
+import { isSelectableBox, moveMockBox, towerForBox } from './boardInteraction'
 import { focusedSelectionButtons, modeSelectionButtons } from './controls'
 import { initialDisplayState, reduceDisplay } from './store'
 import './ui/retro.css'
@@ -21,6 +23,7 @@ export function DisplayApp() {
   const [state, dispatch] = useReducer(reduceDisplay, initialDisplayState)
   const [connected, setConnected] = useState(false)
   const [fps, setFps] = useState(0)
+  const [selectedBoxId, setSelectedBoxId] = useState<BoxId | null>(null)
   const sceneRef = useRef<BoardScene | null>(null)
   const controllerSocketRef = useRef<ControllerSocket | null>(null)
   // 効果音導出用の直前状態。React の描画バッチに依存せずメッセージ単位で
@@ -66,6 +69,7 @@ export function DisplayApp() {
           sceneRef.current?.setBoxes(msg.payload.boxes)
           return
         }
+        if (msg.type === 'board') setSelectedBoxId(null)
         for (const e of deriveDisplaySfx(sfxStateRef.current, msg)) sfx.play(e.id, e)
         sfxStateRef.current = reduceDisplay(sfxStateRef.current, msg)
         dispatch(msg)
@@ -76,12 +80,40 @@ export function DisplayApp() {
   }, [])
 
   const board = state.board
+  const boardInteractionEnabled =
+    state.screen?.screen === 'practice' || state.screen?.screen === 'game_play'
+
+  const moveSelectedBox = (tower: 'A' | 'B' | 'C') => {
+    if (selectedBoxId === null) return
+    void moveMockBox(selectedBoxId, tower)
+      .then(() => setSelectedBoxId(null))
+      // 実CV運用時など、モックAPIが使えない場合は選択を残して再試行できるようにする。
+      .catch(() => undefined)
+  }
+
   return (
     <div className="retro-root" style={{ background: 'var(--crt-bg)' }}>
       <BoardCanvas
         onScene={(scene) => (sceneRef.current = scene)}
         onFps={setFps}
         cameraSide={state.cameraSide}
+        selectedBoxId={selectedBoxId}
+        onBoxClick={(boxId) => {
+          if (!boardInteractionEnabled) return
+          // 選択済みなら、積まれている箱をクリックしても選び直さず、その塔を移動先にする。
+          // これにより空塔と同じように、箱のある塔にもそのまま積める。
+          if (selectedBoxId !== null) {
+            const tower = towerForBox(board, boxId)
+            if (tower !== null) {
+              moveSelectedBox(tower)
+              return
+            }
+          }
+          if (isSelectableBox(board, boxId)) setSelectedBoxId(boxId)
+        }}
+        onTowerClick={(tower) => {
+          if (boardInteractionEnabled) moveSelectedBox(tower)
+        }}
       />
       <ScreenView
         lang={state.lang}
