@@ -23,6 +23,8 @@ export function ScreenView({
   onModeSelect,
   onPracticeSelect,
   onResultSelect,
+  onNameType,
+  onNameDone,
 }: {
   lang: Lang
   screen: ScreenState | null
@@ -31,6 +33,8 @@ export function ScreenView({
   onModeSelect: (target: 'rules' | 'practice' | 'game' | 'lang') => void
   onPracticeSelect: (target: 'back' | 'help') => void
   onResultSelect: (target: 'input' | 'decide') => void
+  onNameType: (text: string) => void
+  onNameDone: () => void
 }) {
   if (screen === null) {
     return (
@@ -65,7 +69,15 @@ export function ScreenView({
     case 'game_play':
       return <GamePlayScreen lang={lang} ctx={screen.ctx} lastJudge={lastJudge} />
     case 'result':
-      return <ResultScreen lang={lang} ctx={screen.ctx} onSelect={onResultSelect} />
+      return (
+        <ResultScreen
+          lang={lang}
+          ctx={screen.ctx}
+          onSelect={onResultSelect}
+          onNameType={onNameType}
+          onNameDone={onNameDone}
+        />
+      )
     case 'ranking':
       return <RankingScreen lang={lang} ctx={screen.ctx} />
     case 'qr':

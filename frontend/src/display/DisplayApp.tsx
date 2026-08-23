@@ -154,6 +154,13 @@ export function DisplayApp() {
             ),
           )
         }}
+        onNameType={(text) => {
+          controllerSocketRef.current?.send({
+            type: 'name_text',
+            payload: { text: text.slice(0, 10) },
+          })
+        }}
+        onNameDone={() => controllerSocketRef.current?.send({ type: 'name_done', payload: {} })}
       />
       {!connected && state.screen !== null && (
         <div className="retro-disconnected">{t(state.lang, 'disconnected')}</div>

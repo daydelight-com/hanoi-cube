@@ -10,10 +10,14 @@ export function ResultScreen({
   lang,
   ctx,
   onSelect,
+  onNameType,
+  onNameDone,
 }: {
   lang: Lang
   ctx: ScreenCtxMap['result']
   onSelect: (target: 'input' | 'decide') => void
+  onNameType: (text: string) => void
+  onNameDone: () => void
 }) {
   const typing = ctx.input_mode === 'name'
   return (
@@ -36,10 +40,23 @@ export function ResultScreen({
         </div>
         <div className="retro-result-name">
           <span className="retro-hud-label">{t(lang, 'resultNameLabel')}</span>
-          <span className={`retro-name-field${typing ? ' typing' : ''}`}>
-            {ctx.name_text}
-            {typing && <span className="retro-caret">_</span>}
-          </span>
+          {typing ? (
+            <input
+              className="retro-name-field typing"
+              autoFocus
+              value={ctx.name_text}
+              maxLength={10}
+              autoComplete="off"
+              onChange={(event) => onNameType(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter') return
+                event.preventDefault()
+                onNameDone()
+              }}
+            />
+          ) : (
+            <span className="retro-name-field">{ctx.name_text}</span>
+          )}
         </div>
       </RetroFrame>
       {typing ? (

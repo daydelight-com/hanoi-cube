@@ -58,6 +58,10 @@
   pointer-events: auto;
 }
 
+.retro-screen input {
+  pointer-events: auto;
+}
+
 .retro-screen--clear {
   background: transparent;
 }
@@ -386,6 +390,15 @@ button.retro-menu-item {
 
 .retro-name-field.typing {
   border-bottom-color: var(--neon-strong);
+  background: transparent;
+  border-top: 0;
+  border-right: 0;
+  border-left: 0;
+  outline: 0;
+  font-family: inherit;
+  letter-spacing: inherit;
+  text-shadow: inherit;
+  user-select: text;
 }
 
 .retro-caret {
