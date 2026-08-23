@@ -49,7 +49,7 @@ export function ScreenView({
     case 'mode_select':
       return <ModeSelectScreen lang={lang} ctx={screen.ctx} onSelect={onModeSelect} />
     case 'rule_dialog':
-      return <RuleDialogScreen lang={lang} ctx={screen.ctx} />
+      return <RuleDialogScreen lang={lang} ctx={screen.ctx} onClose={() => onButton('enter')} />
     case 'practice':
       return (
         <PracticeScreen
