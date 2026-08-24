@@ -35,6 +35,11 @@ interface BoxEntry {
   target: BoxTarget
 }
 
+interface SceneInteractions {
+  onBoxClick: (boxId: BoxId) => void
+  onTowerClick: (tower: 'A' | 'B' | 'C') => void
+}
+
 export class BoardScene {
   private renderer: THREE.WebGLRenderer
   private scene = new THREE.Scene()
@@ -46,6 +51,12 @@ export class BoardScene {
   private groundOffsetMm = 0
   private faceTextures = new Map<BoxId, Map<number, THREE.Texture>>()
   private disposed = false
+  private raycaster = new THREE.Raycaster()
+  private pointer = new THREE.Vector2()
+  private towerTargets: THREE.Mesh[] = []
+  private interactions: SceneInteractions | null = null
+  private selectedBoxId: BoxId | null = null
+  private selectionOutline: THREE.LineSegments
 
   // FPS計測(直近1秒の描画フレーム数)。DoD確認用に HUD へ通知する
   private frameCount = 0
@@ -64,6 +75,13 @@ export class BoardScene {
     this.setCameraSide('back')
 
     this.buildMat()
+    this.selectionOutline = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)),
+      new THREE.LineBasicMaterial({ color: '#fff2a8' }),
+    )
+    this.selectionOutline.visible = false
+    this.scene.add(this.selectionOutline)
+    canvas.addEventListener('pointerdown', this.onPointerDown)
     void this.loadTextures()
     this.renderer.setAnimationLoop(() => this.tick())
   }
@@ -107,8 +125,17 @@ export class BoardScene {
     this.camera.updateProjectionMatrix()
   }
 
+  setInteractions(interactions: SceneInteractions): void {
+    this.interactions = interactions
+  }
+
+  setSelectedBox(boxId: BoxId | null): void {
+    this.selectedBoxId = boxId
+  }
+
   dispose(): void {
     this.disposed = true
+    this.renderer.domElement.removeEventListener('pointerdown', this.onPointerDown)
     this.renderer.setAnimationLoop(null)
     // メッシュ未適用のテクスチャ(ロード途中で破棄された場合)も含めて解放する
     this.disposeFaceTextures()
@@ -152,6 +179,7 @@ export class BoardScene {
         }
       }
     }
+    this.updateSelectionOutline()
     this.renderer.render(this.scene, this.camera)
 
     this.frameCount += 1
@@ -173,6 +201,7 @@ export class BoardScene {
     )
     this.applyFaceTextures(boxId, materials)
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(edge, edge, edge), materials)
+    mesh.userData.boxId = boxId
     this.scene.add(mesh)
     const entry: BoxEntry = {
       mesh,
@@ -261,6 +290,57 @@ export class BoardScene {
     floor.rotation.x = -Math.PI / 2
     floor.position.y = -1
     this.scene.add(floor)
+
+    for (const tower of ['A', 'B', 'C'] as const) {
+      const position = new THREE.Vector3()
+      matPosToThree([TOWER_X_MM[tower], TOWER_Y_MM, 0], position)
+      const target = new THREE.Mesh(
+        new THREE.CircleGeometry(MAT_SIZE_MM.x / 10, 24),
+        new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
+      )
+      target.rotation.x = -Math.PI / 2
+      target.position.copy(position)
+      target.position.y = 0.5
+      target.userData.tower = tower
+      this.towerTargets.push(target)
+      this.scene.add(target)
+    }
+  }
+
+  private onPointerDown = (event: PointerEvent): void => {
+    if (!this.interactions) return
+    const rect = this.renderer.domElement.getBoundingClientRect()
+    this.pointer.set(
+      ((event.clientX - rect.left) / rect.width) * 2 - 1,
+      -((event.clientY - rect.top) / rect.height) * 2 + 1,
+    )
+    this.raycaster.setFromCamera(this.pointer, this.camera)
+
+    const boxHits = this.raycaster.intersectObjects(
+      [...this.boxes.values()].map((entry) => entry.mesh),
+      false,
+    )
+    const boxId = boxHits[0]?.object.userData.boxId as BoxId | undefined
+    if (boxId) {
+      this.interactions.onBoxClick(boxId)
+      return
+    }
+    const towerHits = this.raycaster.intersectObjects(this.towerTargets, false)
+    const tower = towerHits[0]?.object.userData.tower as 'A' | 'B' | 'C' | undefined
+    if (tower) this.interactions.onTowerClick(tower)
+  }
+
+  private updateSelectionOutline(): void {
+    const selected = this.selectedBoxId === null ? undefined : this.boxes.get(this.selectedBoxId)
+    if (!selected) {
+      this.selectionOutline.visible = false
+      return
+    }
+    const edge = BOX_EDGE_MM[selected.size]
+    this.selectionOutline.visible = true
+    this.selectionOutline.position.copy(selected.mesh.position)
+    this.selectionOutline.quaternion.copy(selected.mesh.quaternion)
+    this.selectionOutline.scale.setScalar(edge * 1.08)
   }
 }
 

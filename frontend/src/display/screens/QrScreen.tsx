@@ -7,7 +7,15 @@ import type { Lang, ScreenCtxMap } from '../../contracts/ws'
 import { t } from '../../i18n/strings'
 import { Blink, RetroFrame } from '../ui/Retro'
 
-export function QrScreen({ lang, ctx }: { lang: Lang; ctx: ScreenCtxMap['qr'] }) {
+export function QrScreen({
+  lang,
+  ctx,
+  onNext,
+}: {
+  lang: Lang
+  ctx: ScreenCtxMap['qr']
+  onNext: () => void
+}) {
   const [dataUrl, setDataUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -42,9 +50,9 @@ export function QrScreen({ lang, ctx }: { lang: Lang; ctx: ScreenCtxMap['qr'] })
       </RetroFrame>
       <div className="retro-text">{t(lang, 'qrCaption')}</div>
       <div className="retro-qr-url">{ctx.url}</div>
-      <div className="retro-text">
+      <button type="button" className="retro-text retro-text-button" onClick={onNext}>
         <Blink>{t(lang, 'qrNext')}</Blink>
-      </div>
+      </button>
     </div>
   )
 }

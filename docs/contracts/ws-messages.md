@@ -1,6 +1,6 @@
 # 契約: WebSocketメッセージ(ws-messages)
 
-エンドポイント(仕様§8.1): `/ws/display`(ディスプレイ)、`/ws/controller`(iPad)。
+エンドポイント(仕様§8.1): `/ws/display`(ディスプレイ)、`/ws/controller`(操作クライアント)。
 すべてのメッセージは `{"type": string, "payload": object}` のJSON。未知の type は受信側で無視する。
 画面ID・遷移の定義は [screens.md](screens.md)、盤面型は [board.md](board.md) / [cv-interface.md](cv-interface.md)。
 
@@ -100,7 +100,7 @@
   `timeup` が代替するため遷移音なし。idle_title⇄idle_ranking はタイムアウト遷移と
   区別できないため無音。
 
-## 5. サーバー → iPad(/ws/controller)
+## 5. サーバー → 操作クライアント(/ws/controller)
 
 | type | 送信タイミング | payload |
 |---|---|---|
@@ -110,7 +110,7 @@
 | `sfx` | 効果音トリガー | `{ id: SfxId }`(iPadスピーカーで再生。`pad_button` は押下ローカル再生でも可) |
 | `flash` | 判定実行時(本番・練習) | `{ result: "scored" \| "failed" \| "duplicate" }`(画面全体フラッシュ演出+`pad_flash`音) |
 
-## 6. iPad → サーバー(/ws/controller)
+## 6. 操作クライアント → サーバー(/ws/controller)
 
 | type | 送信タイミング | payload |
 |---|---|---|
@@ -118,6 +118,8 @@
 | `name_text` | 名前入力の変化のたび | `{ text: string }`(クライアントで10文字に切り詰めて送る。サーバーでも検証) |
 | `name_done` | ソフトウェアキーボードの完了 | `{}`(サーバーは `input_mode: buttons` を返す) |
 
-- ディスプレイ→サーバー方向のメッセージはない(ディスプレイは表示専用)。
-  開発時のキーボード操作は `/controller` を同一Macで開くか、モックCLIを使う。
+- DisplayApp は画面描画のため `/ws/display` を購読しつつ、表示上のボタンをクリックしたときは
+  `/ws/controller` にこの節のメッセージを送信する。操作状態は常に `/ws/display` の配信を正とし、
+  controller snapshot は利用しない。`/controller` は従来どおり独立したタッチ操作クライアントとして
+  利用できるが、DisplayApp の操作には必須ではない。
 - `/ws/admin`(管理画面)は S10 で本契約に追記する。

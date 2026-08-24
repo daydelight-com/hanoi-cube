@@ -10,6 +10,7 @@ from typing import Any
 
 import pytest
 from app.api.main import create_app
+from app.api.ws import _reset_mock_board_after_practice
 from fastapi.testclient import TestClient
 from starlette.testclient import WebSocketTestSession
 
@@ -137,6 +138,29 @@ def test_mock_endpoint_rejects_bad_board() -> None:
     with TestClient(create_app(start_loop=False)) as client:
         res = client.post("/api/mock/board", json={"board": "LLLL//"})
         assert res.status_code == 400
+
+
+def test_mock_move_endpoint_applies_a_legal_move() -> None:
+    with TestClient(create_app(start_loop=False)) as client:
+        res = client.post("/api/mock/move", json={"box_id": "large-1", "target": "A"})
+        assert res.status_code == 200
+        server = client.app.state.game
+        assert server.cv.last_board is not None
+        assert server.cv.last_board.board == "L//"
+
+
+def test_leaving_practice_resets_mock_board() -> None:
+    with TestClient(create_app(start_loop=False)) as client:
+        server = client.app.state.game
+        server.cv.move("large-1", "A")
+        server.machine._enter_practice(0)
+        server.machine.on_button("left", 1)
+        assert server.machine.screen == "practice"
+        server.machine.on_button("enter", 2)
+        assert server.machine.screen == "mode_select"
+        _reset_mock_board_after_practice(server, "practice")
+        assert server.cv.last_board is not None
+        assert server.cv.last_board.board == "//"
 
 
 def test_mock_endpoints_disabled_by_env(monkeypatch: pytest.MonkeyPatch) -> None:

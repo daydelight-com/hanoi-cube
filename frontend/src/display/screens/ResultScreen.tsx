@@ -6,7 +6,19 @@ import type { Lang, ScreenCtxMap } from '../../contracts/ws'
 import { t } from '../../i18n/strings'
 import { Blink, MenuItem, RetroFrame } from '../ui/Retro'
 
-export function ResultScreen({ lang, ctx }: { lang: Lang; ctx: ScreenCtxMap['result'] }) {
+export function ResultScreen({
+  lang,
+  ctx,
+  onSelect,
+  onNameType,
+  onNameDone,
+}: {
+  lang: Lang
+  ctx: ScreenCtxMap['result']
+  onSelect: (target: 'input' | 'decide') => void
+  onNameType: (text: string) => void
+  onNameDone: () => void
+}) {
   const typing = ctx.input_mode === 'name'
   return (
     <div className="retro-screen">
@@ -28,10 +40,23 @@ export function ResultScreen({ lang, ctx }: { lang: Lang; ctx: ScreenCtxMap['res
         </div>
         <div className="retro-result-name">
           <span className="retro-hud-label">{t(lang, 'resultNameLabel')}</span>
-          <span className={`retro-name-field${typing ? ' typing' : ''}`}>
-            {ctx.name_text}
-            {typing && <span className="retro-caret">_</span>}
-          </span>
+          {typing ? (
+            <input
+              className="retro-name-field typing"
+              autoFocus
+              value={ctx.name_text}
+              maxLength={10}
+              autoComplete="off"
+              onChange={(event) => onNameType(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter') return
+                event.preventDefault()
+                onNameDone()
+              }}
+            />
+          ) : (
+            <span className="retro-name-field">{ctx.name_text}</span>
+          )}
         </div>
       </RetroFrame>
       {typing ? (
@@ -41,9 +66,13 @@ export function ResultScreen({ lang, ctx }: { lang: Lang; ctx: ScreenCtxMap['res
       ) : (
         <>
           <div style={{ display: 'flex', gap: '3vw' }}>
-            <MenuItem focused={ctx.focus === 'input'}>{t(lang, 'resultInputButton')}</MenuItem>
+            <MenuItem focused={ctx.focus === 'input'} onClick={() => onSelect('input')}>
+              {t(lang, 'resultInputButton')}
+            </MenuItem>
             <div className={ctx.name_text.length === 0 ? 'retro-disabled' : undefined}>
-              <MenuItem focused={ctx.focus === 'decide'}>{t(lang, 'resultDecideButton')}</MenuItem>
+              <MenuItem focused={ctx.focus === 'decide'} onClick={() => onSelect('decide')}>
+                {t(lang, 'resultDecideButton')}
+              </MenuItem>
             </div>
           </div>
           <div className="retro-text">{t(lang, 'resultHint')}</div>

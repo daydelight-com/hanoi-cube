@@ -138,7 +138,10 @@ async def ws_controller(websocket: WebSocket) -> None:
             except ValidationError:
                 continue  # 外形不正は無視
             async with server.lock:
-                await server.dispatch(_handle_inbound(server.machine, inbound, received_ms))
+                previous_screen = server.machine.screen
+                outbounds = _handle_inbound(server.machine, inbound, received_ms)
+                _reset_mock_board_after_practice(server, previous_screen)
+                await server.dispatch(outbounds)
     except WebSocketDisconnect:
         pass
     finally:
@@ -159,3 +162,13 @@ def _handle_inbound(machine: StateMachine, inbound: InboundMessage, now: int) ->
     except ValidationError:
         return []
     return []
+
+
+def _reset_mock_board_after_practice(server: GameServer, previous_screen: str) -> None:
+    """練習を戻る操作で抜けたときだけ、操作可能なモック盤面を初期化する。"""
+    if previous_screen != "practice" or server.machine.screen != "mode_select":
+        return
+    # 実CVは物理の箱が正なので、reset() を持たず何もしない。
+    reset = getattr(server.cv, "reset", None)
+    if callable(reset):
+        reset()

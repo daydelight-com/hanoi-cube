@@ -9,7 +9,17 @@ import { PageDots, RetroFrame } from '../ui/Retro'
 import { RuleFigure } from './RuleFigure'
 import { RULE_FIGURES } from './ruleFigures'
 
-export function RuleDialogScreen({ lang, ctx }: { lang: Lang; ctx: ScreenCtxMap['rule_dialog'] }) {
+export function RuleDialogScreen({
+  lang,
+  ctx,
+  onClose,
+  onPageChange,
+}: {
+  lang: Lang
+  ctx: ScreenCtxMap['rule_dialog']
+  onClose: () => void
+  onPageChange: (direction: 'left' | 'right') => void
+}) {
   const pages = RULE_PAGES[lang]
   // ページ数はサーバー(ctx.page_count)と辞書で二重管理のため、範囲外はクランプして守る
   const page = Math.min(Math.max(ctx.page, 0), pages.length - 1)
@@ -46,10 +56,33 @@ export function RuleDialogScreen({ lang, ctx }: { lang: Lang; ctx: ScreenCtxMap[
           ))}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1vh' }}>
-          <PageDots page={page} pageCount={ctx.page_count} />
-          <div className="retro-text" style={{ fontSize: '1.3vw', color: 'var(--neon-base)' }}>
-            {t(lang, 'rulePageNav')} / {t(lang, 'ruleClose')}
+          <div className="retro-rule-nav">
+            <button
+              type="button"
+              className="retro-rule-nav-button"
+              aria-label="Previous page"
+              onClick={() => onPageChange('left')}
+            >
+              ◀
+            </button>
+            <PageDots page={page} pageCount={ctx.page_count} />
+            <button
+              type="button"
+              className="retro-rule-nav-button"
+              aria-label="Next page"
+              onClick={() => onPageChange('right')}
+            >
+              ▶
+            </button>
           </div>
+          <button
+            type="button"
+            className="retro-text retro-text-button"
+            style={{ fontSize: '1.3vw', color: 'var(--neon-base)' }}
+            onClick={onClose}
+          >
+            {t(lang, 'rulePageNav')} / {t(lang, 'ruleClose')}
+          </button>
         </div>
       </RetroFrame>
     </div>

@@ -19,6 +19,10 @@ class FakeAudioParam {
     return this
   }
 
+  cancelScheduledValues(): this {
+    return this
+  }
+
   cancelAndHoldAtTime(): this {
     return this
   }
@@ -130,5 +134,18 @@ describe('BgmEngine', () => {
     expect(engine.playbackState.scheduledNotes).toBeGreaterThan(0)
 
     engine.setTrack(null)
+  })
+
+  it('cancelAndHoldAtTimeがないAudioParamでも曲を切り替えられる', () => {
+    vi.useFakeTimers()
+    vi.stubGlobal('AudioContext', FakeAudioContext)
+    const engine = new BgmEngine()
+    engine.setTrack('waiting')
+    engine.unlock()
+    const activeGain = (engine as unknown as { session: { bus: FakeGain } }).session.bus.gain
+    ;(activeGain as unknown as { cancelAndHoldAtTime?: unknown }).cancelAndHoldAtTime = undefined
+
+    expect(() => engine.setTrack('gameplay')).not.toThrow()
+    expect(engine.playbackState.activeTrack).toBe('gameplay')
   })
 })

@@ -100,6 +100,20 @@ function setGainEnvelope(
   gain.exponentialRampToValueAtTime(SILENCE, end)
 }
 
+/** Safari等で cancelAndHoldAtTime が未実装でも、現在値から安全にフェードアウトする。 */
+function fadeOut(param: AudioParam, now: number): void {
+  const cancelAndHold = (
+    param as AudioParam & { cancelAndHoldAtTime?: (cancelTime: number) => AudioParam }
+  ).cancelAndHoldAtTime
+  if (typeof cancelAndHold === 'function') {
+    cancelAndHold.call(param, now)
+  } else {
+    param.cancelScheduledValues(now)
+    param.setValueAtTime(Math.max(SILENCE, param.value), now)
+  }
+  param.exponentialRampToValueAtTime(SILENCE, now + TRACK_FADE_OUT_SECONDS)
+}
+
 export class BgmEngine {
   private ctx: AudioContext | null = null
   private master: GainNode | null = null
@@ -192,8 +206,7 @@ export class BgmEngine {
     this.session = null
     if (previous !== null) {
       const now = ctx.currentTime
-      previous.bus.gain.cancelAndHoldAtTime(now)
-      previous.bus.gain.exponentialRampToValueAtTime(SILENCE, now + TRACK_FADE_OUT_SECONDS)
+      fadeOut(previous.bus.gain, now)
       setTimeout(
         () => {
           previous.bus.disconnect()

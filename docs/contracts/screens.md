@@ -49,7 +49,7 @@ specification.md §5 の機械可読版。状態機械(`server/app/state/`、S2)
 | 16 | practice | enter | 選択なし ∧ 盤面legal ∧ クールダウン外 | 判定(§4) | practice |
 | 17 | game_countdown | timeout:countdown(GO後) | | 計測開始 | game_play |
 | 18 | game_play | enter | 盤面legal ∧ クールダウン外 ∧ 残時間>0 | 判定(§4) | game_play |
-| 19 | game_play | timeout:timeup(60s) | | 結果確定、iPadをname入力モードへ | result |
+| 19 | game_play | timeout:timeup(60s) | | 最新の合法盤面を最後に1回判定して結果確定、iPadをname入力モードへ | result |
 | 20 | result | name_text | | ディスプレイへミラー(10文字上限) | result |
 | 21 | result | name_done | | iPadをbuttonsモードへ | result |
 | 22 | result | left / right | buttonsモード | 入力⇄決定 のfocus移動 | result |
@@ -60,7 +60,8 @@ specification.md §5 の機械可読版。状態機械(`server/app/state/`、S2)
 
 - 起動時の初期状態は `idle_title`。
 - 判定クールダウンは0.5秒(仕様§5.6)。ガードを満たさない enter は無視(演出・音も出さない)。
-- 時間切れ直前の判定: enter の受信時刻が timeup 前なら有効(仕様§5.6)。
+- 時間切れ直前の判定: enter の受信時刻が timeup 前なら有効(仕様§5.6)。タイムアップ時は、
+  最新の確定盤面が合法ならクールダウンを無視して最後に1回だけ判定する。違法盤面・未確定盤面は判定しない。
 
 ## 4. 判定アクション(行16・18の共通処理)
 
