@@ -209,6 +209,16 @@ cd .. && firebase deploy --only firestore,hosting
 公開 URL: https://daydelight-com.github.io/hanoi-cube/ (`main` への push で GitHub Actions が自動デプロイ)。
 仕様は [docs/pyxel_app_specification.md](docs/pyxel_app_specification.md)、進め方は [docs/pyxel_app_development_plan.md](docs/pyxel_app_development_plan.md)。
 
+### 遊び方
+
+1. 公開 URL を開き、ロード後の「CLICK TO START」をクリック(この 1 クリックで効果音も有効になる)
+2. タイトルで「スタート」。ルールはゲーム内の「ルール」(5 ページ)にまとまっている。右上の JA / EN で言語切替
+3. 3-2-1-GO! のあと **60 秒**。箱をドラッグ&ドロップで 3 本の塔に並べ、「はんてい」を押すと
+   その盤面が「ハノイの塔のルールで崩せる配置」なら手数に応じて得点。崩せない配置は「MISS」、判定済みの盤面は「ALREADY」(0 点)
+4. 同じ盤面は 2 度得点できないので、判定したら並べ替えて次の盤面へ。タイムアップでスコア発表。自己ベストはブラウザに保存される
+
+操作はマウス / タッチのみで完結する(補助キー: Enter=はんてい、Esc=タイトルへ、Q=終了〔ネイティブ版〕)。
+
 Pyxel は未リリースの `cube` ブランチを使うため **`pip install pyxel` では動かない**。ビルド済み wheel を GitHub Release
 [`pyxel-cube-runtime-2026-08-23`](https://github.com/daydelight-com/hanoi-cube/releases/tag/pyxel-cube-runtime-2026-08-23) で配布している
 (macOS Apple Silicon 用。`pyxel_app/pyproject.toml` の `[tool.uv.sources]` がこの URL を指すので `uv sync` だけで入る。
