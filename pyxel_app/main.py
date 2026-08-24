@@ -31,6 +31,7 @@ from board_state import BoardState  # noqa: E402
 from input.drag import DragController  # noqa: E402
 from input.pointer import PointerDriver  # noqa: E402
 from scene.board_scene import BoardScene  # noqa: E402
+from scene.textures import load as load_textures  # noqa: E402
 from screens import draw  # noqa: E402
 from screens.base import Pointer, Screen  # noqa: E402
 from screens.title import TitleScreen  # noqa: E402
@@ -68,7 +69,9 @@ class App:
         self.font = pyxel.Font(FONT_PATH)
         draw.set_font(self.font)  # 日本語 UI(§3.6)。各画面は draw.FONT で描く
         self.table = precompute.load_table()
-        self.scene = BoardScene(pyxel.colors, WIDTH, HEIGHT)
+        # ドット化テクスチャ。パレット追加を伴うため BoardScene(Shading)生成より前に読む
+        textures = load_textures()
+        self.scene = BoardScene(pyxel.colors, WIDTH, HEIGHT, textures)
         # タイトル中も盤面を背景に出すため、初期配置で結線しておく(ゲーム開始時に bind し直す)
         self.scene.bind(PointerDriver(DragController(BoardState.initial()), self.scene))
         self.screen: Screen = TitleScreen(self.table, self.scene)

@@ -17,6 +17,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Final
 
+import pyxel
 from pyxel.cube import Camera, Collider, Mat4, Node, Shading, Vec3
 
 from app.core.board import Size, Tower
@@ -25,12 +26,14 @@ from input.pointer import PointerDriver
 from scene import layout, picking
 from scene.layout import DropTarget, TowerTarget
 from scene.smoothing import POS_LAMBDA, SmoothedPosition
+from scene.textures import Textures
 
 Vec = tuple[float, float, float]
 
 TAG_BOX: Final = "box"
 
-# ---- 見た目(暫定。基調色への差し替えは P5) ----
+# ---- 見た目 ----
+# テクスチャ(scene/textures.py)が読めた場合はそれを貼り、無い環境では以下の単色に縮退する
 BOX_COLORS: Final[dict[Size, int]] = {"L": 12, "M": 11, "S": 10}  # 青系 / 緑系 / 黄系(§4.1)
 BOX_OUTLINE: Final = 1
 MAT_COLOR: Final = 13
@@ -62,8 +65,9 @@ def _v(p: Vec) -> Vec3:
 class MatNode(Node):
     """マット平面と塔・スロットのマーカー。"""
 
-    def __init__(self) -> None:
+    def __init__(self, image: pyxel.Image | None = None) -> None:
         super().__init__()
+        self.image = image
         w, h = (layout.mm(v) for v in layout.MAT_SIZE_MM)
         self.size = Vec3(w, MAT_THICKNESS, h)
         self.transform = Mat4.from_translation(Vec3(0.0, -MAT_THICKNESS / 2, 0.0))
@@ -79,13 +83,15 @@ class MatNode(Node):
             self.slot_markers.append((pos, Vec3(edge, 0.0, edge)))
 
     def on_draw(self) -> None:
-        self.box(Mat4.IDENTITY, self.size, MAT_COLOR)
+        # アートワークがあれば貼る(box は上面に画像全面が正立で貼られる)。無ければ単色
+        self.box(Mat4.IDENTITY, self.size, MAT_COLOR if self.image is None else self.image)
         # 以降はマット上面(ローカル y = 厚み/2)に描く
         top = self.size.y / 2 + MARKER_Y
         self.shaded(False)
         for tower, pos in self.tower_markers:
             at = Vec3(pos.x, top, pos.z)
-            self.box(Mat4.from_translation(at), self.marker_size, TOWER_MARKER_COLOR)
+            if self.image is None:  # アートワーク側に塔の枠があるため塗りは縮退時のみ
+                self.box(Mat4.from_translation(at), self.marker_size, TOWER_MARKER_COLOR)
             label = Vec3(pos.x, top + 0.02, pos.z + self.marker_size.z / 2 + 0.12)
             self.text(label, tower, LABEL_COLOR)
         for pos, size in self.slot_markers:
@@ -95,12 +101,13 @@ class MatNode(Node):
 class BoxNode(Node):
     """箱 1 個。`target` を指数平滑化で追いかける。"""
 
-    def __init__(self, box_id: str, position: Vec) -> None:
+    def __init__(self, box_id: str, position: Vec, image: pyxel.Image | None = None) -> None:
         super().__init__()
         self.box_id = box_id
         self.name = box_id
         self.edge = layout.box_edge(size_of(box_id))
         self.color = BOX_COLORS[size_of(box_id)]
+        self.image = image
         self.size = Vec3(self.edge, self.edge, self.edge)
         self.collider = Collider(size=self.size, trigger=True, mass=0.0)
         self.tags = [TAG_BOX]
@@ -124,7 +131,7 @@ class BoxNode(Node):
         self.transform = Mat4.from_translation(_v(position))
 
     def on_draw(self) -> None:
-        self.box(Mat4.IDENTITY, self.size, self.color)
+        self.box(Mat4.IDENTITY, self.size, self.color if self.image is None else self.image)
         self.boxb(Mat4.IDENTITY, self.size, BOX_OUTLINE)
 
 
@@ -167,16 +174,23 @@ class HighlightNode(Node):
 class BoardScene(Node):
     """盤面シーン。`PointerDriver.SceneQuery` を実装する(`pick_box` / `floor_point`)。"""
 
-    def __init__(self, colors: Sequence[int], width: int, height: int) -> None:
+    def __init__(
+        self,
+        colors: Sequence[int],
+        width: int,
+        height: int,
+        textures: Textures | None = None,
+    ) -> None:
         super().__init__()
         self.viewport: picking.Viewport = (0.0, 0.0, float(width), float(height))
+        self.textures = textures if textures is not None else Textures()
         self.shading = Shading(list(colors))
         self.shading.direction = _v(LIGHT_DIRECTION).normalize()
         self.camera = Camera()
         self.camera.clear_color = CLEAR_COLOR
         self.camera.fov = CAMERA_FOV
         self.camera.transform = Mat4.look_at(_v(CAMERA_EYE), _v(CAMERA_TARGET))
-        self.mat = MatNode()
+        self.mat = MatNode(self.textures.mat)
         self.add_child(self.mat)
         self.boxes: dict[str, BoxNode] = {}
         self.highlight = HighlightNode()
@@ -191,7 +205,8 @@ class BoardScene(Node):
             node.destroy()
         self.boxes = {}
         for box_id in BOX_IDS:
-            node = BoxNode(box_id, layout.box_center(driver.board, box_id))
+            image = self.textures.boxes.get(size_of(box_id))
+            node = BoxNode(box_id, layout.box_center(driver.board, box_id), image)
             self.boxes[box_id] = node
             self.add_child(node)
         if self.highlight.parent is None:
