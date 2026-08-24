@@ -53,6 +53,10 @@ LIGHT_DIRECTION: Final[Vec] = (0.5, -1.5, -1.0)
 
 # マット面からわずかに浮かせて Z ファイトを避ける(depth_offset(-1.0) は箱まで透けるので使わない)
 MARKER_Y: Final = 0.02
+# マットのアートワークはタイル分割して貼る。1 枚のポリゴンに貼るとテクスチャが
+# アフィン補間(透視補正なし)され、奥行きのある視点で絵がせん断するため
+MAT_GRID: Final = (8, 6)
+MAT_IMAGE_Y: Final = 0.005  # 台座上面との Z ファイト回避(マーカー MARKER_Y より下)
 TOWER_MARKER_SIZE_MM: Final = 90.0
 SLOT_MARKER_MARGIN_MM: Final = 6.0
 HIGHLIGHT_MARGIN_MM: Final = 10.0
@@ -83,11 +87,14 @@ class MatNode(Node):
             self.slot_markers.append((pos, Vec3(edge, 0.0, edge)))
 
     def on_draw(self) -> None:
-        # アートワークがあれば貼る(box は上面に画像全面が正立で貼られる)。無ければ単色
-        self.box(Mat4.IDENTITY, self.size, MAT_COLOR if self.image is None else self.image)
-        # 以降はマット上面(ローカル y = 厚み/2)に描く
-        top = self.size.y / 2 + MARKER_Y
+        self.box(Mat4.IDENTITY, self.size, MAT_COLOR)
+        # 以降は陰影なし: アートワークは印刷物なので陰影を掛けない(シェーディングの
+        # ランプで白がパレット内の別系統の明色に置き換わり色転びする)。マーカーも同様
         self.shaded(False)
+        if self.image is not None:
+            self._draw_image_tiles(self.size.y / 2 + MAT_IMAGE_Y)
+        # マット上面(ローカル y = 厚み/2)に描く
+        top = self.size.y / 2 + MARKER_Y
         for tower, pos in self.tower_markers:
             at = Vec3(pos.x, top, pos.z)
             if self.image is None:  # アートワーク側に塔の枠があるため塗りは縮退時のみ
@@ -96,6 +103,22 @@ class MatNode(Node):
             self.text(label, tower, LABEL_COLOR)
         for pos, size in self.slot_markers:
             self.boxb(Mat4.from_translation(Vec3(pos.x, top, pos.z)), size, SLOT_MARKER_COLOR)
+
+    def _draw_image_tiles(self, y: float) -> None:
+        """アートワークを MAT_GRID のタイルに分けて上面に貼る(アフィンのせん断を抑える)。"""
+        assert self.image is not None
+        nx, nz = MAT_GRID
+        tile_w = self.size.x / nx
+        tile_d = self.size.z / nz
+        for gz in range(nz):
+            v0, v1 = gz / nz, (gz + 1) / nz
+            cz = -self.size.z / 2 + (gz + 0.5) * tile_d  # gz=0 が奥(-z)= 画像の上端
+            for gx in range(nx):
+                u0, u1 = gx / nx, (gx + 1) / nx
+                cx = -self.size.x / 2 + (gx + 0.5) * tile_w
+                mat = Mat4.from_translation(Vec3(cx, y, cz)).rotate_x(-90.0)
+                uvs = ((u0, v0), (u1, v0), (u0, v1), (u1, v1))
+                self.plane(mat, self.image, uvs, tile_w, tile_d)
 
 
 class BoxNode(Node):
