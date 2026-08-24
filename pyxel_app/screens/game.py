@@ -29,6 +29,9 @@ from screens.game_logic import (
     FeedbackKind,
     GameEvent,
     GamePlay,
+    countdown_scale,
+    feedback_offset_y,
+    feedback_scale,
 )
 from screens.result import ResultScreen
 from session import GameSession
@@ -38,7 +41,6 @@ HUD_BG: Final = 0
 HUD_LABEL: Final = 13
 HUD_VALUE: Final = 7
 WARNING_COLOR: Final = 8
-BLINK_HZ: Final = 4
 FEEDBACK_COLOR: Final[dict[FeedbackKind, int]] = {
     FeedbackKind.SCORED: 11,
     FeedbackKind.MISS: 8,
@@ -108,14 +110,19 @@ class GameScreen(Screen):
         )
         value = self.session.countdown_value(now)
         if value is not None:
-            draw.big_text(WIDTH / 2, FEEDBACK_CY, str(value), 10, 5)
+            age = self.session.countdown_age(now) or 0.0
+            draw.big_text(WIDTH / 2, FEEDBACK_CY, str(value), 10, countdown_scale(age, 5))
         elif self.session.show_go(now):
-            draw.big_text(WIDTH / 2, FEEDBACK_CY, "GO!", 11, 5)
+            go_age = now - self.session.started_at
+            draw.big_text(WIDTH / 2, FEEDBACK_CY, "GO!", 11, countdown_scale(go_age, 5))
         feedback = self.play.visible_feedback(now)
         if feedback is not None:
             color = FEEDBACK_COLOR[feedback.kind]
             if feedback.kind is FeedbackKind.SCORED:
-                draw.big_text(WIDTH / 2, FEEDBACK_CY, feedback.text, color, 4)  # +N は言語非依存
+                # +N は言語非依存。ポップしてから浮き上がる
+                age = feedback.age(now)
+                cy = FEEDBACK_CY + feedback_offset_y(age)
+                draw.big_text(WIDTH / 2, cy, feedback.text, color, feedback_scale(age, 4))
             else:
                 text = m.judgeFail if feedback.kind is FeedbackKind.MISS else m.judgeDup
                 draw.big_text(WIDTH / 2, FEEDBACK_CY, text, color, 3, font=font)
@@ -132,9 +139,7 @@ class GameScreen(Screen):
         score_x = 6 + draw.text_width(m.scoreLabel, font) + 5
         pyxel.text(score_x, value_y, f"{self.session.score:04d}", HUD_VALUE)
         # 中央: のこり時間(ラベル + 値をまとめて中央寄せ)
-        time_col = HUD_VALUE
-        if self.session.in_warning(now) and int(now * BLINK_HZ) % 2 == 0:
-            time_col = WARNING_COLOR
+        time_col = WARNING_COLOR if self.session.warning_blink(now) else HUD_VALUE
         time_value = self.session.remaining_display(now)
         time_lw = draw.text_width(m.timeLabel, font)
         time_x = WIDTH / 2 - (time_lw + 5 + draw.text_width(time_value)) / 2

@@ -23,6 +23,8 @@ HUD_HEIGHT: Final = 16
 JUDGE_BUTTON: Final = Button(Rect(258, 212, 58, 24), "JUDGE")
 TITLE_BUTTON: Final = Button(Rect(4, 214, 44, 20), "TITLE")
 FEEDBACK_SEC: Final = 1.0
+FEEDBACK_POP_SEC: Final = 0.15  # +N の出現ポップ(小 → 等倍)にかける秒
+FEEDBACK_RISE_PX: Final = 14  # +N が FEEDBACK_SEC かけて浮き上がる量
 
 
 class GameEvent(Enum):
@@ -52,6 +54,34 @@ class Feedback:
 
     def visible(self, now: float) -> bool:
         return now - self.at < FEEDBACK_SEC
+
+    def age(self, now: float) -> float:
+        return max(0.0, now - self.at)
+
+
+def feedback_offset_y(age: float) -> float:
+    """+N の縦オフセット(px)。減速カーブで FEEDBACK_RISE_PX まで浮き上がる(上が負)。"""
+    t = min(max(age / FEEDBACK_SEC, 0.0), 1.0)
+    return -FEEDBACK_RISE_PX * (1.0 - (1.0 - t) ** 2)
+
+
+def feedback_scale(age: float, base: int) -> int:
+    """+N の拡大率。出現直後は base の半分から始まり FEEDBACK_POP_SEC で base に届く。"""
+    if age >= FEEDBACK_POP_SEC:
+        return base
+    t = max(0.0, age) / FEEDBACK_POP_SEC
+    return max(1, round(base * (0.5 + 0.5 * t)))
+
+
+COUNTDOWN_POP_SEC: Final = 0.2
+
+
+def countdown_scale(age: float, base: int) -> int:
+    """3-2-1-GO の数字ポップ。出現直後は base+2 で、COUNTDOWN_POP_SEC かけて base に戻る。"""
+    if age >= COUNTDOWN_POP_SEC:
+        return base
+    t = max(0.0, age) / COUNTDOWN_POP_SEC
+    return base + max(0, round((1.0 - t) * 2))
 
 
 _FEEDBACK_OF: dict[str, tuple[FeedbackKind, GameEvent]] = {

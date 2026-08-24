@@ -32,6 +32,7 @@ GAME_SEC: Final = 60.0
 JUDGE_COOLDOWN_SEC: Final = 0.5
 GO_DISPLAY_SEC: Final = 1.0  # 「GO」を出す長さ(演出のみ。判定可否には関係しない)
 LAST_SECONDS_WARNING: Final = 10  # 残り 10 秒で赤点滅(§3.4)
+WARNING_BLINK_HZ: Final = 4  # 赤点滅の切替回数 / 秒(赤 0.25 秒 → 白 0.25 秒の交互)
 
 JudgeResult = Literal["scored", "unclearable", "duplicate_same", "duplicate_mirror"]
 
@@ -163,6 +164,13 @@ class GameSession:
         elapsed = now - self._countdown_started_at
         return max(1, COUNTDOWN_STEPS - math.floor(elapsed / COUNTDOWN_STEP_SEC))
 
+    def countdown_age(self, now: float) -> float | None:
+        """現在のカウントダウン数字が出てからの経過秒(ポップ演出用)。カウントダウン外は None。"""
+        if self.countdown_value(now) is None:
+            return None
+        elapsed = now - self._countdown_started_at
+        return elapsed - math.floor(elapsed / COUNTDOWN_STEP_SEC) * COUNTDOWN_STEP_SEC
+
     def show_go(self, now: float) -> bool:
         """「GO!」を表示する期間(プレイ開始直後 `GO_DISPLAY_SEC`)。"""
         return self._phase is not Phase.IDLE and 0.0 <= now - self._started_at < GO_DISPLAY_SEC
@@ -181,6 +189,12 @@ class GameSession:
     def in_warning(self, now: float) -> bool:
         """残り 10 秒以内(数字を赤点滅させる)。"""
         return self.phase(now) is Phase.PLAYING and self.remaining_sec(now) <= LAST_SECONDS_WARNING
+
+    def warning_blink(self, now: float) -> bool:
+        """赤点滅の「いま赤」フェーズか。deadline 基準なので交互周期が壁時計に依らず安定する。"""
+        if not self.in_warning(now):
+            return False
+        return int((self._deadline - now) * WARNING_BLINK_HZ) % 2 == 0
 
     def cooldown_remaining(self, now: float) -> float:
         if self._last_judge_at is None:

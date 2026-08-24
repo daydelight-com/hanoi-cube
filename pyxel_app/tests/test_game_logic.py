@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from itertools import pairwise
+
 import pytest
 
 from app.core.precompute import PrecomputeTable, load_table
@@ -13,6 +15,9 @@ from input.drag import DragController
 from input.pointer import PointerDriver
 from scene import layout
 from screens.game_logic import (
+    COUNTDOWN_POP_SEC,
+    FEEDBACK_POP_SEC,
+    FEEDBACK_RISE_PX,
     FEEDBACK_SEC,
     HUD_HEIGHT,
     JUDGE_BUTTON,
@@ -20,6 +25,9 @@ from screens.game_logic import (
     FeedbackKind,
     GameEvent,
     GamePlay,
+    countdown_scale,
+    feedback_offset_y,
+    feedback_scale,
 )
 from session import GAME_SEC, GameSession
 from tests.test_pointer import TopDownScene, screen_of
@@ -240,3 +248,32 @@ def test_title_button_at_time_up_is_ignored(table: PrecomputeTable) -> None:
     assert play.frame(tx, ty, True, True, t0 + GAME_SEC) == [GameEvent.TIME_UP]
     assert play.frame(tx, ty, False, True, t0 + GAME_SEC + 0.1) == []
     assert click(play, tx, ty, t0 + GAME_SEC + 0.2) == []
+
+
+# ---- 演出ヘルパー(P6: +N のアニメ・数字のポップ) ----
+
+
+def test_feedback_offset_rises_and_settles() -> None:
+    """0 から始まり単調に浮き上がり、表示終了時に FEEDBACK_RISE_PX で止まる(上が負)。"""
+    assert feedback_offset_y(0.0) == 0.0
+    samples = [feedback_offset_y(FEEDBACK_SEC * i / 10) for i in range(11)]
+    assert all(a > b for a, b in pairwise(samples))  # 単調に上へ
+    assert samples[-1] == -FEEDBACK_RISE_PX
+    assert feedback_offset_y(FEEDBACK_SEC + 1.0) == -FEEDBACK_RISE_PX  # 表示終了後も飛ばない
+
+
+def test_feedback_scale_pops_from_half_to_base() -> None:
+    assert feedback_scale(0.0, 4) == 2  # 半分から
+    assert feedback_scale(FEEDBACK_POP_SEC, 4) == 4  # ポップ完了で等倍
+    assert feedback_scale(10.0, 4) == 4
+    scales = [feedback_scale(FEEDBACK_POP_SEC * i / 4, 4) for i in range(5)]
+    assert all(a <= b for a, b in pairwise(scales))  # 縮まない
+    assert feedback_scale(0.0, 1) == 1  # 最低 1 倍を割らない
+
+
+def test_countdown_scale_pops_from_large_to_base() -> None:
+    assert countdown_scale(0.0, 5) == 7  # base+2 から
+    assert countdown_scale(COUNTDOWN_POP_SEC, 5) == 5
+    assert countdown_scale(10.0, 5) == 5
+    scales = [countdown_scale(COUNTDOWN_POP_SEC * i / 4, 5) for i in range(5)]
+    assert all(a >= b for a, b in pairwise(scales))  # 大きくならない

@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import random
-from itertools import count
+from itertools import count, pairwise
 from typing import cast
 
 import pytest
@@ -307,6 +307,29 @@ def test_warning_in_last_ten_seconds(table: PrecomputeTable) -> None:
     assert session.in_warning(t0 + 50.0)
     assert session.in_warning(t0 + 59.9)
     assert not session.in_warning(t0 + 60.0)  # 終了後は点滅しない
+
+
+def test_warning_blink_alternates_every_quarter_second(table: PrecomputeTable) -> None:
+    """赤 0.25 秒 → 白 0.25 秒の交互(deadline 基準)。警告外は常に False。"""
+    session, t0 = started(table)
+    deadline = session.deadline
+    assert not session.warning_blink(t0 + 49.0)  # 警告前
+    assert not session.warning_blink(deadline + 0.1)  # 終了後
+    phases = [session.warning_blink(deadline - 10.0 + 0.25 * i + 0.125) for i in range(40)]
+    assert all(a != b for a, b in pairwise(phases))  # 0.25 秒ごとに交互
+    # 同じ 0.25 秒枠の中では変わらない
+    assert session.warning_blink(deadline - 0.95) == session.warning_blink(deadline - 0.80)
+
+
+def test_countdown_age_resets_each_digit(table: PrecomputeTable) -> None:
+    session = GameSession(table)
+    assert session.countdown_age(0.0) is None  # start 前
+    session.start(10.0)
+    assert session.countdown_age(10.0) == pytest.approx(0.0)
+    assert session.countdown_age(10.9) == pytest.approx(0.9)
+    assert session.countdown_age(11.0) == pytest.approx(0.0)  # 「2」に切り替わった直後
+    assert session.countdown_age(12.4) == pytest.approx(0.4)
+    assert session.countdown_age(13.0) is None  # プレイ開始後
 
 
 def test_start_resets_everything(table: PrecomputeTable) -> None:
