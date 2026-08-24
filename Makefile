@@ -13,9 +13,10 @@ check-frontend:
 check-cloud:
 	cd cloud/record && npm run --silent check
 
-# Pyxel 版(pyxel_app/)。ruff は scripts/build_pyxel_site.py も対象
+# Pyxel 版(pyxel_app/)。ruff は scripts/build_pyxel_site.py と make_pyxel_textures.py も対象
+PYXEL_SCRIPTS = ../scripts/build_pyxel_site.py ../scripts/make_pyxel_textures.py
 check-pyxel:
-	cd pyxel_app && uv run ruff check . ../scripts/build_pyxel_site.py && uv run ruff format --check . ../scripts/build_pyxel_site.py && uv run mypy && uv run pytest -q
+	cd pyxel_app && uv run ruff check . $(PYXEL_SCRIPTS) && uv run ruff format --check . $(PYXEL_SCRIPTS) && uv run mypy && uv run pytest -q
 
 # Pyxel 版の静的サイトを site/ に組み立てる(仕様書 §7.1)。pyxel-serve でローカル確認(:8081。Firestore エミュレータの 8080 と分ける)
 pyxel-site:
