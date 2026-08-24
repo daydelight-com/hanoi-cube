@@ -143,6 +143,11 @@ def test_build_site_produces_required_files() -> None:
         "screens/game.py",
         "screens/result.py",
         "screens/title.py",
+        # P5
+        "i18n.py",
+        "storage.py",
+        "screens/menu_logic.py",
+        "screens/rules.py",
     ):
         assert f"hanoi_cube/{module}" in names, module
     # ランタイム・テストは .pyxapp に入れない

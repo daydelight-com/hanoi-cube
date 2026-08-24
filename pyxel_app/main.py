@@ -31,6 +31,7 @@ from board_state import BoardState  # noqa: E402
 from input.drag import DragController  # noqa: E402
 from input.pointer import PointerDriver  # noqa: E402
 from scene.board_scene import BoardScene  # noqa: E402
+from screens import draw  # noqa: E402
 from screens.base import Pointer, Screen  # noqa: E402
 from screens.title import TitleScreen  # noqa: E402
 
@@ -59,10 +60,13 @@ class FpsMeter:
 
 class App:
     def __init__(self) -> None:
-        pyxel.init(WIDTH, HEIGHT, title="Hanoi Cube", fps=FPS)
+        # Esc は「タイトルへ」の補助キー(§3.1)なので終了キーにしない(終了は Q)
+        pyxel.init(WIDTH, HEIGHT, title="Hanoi Cube", fps=FPS, quit_key=pyxel.KEY_NONE)
         pyxel.mouse(True)
+        draw.setup_palette()  # 基調色 #438532。BoardScene(Shading)生成より前に行う
         sfx.setup()
-        self.font = pyxel.Font(FONT_PATH)  # 日本語 UI は P5(読めることの確認のみ)
+        self.font = pyxel.Font(FONT_PATH)
+        draw.set_font(self.font)  # 日本語 UI(§3.6)。各画面は draw.FONT で描く
         self.table = precompute.load_table()
         self.scene = BoardScene(pyxel.colors, WIDTH, HEIGHT)
         # タイトル中も盤面を背景に出すため、初期配置で結線しておく(ゲーム開始時に bind し直す)

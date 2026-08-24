@@ -30,21 +30,21 @@ _DEFINED: set[Sfx] = set()
 
 
 def setup() -> None:
-    """サウンドを定義する(暫定)。未定義の音は `play()` で無視される。"""
+    """サウンドを定義する(既存仕様 §5.12 の音イメージに合わせて P5 で調整。実聴は要人間確認)。"""
     # 配置: 短い上昇音(スッと収まる感じ)
     pyxel.sounds[Sfx.PLACE].set("c3e3g3c4", "t", "7765", "nnnf", 5)
-    # 失敗: 低い下降ブザー
+    # 失敗: 低い下降ブザー(低い不協和音)
     pyxel.sounds[Sfx.FAIL].set("e2c2", "s", "66", "nf", 12)
-    # ボタン: 短いクリック音
-    pyxel.sounds[Sfx.BUTTON].set("c4", "p", "5", "f", 4)
-    # 判定成功: ファンファーレ風の上昇アルペジオ
-    pyxel.sounds[Sfx.JUDGE_OK].set("c3e3g3c4e4g4", "s", "777766", "nnnnnf", 6)
-    # 判定済み: 同じ音を 2 回(残念でも失敗でもない)
+    # ボタン(決定): 2 音の上昇「ピコッ」
+    pyxel.sounds[Sfx.BUTTON].set("c4e4", "p", "54", "nf", 4)
+    # 判定成功: 上昇アルペジオ + コイン音の跳ね
+    pyxel.sounds[Sfx.JUDGE_OK].set("c3e3g3c4e4g4e4g4", "s", "77776666", "nnnnnnnf", 5)
+    # 判定済み: 中立的な 2 連ビープ(残念でも失敗でもない)
     pyxel.sounds[Sfx.JUDGED].set("a3ra3", "t", "666", "nnf", 8)
-    # カウントダウン: 短いビープ(3, 2, 1 / GO は同じ音)
+    # カウントダウン: 低めの単音ビープ(3, 2, 1 / GO は同じ音)
     pyxel.sounds[Sfx.COUNTDOWN].set("g3", "p", "6", "f", 8)
-    # タイムアップ: 長めの下降
-    pyxel.sounds[Sfx.TIMEUP].set("g3e3c3c3", "s", "7766", "nnnf", 14)
+    # タイムアップ: ゴング風の長めの下降
+    pyxel.sounds[Sfx.TIMEUP].set("g3e3c3g2c3", "s", "77665", "nnnnf", 16)
     _DEFINED.update(set(Sfx))
 
 

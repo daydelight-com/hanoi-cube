@@ -41,7 +41,18 @@ known-first-party = ["app"]  # server/app/core(sys.path 経由で import)
 
 [tool.mypy]
 strict = true
-files = ["main.py", "board_state.py", "sfx.py", "session.py", "scene", "input", "screens", "tests"]
+files = [
+    "main.py",
+    "board_state.py",
+    "sfx.py",
+    "session.py",
+    "i18n.py",
+    "storage.py",
+    "scene",
+    "input",
+    "screens",
+    "tests",
+]
 mypy_path = "../server"
 explicit_package_bases = true
 exclude = ["runtime", "_core"]
