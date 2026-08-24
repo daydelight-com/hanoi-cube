@@ -7,8 +7,53 @@
     <!-- 固定ランタイム(pyxel_app/runtime/)を相対パスで読む。CDN の pyxel.js は使用禁止(仕様書 §2.3) -->
     <link rel="stylesheet" href="runtime/pyxel.css">
     <script src="runtime/pyxel.js"></script>
+    <style>
+      /* ロード中表示(P6)。ランタイムの「CLICK TO START」が出たら消す */
+      #loading-note {
+        position: fixed;
+        left: 50%;
+        top: 72%;
+        transform: translateX(-50%);
+        z-index: 10;
+        color: #eee;
+        background: none;
+        font-family: monospace;
+        font-size: 14px;
+        text-align: center;
+        pointer-events: none;
+      }
+      /* ドットは opacity で点滅させる(content のアニメは Safari が対応しない) */
+      #loading-note span {
+        animation: loading-dot 1.2s infinite;
+        opacity: 0;
+      }
+      #loading-note span:nth-child(2) { animation-delay: 0.2s; }
+      #loading-note span:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes loading-dot {
+        0% { opacity: 0; }
+        25% { opacity: 1; }
+        100% { opacity: 1; }
+      }
+    </style>
   </head>
   <body>
+    <div id="loading-note">よみこみちゅう / Loading<span>.</span><span>.</span><span>.</span></div>
+    <script>
+      // ランタイムが「CLICK TO START」(#pyxel-prompt)またはエラー表示を出したらロード中表示を消す
+      (() => {
+        const note = document.getElementById("loading-note");
+        const observer = new MutationObserver(() => {
+          if (
+            document.getElementById("pyxel-prompt") ||
+            document.getElementById("pyxel-error-overlay")
+          ) {
+            note.remove();
+            observer.disconnect();
+          }
+        });
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+      })();
+    </script>
     <pyxel-play root="." name="hanoi_cube.pyxapp" packages="pydantic"></pyxel-play>
   </body>
 </html>
