@@ -243,3 +243,48 @@ make check-pyxel                       # ruff / mypy strict / pytest(make check 
 - [docs/game/](docs/game/) — ゲームルールと得点表
 - [docs/handoff/](docs/handoff/) — 開発セッションごとの引き継ぎメモ
 - [CLAUDE.md](CLAUDE.md) — 開発時の規則(AI エージェント向け)
+
+## ライセンス
+
+### ソースコード
+
+Apache License, Version 2.0(全文: [LICENSE](LICENSE))。
+
+```
+Copyright 2026 Day Delight Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
+
+### Apache-2.0 の適用外(著作権は Day Delight Inc. に帰属し、無断利用を許諾しません)
+
+コードを自由に参照・再利用していただくことを意図した公開ですが、ゲームそのもの
+(企画・ルール・見た目)の持ち出しは想定していません。以下は Apache-2.0 の許諾に
+含まれません。
+
+| 対象 | 内容 |
+|---|---|
+| [docs/game/](docs/game/) | ゲームルール・得点表(ゲームデザイン文書) |
+| `frontend/public/textures/`、`frontend/public/favicon.png` | 箱・プレイマットのテクスチャ、CUBE ロゴ・キャラクター、アイコン |
+| `pyxel_app/assets/textures/` | Pyxel 版のテクスチャ(上記素材から生成) |
+| `cloud/record/public/` | 記録画面の OGP 画像・アイコン |
+| `hanoi_markers/markers/` | 独自マーカー画像 |
+| 「Hanoi Cube」「Cubeでハノイ」「CUBE」の名称・ロゴ・キャラクター、および Day Delight Inc. の名称・ロゴ | Apache-2.0 §6 のとおり商標等の使用許諾は含まれません |
+
+これらを利用したい場合は個別にご相談ください。
+
+### 同梱している第三者の著作物
+
+AprilTag のタグ画像(BSD 2-Clause)、Pyxel 固定ランタイム(MIT。同梱 wheel は MPL-2.0 を含む
+201 個の Rust クレートを静的リンクしている)、M+ BITMAP FONTS、Vite のプロジェクトテンプレート(MIT)を
+同梱しています。詳細は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) を参照してください。
