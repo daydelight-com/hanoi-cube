@@ -156,6 +156,15 @@ class BoardTracker:
         self._confirmed_sig: _BoardSignature | None = None
         self._last_board: CvBoardUpdate | None = None
 
+    def elevated_box_ids(self) -> frozenset[str]:
+        """確定盤面で段1以上(=別の箱の上)にある箱のID。遮蔽保持中も維持される。
+
+        接地自動校正(ground_autocal.py)が積まれた箱を地面と誤認しないための参照。
+        """
+        if self._last_board is None:
+            return frozenset()
+        return frozenset(box_id for stack in self._last_board.tower_box_ids for box_id in stack[1:])
+
     @property
     def last_board(self) -> CvBoardUpdate | None:
         return self._last_board

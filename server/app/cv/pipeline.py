@@ -17,13 +17,19 @@ worker.py(別プロセス)がフレームごとに呼ぶ。カメラ・プロセ
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 import numpy.typing as npt
 
 from app.cv.detector import TagDetection
 from app.cv.geometry import CameraModel, box_estimate, calibrate
+from app.cv.ground_autocal import (
+    GROUND_CAL_MAX_MM,
+    GROUND_CAL_SETTLE_STEPS,
+    next_ground_offset_mm,
+    resting_reference_error_mm,
+)
 from app.cv.interface import BOX_EDGE_MM, CvMessage
 from app.cv.layout import MAT_SIZE_MM, MAT_TAG_BLACK_MM, MAT_TAG_CENTERS_MM, MAT_TAG_IDS
 from app.cv.tag_master import TagMaster
@@ -68,7 +74,13 @@ def _mean_yaw(yaws: list[float]) -> float:
 class FramePipeline:
     """検出結果列 → (キャリブレーション+幾何+盤面構成) → CvMessage 列。"""
 
-    def __init__(self, master: TagMaster, *, expected_camera_side: str | None = None) -> None:
+    def __init__(
+        self,
+        master: TagMaster,
+        *,
+        expected_camera_side: str | None = None,
+        ground_autocal: bool = True,
+    ) -> None:
         self._master = master
         self._tracker = BoardTracker()
         self._camera: CameraModel | None = None
@@ -79,6 +91,12 @@ class FramePipeline:
         # HANOI_CAMERA_SIDE の設定値("back"/"front")。None はチェックなし(テスト等)。
         # 設定と実測カメラ位置が食い違えば警告し、設営ミス(表示の180°逆)に気付けるようにする
         self._expected_camera_side = expected_camera_side
+        # 接地自動校正(ground_autocal.py)。補正量は観測zから一様に引く。
+        # 推定は調整ウィンドウ中のみ(起動時に自動で開き、収束したら固定)
+        self._ground_autocal = ground_autocal
+        self._ground_offset_mm = 0.0
+        self._ground_cal_active = True
+        self._ground_cal_steps = 0
 
     @property
     def calibrated(self) -> bool:
@@ -93,6 +111,11 @@ class FramePipeline:
     def tracker(self) -> BoardTracker:
         return self._tracker
 
+    @property
+    def ground_offset_mm(self) -> float:
+        """接地自動校正の現在の補正量(mm)。ワーカーの再保存判定・診断用。"""
+        return self._ground_offset_mm
+
     # ---- キャリブレーションの保存・復元(カメラ・マットは固定の前提) ----
     # マットが小さい会場では箱に隠れて四隅がそろいにくい。一度成立した推定を
     # ファイルに保存し、再起動時は空マットを見せなくても動けるようにする。
@@ -106,6 +129,7 @@ class FramePipeline:
             "k": self._camera.k.tolist(),
             "r_cam_from_mat": self._camera.r_cam_from_mat.tolist(),
             "t_cam_from_mat": self._camera.t_cam_from_mat.tolist(),
+            "ground_offset_mm": self._ground_offset_mm,
         }
 
     def restore_calibration(self, data: dict[str, object]) -> None:
@@ -128,6 +152,10 @@ class FramePipeline:
             raise ValueError("キャリブレーションデータの形が不正")
         self._camera = camera
         self._image_size = (int(image_size[0]), int(image_size[1]))
+        # 旧形式のファイルにはキーが無いため 0 扱い(以後の観測で再収束する)。
+        # 壊れた値が恒久適用されないよう更新時と同じ上限でクランプする
+        raw_offset = float(data.get("ground_offset_mm", 0.0))  # type: ignore[arg-type]
+        self._ground_offset_mm = max(-GROUND_CAL_MAX_MM, min(GROUND_CAL_MAX_MM, raw_offset))
         self._last_calibrated_ms = None  # 四隅がそろえば新しい推定で上書きされる
         self._warn_if_side_mismatch(camera)
 
@@ -143,6 +171,9 @@ class FramePipeline:
             self._camera = None
             self._mat_corners.clear()
             self._last_calibrated_ms = None
+            self._ground_offset_mm = 0.0
+            self._ground_cal_active = True
+            self._ground_cal_steps = 0
 
         mat_now = 0
         for det in detections:
@@ -154,6 +185,8 @@ class FramePipeline:
         sightings: list[BoxSighting] = []
         if self._camera is not None:
             sightings = self._resolve_boxes(detections, self._camera)
+            if self._ground_autocal:
+                sightings = self._apply_ground_autocal(sightings, t_ms)
         return self._tracker.process(t_ms, sightings, mat_now, self.calibrated)
 
     # ---- 内部 ----
@@ -290,6 +323,38 @@ class FramePipeline:
         detected = np.array([corners[tag_id].mean(axis=0) for tag_id in sorted(corners)])
         projected = camera.project(centers_mm)
         return float(np.max(np.linalg.norm(projected - detected, axis=1)))
+
+    def _apply_ground_autocal(self, sightings: list[BoxSighting], t_ms: int) -> list[BoxSighting]:
+        """接地自動校正(ground_autocal.py)。調整ウィンドウ中は推定し、常に補正を適用する。"""
+        del t_ms  # 確定は参照つき更新の回数で数える(途切れた時間を収束に数えない)
+        if self._ground_cal_active:
+            error = resting_reference_error_mm(sightings, self._tracker.elevated_box_ids())
+            if error is not None:
+                self._ground_offset_mm = next_ground_offset_mm(self._ground_offset_mm, error)
+                self._ground_cal_steps += 1
+            if self._ground_cal_steps >= GROUND_CAL_SETTLE_STEPS:
+                self._ground_cal_active = False
+                logger.info(
+                    "接地校正を確定した: 高さ補正 %.1fmm(再調整は make ground-cal)",
+                    self._ground_offset_mm,
+                )
+        offset = self._ground_offset_mm
+        if offset != 0.0:
+            sightings = [
+                replace(s, pos_mm=(s.pos_mm[0], s.pos_mm[1], s.pos_mm[2] - offset))
+                for s in sightings
+            ]
+        return sightings
+
+    def restart_ground_autocal(self) -> None:
+        """接地校正の調整ウィンドウを開き直す(make ground-cal のトリガーから呼ばれる)。
+
+        現在の補正量を初期値として、マット上の箱から推定をやり直す。
+        呼ぶ前にマット上の箱が全てきちんと置かれていることが前提(運用手順)。
+        """
+        self._ground_cal_active = True
+        self._ground_cal_steps = 0
+        logger.info("接地校正をやり直す(現在の補正 %.1fmm から再推定)", self._ground_offset_mm)
 
     def _resolve_boxes(
         self, detections: list[TagDetection], camera: CameraModel

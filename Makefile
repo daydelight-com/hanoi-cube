@@ -45,3 +45,10 @@ mock:
 CAMERA ?= 0
 camera-check:
 	cd server && uv run python ../scripts/cv_poc.py --camera $(CAMERA) --show
+
+
+# 高さ(接地)校正のやり直し。マット上に箱を1つ以上きちんと置いてから実行する。
+# 稼働中のCVワーカーが約1秒以内に検知し、5秒ほどで補正を確定してログに出す
+ground-cal:
+	mkdir -p output && touch output/ground_autocal.request
+	@echo "接地校正をやり直します。マット上の箱を動かさず、サーバーログの「接地校正を確定した」を確認してください"

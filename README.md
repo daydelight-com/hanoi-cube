@@ -107,6 +107,7 @@ iPhone(連係カメラ)を三脚に固定して接続したら、本番起動の
 
 ```bash
 make camera-check          # カメラ番号を変える場合は make camera-check CAMERA=1
+make ground-cal            # 高さ(接地)校正のやり直し(マット上に箱を置いてから)
 ```
 
 (`cd server && uv run python ../scripts/cv_poc.py --camera 0 --show` と同じ)
@@ -159,6 +160,7 @@ cd frontend && node e2e/full-play.mjs
 | `HANOI_CV_WIDTH` / `HANOI_CV_HEIGHT` | `1920` / `1080` | 撮影解像度 |
 | `HANOI_TAG_MASTER` | `output/tag_master.json` | タグマスタのパス |
 | `HANOI_CV_CALIBRATION` | `output/cv_calibration.json` | キャリブレーション永続化先(空文字で無効) |
+| `HANOI_CV_GROUND_AUTOCAL` | `1` | `0` で接地校正(高さの系統誤差補正)を無効化 |
 | `HANOI_FIREBASE_CREDENTIALS` | リポジトリ直下 `service-account.json` を自動検出 | Firebase サービスアカウント鍵 |
 | `HANOI_FIREBASE_PROJECT` | — | Firebase プロジェクト ID の明示 |
 | `FIRESTORE_EMULATOR_HOST` | — | Firestore エミュレータ(例 `127.0.0.1:8080`) |

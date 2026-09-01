@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 _RESTART_BACKOFF_S = 3.0
 
 DEFAULT_CALIBRATION_PATH = DEFAULT_TAG_MASTER_PATH.parent / "cv_calibration.json"
+# make ground-cal(リポジトリ直下で touch)とワーカー(cwd=server)で一致するよう絶対パス
+DEFAULT_GROUND_CAL_REQUEST_PATH = DEFAULT_TAG_MASTER_PATH.parent / "ground_autocal.request"
 
 
 def config_from_env() -> CvWorkerConfig:
@@ -30,7 +32,8 @@ def config_from_env() -> CvWorkerConfig:
 
     HANOI_CV_CAMERA / _VIDEO / _WIDTH / _HEIGHT / HANOI_TAG_MASTER /
     HANOI_CV_CALIBRATION(空文字で永続化無効。既定 output/cv_calibration.json)/
-    HANOI_CAMERA_SIDE(back=既定/front。実測カメラ位置と食い違えば警告)
+    HANOI_CAMERA_SIDE(back=既定/front。実測カメラ位置と食い違えば警告)/
+    HANOI_CV_GROUND_AUTOCAL(0で接地自動校正を無効化。既定は有効)
     """
     camera_side = os.environ.get("HANOI_CAMERA_SIDE", "back")
     if camera_side not in ("back", "front"):
@@ -44,6 +47,8 @@ def config_from_env() -> CvWorkerConfig:
         calibration_path=os.environ.get("HANOI_CV_CALIBRATION", str(DEFAULT_CALIBRATION_PATH))
         or None,
         camera_side=camera_side,
+        ground_autocal=os.environ.get("HANOI_CV_GROUND_AUTOCAL", "1") != "0",
+        ground_cal_request_path=str(DEFAULT_GROUND_CAL_REQUEST_PATH),
     )
 
 
